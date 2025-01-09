@@ -1,116 +1,113 @@
 import extensions.FPSDisplay
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
-import org.openrndr.extra.noise.Random
+import org.openrndr.draw.*
 import org.openrndr.math.Vector2
-import org.openrndr.math.clamp
-import org.openrndr.math.mod
-import kotlin.math.pow
+import java.io.File
 
 fun main() = application {
+    val gridSize = (2.5 * sigma).toInt()
+    val computeWidth = 50
+    val computeHeight = 10
+    val count = computeWidth * computeHeight * 32
+
     configure {
         width = 1000
         height = 1000
         windowResizable = true
     }
     program {
-        val area = drawer.bounds.offsetEdges(0.0)
-        var positions = Array(count) {
-            Random.point(area)
+        val gridRows = width / gridSize
+        val gridCols = height / gridSize
+
+//        val area = drawer.bounds.offsetEdges(0.0)
+
+        val computeShader = ComputeShader.fromCode(File("data/compute-shaders/fields.glsl").readText(), "cs")
+
+        computeShader.apply {
+            uniform("gridSize", gridSize)
+            uniform("gridRows", gridRows)
+            uniform("gridCols", gridCols)
+            uniform("epsilon", epsilon)
+            uniform("sigma", sigma)
+            uniform("dT", deltaT)
         }
-        // Define GUI
-//        val gui = GUI()
-//
-//        val settings = object {
-//            @DoubleParameter("maxForce", 0.0, 10.0)
-//            var maxForceLog = 5.0
+
+//        for (i in 0 until count) {
+//            prevPositions[i] += Random.vector2(-randomVel * deltaT, randomVel * deltaT)
 //        }
-//        gui.add(settings, "Settings")
-//        extend(gui)
 
-
-        val width = area.width.toInt()
-        val gridSize = 10 //sigma.toInt()
-        val height = area.height.toInt()
-
-        var prevPositions = positions.copyOf()
-        val gridWidth = (width / gridSize)// + 1
-        val gridHeight = (height / gridSize)// + 1
-        val gridCells = Array((gridWidth + 1) * (gridHeight + 1)) {
-            mutableListOf<Vector2>()
+        val positionBuffers = List(2) {
+            vertexBuffer(
+                vertexFormat {
+                    attribute("position", VertexElementType.VECTOR2_FLOAT32)
+                }, gridRows * gridCols
+            ).also {
+                it.put {
+                    repeat(it.vertexCount) {
+                        write(Vector2.ZERO)
+                    }
+                }
+            }
         }
-        val randomVel = 100.0
-        for (i in 0 until count) {
-            prevPositions[i] += Random.vector2(-randomVel * deltaT, randomVel * deltaT)
-        }
+
+        val gridIndexesBuffer = vertexBuffer(vertexFormat {
+            attribute("index", VertexElementType.UINT32)
+        }, count)
+
+        var swapIndex = 0
 
         extend {
+            // Swapping grid information at each step
+            val currPositions = positionBuffers[swapIndex % 2]
+            val prevPositions = positionBuffers[(swapIndex + 1) % 2]
+            swapIndex++
+
+
+            // Fill grid
+            val gridSizesBuffer = vertexBuffer(vertexFormat {
+                attribute("size", VertexElementType.UINT32)
+                attribute("offset", VertexElementType.UINT32)
+            }, gridRows * gridCols).also {
+                it.put {
+                    repeat(it.vertexCount) {
+                        write(0)
+                    }
+                }
+            }
+
+
+            // Execute compute shader to get new positions
+            computeShader.apply {
+                buffer("currParticlesBuffer", currPositions)
+                buffer("prevParticlesBuffer", prevPositions)
+                buffer("gridIndexesBuffer", gridIndexesBuffer)
+            }
+            computeShader.execute(computeWidth, computeHeight)
+
+            val newPositions = prevPositions // compute shader writes to previous
+
+            // Draw
             drawer.clear(ColorRGBa.GRAY)
             drawer.fill = ColorRGBa.WHITE
             drawer.strokeWeight = 0.5
 
-            // Clear grid
-            for (i in gridCells.indices) gridCells[i].clear()
+            // Draw circles from buffer positions
 
-            // Fill grid
-            for (i in 0 until count) {
-                val xGrid = (positions[i].x / gridSize).toInt()
-                val yGrid = (positions[i].y / gridSize).toInt()
-                gridCells[xGrid * gridWidth + yGrid] += positions[i]
-            }
-            val forces = Array(count) {
-                Vector2.ZERO
-            }
-            positions.forEachIndexed { i, position ->
-                val gridX = (position.x / gridSize).toInt()
-                val gridY = (position.y / gridSize).toInt()
-                val gridCellId = gridX * gridWidth + gridY
-//                val nearbyPositions =
-//                val nearbyPositions = positions.toList()
-                val netForce = calculateNetForce(
-                    position,
-                    gridCells[gridCellId],
-                    gridCells.getOrNull(gridCellId - 1),
-                    gridCells.getOrNull(gridCellId + 1),
-                    gridCells.getOrNull(gridCellId - gridWidth),
-                    gridCells.getOrNull(gridCellId + gridWidth)
-                )
-                val newPosition = newPosition(
-                    position = position,
-                    prev = prevPositions[i],
-                    netForce = netForce,
-                    deltaT = deltaT
-                )
-//                drawer.lineSegment(position, position + (netForce * 10.0))
-//                drawer.text("Distance: " + positions[0].distanceTo(positions[1]).toString(), 10.0, 10.0)
-//                drawer.text("Net force: ${netForce.length}", 10.0, 20.0)
-//                positions[i] = newPosition
-                forces[i] = netForce * deltaT.pow(2)
-                prevPositions[i] = newPosition.mod(area.dimensions)
-            }
-
-            val new = prevPositions
-            prevPositions = positions
-            positions = new
-
-            drawer.circles {
-                for (i in 0 until count) {
-                    circle(positions[i], sigma / 2)
-                }
-            }
+            drawer.vertexBuffer(positionBuffers, DrawPrimitive.POINTS)
             // draw forces as lines in one batch
-            if(showForceLines) {
-                val visualForceClamp = 100.0
-                drawer.lineSegments(forces.flatMapIndexed { i, force ->
-                    listOf(
-                        positions[i],
-                        positions[i] + (force * 10.0).clamp(
-                            Vector2(-visualForceClamp, -visualForceClamp),
-                            Vector2(visualForceClamp, visualForceClamp)
-                        )
-                    )
-                })
-            }
+//            if (showForceLines) {
+//                val visualForceClamp = 100.0
+//                drawer.lineSegments(forces.flatMapIndexed { i, force ->
+//                    listOf(
+//                        positions[i],
+//                        positions[i] + (force * 10.0).clamp(
+//                            Vector2(-visualForceClamp, -visualForceClamp),
+//                            Vector2(visualForceClamp, visualForceClamp)
+//                        )
+//                    )
+//                })
+//            }
         }
         extend(FPSDisplay())
     }

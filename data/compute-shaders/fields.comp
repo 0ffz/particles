@@ -1,0 +1,78 @@
+#version 430
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+
+uniform uint gridSize;
+uniform uint gridRows;
+uniform uint gridCols;
+uniform float epsilon;
+uniform float sigma;
+uniform float dT;
+
+struct ParticleProps {
+    vec2 position;
+};
+
+struct GridInfo {
+    uint count;
+    uint start;
+};
+
+layout (binding = 0) buffer currParticlesBuffer {
+    ParticleProps currParticles[];
+};
+
+layout (binding = 1) buffer prevParticlesBuffer {
+    ParticleProps prevParticles[];
+};
+
+layout (binding = 2) buffer gridIndexesBuffer {
+    uint gridIndexes[];
+};
+
+layout (binding = 2) buffer gridInfoBuffer {
+    GridInfo gridInfo[];
+};
+
+
+float lennardJonesForce(float distance) {
+    float inv_r = sigma / distance;
+    float inv_r6 = inv_r * inv_r * inv_r * inv_r * inv_r * inv_r;
+    float inv_r12 = inv_r6 * inv_r6;
+    return 24.0 * epsilon * (2.0 * inv_r12 - inv_r6) / distance;
+}
+
+void main() {
+    // Get the index of the particle we're currently working on from current work group invocation
+    const uint id = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y * gl_NumWorkGroups.x * gl_WorkGroupSize.x;
+    vec2 position = currParticles[id].position;
+
+    // Get its grid index
+    int xGrid = int(position.x / gridsize);
+    int yGrid = int(position.y / gridsize);
+    uint gridId = xGrid + yGrid * gridSize;
+
+    vec2 netForce = vec2(0.0, 0.0);
+    if (xGrid != 0 && yGrid != 0 && xGrid != (gridSize - 1) && yGrid != (gridSize - 1)) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                uint localGridId = gridId + x + (y * gridSize);
+                GridInfo localCell = gridInfo[localGridId];
+                for (int i = 0; i < localCell.count; i++) {
+                    vec2 otherPos = currParticles[localCell.start + i].position;
+                    vec2 diff = otherPos - position;
+                    float distance = length(diff);
+                    if (distance > 2.5 * sigma) continue;
+                    netforce += normalize(diff) * lennardJonesForce(distance);
+                }
+            }
+        }
+    }
+    // Update particle position (Verlet integration)
+    vec2 prevPosition = prevParticles[id].position;
+    vec2 nextPosition = 2.0 * position - prevPosition + netForce * dT * dT;
+    prevParticles[id].position = nextPosition;
+    gridIndexes[id] = gridId;
+    // CPU does sorting for this
+//    gridInfo[gridId].count++;
+//    gridInfo[gridId].start++;
+}

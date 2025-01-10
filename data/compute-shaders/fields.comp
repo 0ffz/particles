@@ -33,6 +33,10 @@ layout (binding = 4) buffer prevParticlesBuffer {
     ParticleProps prevParticles[];
 };
 
+layout (binding = 5) buffer colorBuffer {
+    vec4 colors[];
+};
+
 
 float lennardJonesForce(float distance) {
     float inv_r = sigma / distance;
@@ -82,15 +86,17 @@ void main() {
     if (position.y < repelDist) netForce += vec2(0, repelForce);
     else if (position.y > gridHeight - repelDist) netForce += vec2(0, -repelForce);
 
+    // Update position, cap velocity
     const float maxVelocity = .5;
     vec2 prevPosition = prevParticles[id].position;
     vec2 velocity = position - prevPosition;
     velocity = length(velocity) > maxVelocity ? normalize(velocity) * maxVelocity : velocity;
     vec2 nextPosition = position + velocity + (netForce * dT * dT);
 
+    // Write back to buffers
     prevParticles[id].position.x = min(max(nextPosition.x, 0), gridCols * gridSize);
     prevParticles[id].position.y = min(max(nextPosition.y, 0), gridRows * gridSize);
 
-    // if position is out of bounds, wrap around
-
+    // Update color based on netForce
+    colors[id] = vec4(log(length(netForce)) / 40.0, 0, 0, 1);
 }

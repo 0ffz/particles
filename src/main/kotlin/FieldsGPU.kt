@@ -1,6 +1,7 @@
 import extensions.FPSDisplay
 import helpers.Buffers
 import helpers.Drawing.offsetGeometry
+import org.openrndr.Fullscreen
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
@@ -12,22 +13,22 @@ import kotlin.math.sqrt
 
 fun main() = application {
     val gridSize = (2.5 * sigma).toInt()
-    val targetCount = 50_000
     val computeWidth = sqrt(targetCount / 32.0).toInt()
     val computeHeight = computeWidth
     val count = computeWidth * computeHeight * 32
 
     configure {
-        width = 1000
-        height = 1000
+//        width = 1000
+//        height = 1000
+        fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
         windowResizable = true
     }
 
     program {
-        val gridRows = width / gridSize
-        val gridCols = height / gridSize
-
-        val area = drawer.bounds.offsetEdges(-10.0)
+        println(width)
+        val area = drawer.bounds//.offsetEdges(-10.0)
+        val gridCols = width / gridSize
+        val gridRows = height / gridSize
 
         // Initialize buffers
         val positionBuffers = List(2) { listId ->
@@ -47,7 +48,7 @@ fun main() = application {
 //        val sortedParticleIndices = Buffers.uInt(count)
         val cellOffsets = Buffers.uInt(count)
         val colorBuffer = Buffers.colorBuffer(ColorRGBa.BLACK, count)
-        val geometry = Buffers.squareGeometry()
+        val geometry = Buffers.circleFanGeometry()
 
         // Initialize compute shaders
         val updateIndices = UpdateIndices(
@@ -108,6 +109,7 @@ fun main() = application {
             // Draw
             drawer.clear(ColorRGBa.GRAY)
             drawer.fill = ColorRGBa.WHITE
+
             // Draw particles from new positions buffer
             drawer.offsetGeometry(
                 geometry = geometry,

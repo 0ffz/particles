@@ -8,16 +8,21 @@ import org.openrndr.draw.vertexFormat
 import org.openrndr.math.Vector3
 
 object Buffers {
-    fun squareGeometry(): VertexBuffer {
+    fun circleFanGeometry(): VertexBuffer {
+        val numSegments = 10
         val geometry = vertexBuffer(vertexFormat {
             position(3)
-        }, 4)
+        }, numSegments + 2)
 
         geometry.put {
-            write(Vector3(-1.0, -1.0, 0.0))
-            write(Vector3(-1.0, 1.0, 0.0))
-            write(Vector3(1.0, -1.0, 0.0))
-            write(Vector3(1.0, 1.0, 0.0))
+            write(Vector3(0.0, 0.0, 0.0))
+            val angleStep = (2 * Math.PI) / numSegments
+            for (i in 0 ..numSegments) {
+                val angle = i * angleStep
+                val x = Math.cos(angle)
+                val y = Math.sin(angle)
+                write(Vector3(x, y, 0.0))
+            }
         }
         return geometry
     }

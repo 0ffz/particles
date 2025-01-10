@@ -40,7 +40,7 @@ object Drawing {
         vertexBufferInstances(
             listOf(geometry),
             listOf(newPositions, colorBuffer),
-            DrawPrimitive.TRIANGLE_STRIP,
+            DrawPrimitive.TRIANGLE_FAN,
             count
         )
     }

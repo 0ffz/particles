@@ -1,11 +1,9 @@
 import extensions.FPSDisplay
-import kotlinx.coroutines.Dispatchers
 import math.calculateNetForce
 import math.newPosition
 import org.openrndr.application
 import org.openrndr.color.ColorRGBa
 import org.openrndr.extra.noise.Random
-import org.openrndr.launch
 import org.openrndr.math.Vector2
 import org.openrndr.math.clamp
 import org.openrndr.math.mod
@@ -19,7 +17,7 @@ fun main() = application {
     }
     program {
         val area = drawer.bounds.offsetEdges(0.0)
-        var positions = Array(count) {
+        var positions = Array(targetCount) {
             Random.point(area)
         }
 
@@ -34,7 +32,7 @@ fun main() = application {
             mutableListOf<Vector2>()
         }
         val randomVel = 100.0
-        for (i in 0 until count) {
+        for (i in 0 until targetCount) {
             prevPositions[i] += Random.vector2(-randomVel * deltaT, randomVel * deltaT)
         }
 
@@ -47,12 +45,12 @@ fun main() = application {
             for (i in gridCells.indices) gridCells[i].clear()
 
             // Fill grid
-            for (i in 0 until count) {
+            for (i in 0 until targetCount) {
                 val xGrid = (positions[i].x / gridSize).toInt()
                 val yGrid = (positions[i].y / gridSize).toInt()
                 gridCells[xGrid * gridWidth + yGrid] += positions[i]
             }
-            val forces = Array(count) {
+            val forces = Array(targetCount) {
                 Vector2.ZERO
             }
             positions.forEachIndexed { i, position ->
@@ -92,7 +90,7 @@ fun main() = application {
             positions = new
 
             drawer.circles {
-                for (i in 0 until count) {
+                for (i in 0 until targetCount) {
                     circle(positions[i], sigma / 2)
                 }
             }

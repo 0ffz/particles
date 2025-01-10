@@ -14,7 +14,7 @@ class FieldsSimulation(
     val count: Int,
     val computeWidth: Int,
     val computeHeight: Int,
-    val sortedParticleIndices: VertexBuffer,
+//    val sortedParticleIndices: VertexBuffer,
     val particle2CellKey: VertexBuffer,
     val cellOffsets: VertexBuffer,
     val colorBuffer: VertexBuffer,
@@ -27,7 +27,7 @@ class FieldsSimulation(
         uniform("sigma", sigma)
         uniform("dT", deltaT)
         uniform("count", count)
-        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
+//        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
         buffer("particle2CellKeyBuffer", particle2CellKey)
         buffer("cellStartIndicesBuffer", cellOffsets)
         buffer("colorBuffer", colorBuffer)
@@ -38,7 +38,7 @@ class FieldsSimulation(
         currPositions: VertexBuffer,
         prevPositions: VertexBuffer,
     ) = fieldsShader.apply {
-        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
+//        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
         buffer("cellStartIndicesBuffer", cellOffsets)
         buffer("currParticlesBuffer", currPositions)
         buffer("prevParticlesBuffer", prevPositions)

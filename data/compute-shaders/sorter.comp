@@ -6,12 +6,20 @@ uniform int groupWidth;
 uniform int groupHeight;
 uniform int stepIndex;
 
+struct ParticleProps {
+    vec2 position;
+};
+
 layout (binding = 0) buffer keysBuffer {
     uint keys[];
 };
 
 layout (binding = 1) buffer valuesBuffer {
-    uint values[];
+    ParticleProps values[];
+};
+
+layout (binding = 2) buffer prevValuesBuffer {
+    ParticleProps prevValues[];
 };
 
 void main() {
@@ -24,13 +32,17 @@ void main() {
 
     uint keyLow = keys[indexLow];
     uint keyHigh = keys[indexHigh];
-    uint valueLow = values[indexLow];
-    uint valueHigh = values[indexHigh];
+    ParticleProps valueLow = values[indexLow];
+    ParticleProps valueHigh = values[indexHigh];
+    ParticleProps prevValueLow = prevValues[indexLow];
+    ParticleProps prevValueHigh = prevValues[indexHigh];
 
     if (keyLow > keyHigh) {
         keys[indexLow] = keyHigh;
         keys[indexHigh] = keyLow;
         values[indexLow] = valueHigh;
         values[indexHigh] = valueLow;
+        prevValues[indexLow] = prevValueHigh;
+        prevValues[indexHigh] = prevValueLow;
     }
 }

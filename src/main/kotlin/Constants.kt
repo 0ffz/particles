@@ -1,4 +1,4 @@
-val count = 100000
+val count = 50000
 const val sigma = 8.0
 const val epsilon = 5.0
 //const val maxForce = 100000.0

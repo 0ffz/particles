@@ -6,25 +6,31 @@ import java.io.File
 
 class GPUSort(
     val numValues: Int,
-    val indices: VertexBuffer,
+//    val indices: VertexBuffer,
+    val sortByKey: VertexBuffer,
     val offsets: VertexBuffer,
 ) {
     val sorterShader = ComputeShader.fromCode(File("data/compute-shaders/sorter.comp").readText(), "sorter").apply {
         uniform("numValues", numValues)
+//        buffer("keysBuffer", sortByKey)
 //        buffer("valuesBuffer", indices)
     }
 
     val offsetsShader = ComputeShader.fromCode(File("data/compute-shaders/offsets.comp").readText(), "offsets").apply {
         uniform("numValues", numValues)
+//        buffer("keysBuffer", sortByKey)
 //        buffer("offsetsBuffer", offsets)
     }
 
     fun sort(
-        keys: VertexBuffer,
+//        sortByKey: VertexBuffer,
+        values: VertexBuffer,
+        prevValues: VertexBuffer,
     ) {
         sorterShader.run {
-            buffer("keysBuffer", keys)
-            buffer("valuesBuffer", indices)
+            buffer("keysBuffer", sortByKey)
+            buffer("valuesBuffer", values)
+            buffer("prevValuesBuffer", prevValues)
         }
 
         val numPairs = Integer.highestOneBit(numValues) * 2
@@ -46,9 +52,9 @@ class GPUSort(
     }
 
     fun calculateOffsets(
-        keys: VertexBuffer,
+//        keys: VertexBuffer,
     ) = offsetsShader.run {
-        buffer("keysBuffer", keys)
+        buffer("keysBuffer", sortByKey)
         buffer("offsetsBuffer", offsets)
         execute(numValues)
     }

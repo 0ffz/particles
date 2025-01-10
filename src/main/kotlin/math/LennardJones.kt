@@ -1,4 +1,8 @@
+package math
+
+import epsilon
 import org.openrndr.math.Vector2
+import sigma
 import kotlin.math.pow
 
 inline fun lennardJonesPotential(r: Double): Double {

@@ -9,13 +9,13 @@ class UpdateIndices(
     gridSize: Int,
     gridCols: Int,
     keys: VertexBuffer,
-    indices: VertexBuffer,
+//    indices: VertexBuffer,
 ) {
     val computeShader = ComputeShader.fromCode(File("data/compute-shaders/updateIndices.comp").readText(), "updateIndices").apply {
         uniform("gridSize", gridSize)
         uniform("gridCols", gridCols)
         buffer("keysBuffer", keys)
-        buffer("indicesBuffer", indices)
+//        buffer("indicesBuffer", indices)
     }
 
     fun run(positions: VertexBuffer) {

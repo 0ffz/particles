@@ -12,7 +12,7 @@ import kotlin.math.sqrt
 
 fun main() = application {
     val gridSize = (2.5 * sigma).toInt()
-    val targetCount = 100_000
+    val targetCount = 50_000
     val computeWidth = sqrt(targetCount / 32.0).toInt()
     val computeHeight = computeWidth
     val count = computeWidth * computeHeight * 32
@@ -44,7 +44,7 @@ fun main() = application {
             }
         }
         val particle2CellKey = Buffers.uInt(count)
-        val sortedParticleIndices = Buffers.uInt(count)
+//        val sortedParticleIndices = Buffers.uInt(count)
         val cellOffsets = Buffers.uInt(count)
         val colorBuffer = Buffers.colorBuffer(ColorRGBa.BLACK, count)
         val geometry = Buffers.squareGeometry()
@@ -55,7 +55,7 @@ fun main() = application {
             gridSize = gridSize,
             gridCols = gridCols,
             keys = particle2CellKey,
-            indices = sortedParticleIndices,
+//            indices = sortedParticleIndices,
         )
 
         val fieldsSimulation = FieldsSimulation(
@@ -68,7 +68,7 @@ fun main() = application {
             count = count,
             computeWidth = computeWidth,
             computeHeight = computeHeight,
-            sortedParticleIndices = sortedParticleIndices,
+//            sortedParticleIndices = sortedParticleIndices,
             particle2CellKey = particle2CellKey,
             cellOffsets = cellOffsets,
             colorBuffer = colorBuffer,
@@ -76,7 +76,8 @@ fun main() = application {
 
         val gpuSort = GPUSort(
             numValues = count,
-            indices = sortedParticleIndices,
+//            indices = sortedParticleIndices,
+            sortByKey = particle2CellKey,
             offsets = cellOffsets,
         )
 
@@ -91,8 +92,8 @@ fun main() = application {
 
             // Write and sort grid buffers
             updateIndices.run(currPositions)
-            gpuSort.sort(particle2CellKey)
-            gpuSort.calculateOffsets(particle2CellKey)
+            gpuSort.sort(currPositions, prevPositions)
+            gpuSort.calculateOffsets()
 
             // Execute compute shader to get new positions
             fieldsSimulation.run(
@@ -107,7 +108,6 @@ fun main() = application {
             // Draw
             drawer.clear(ColorRGBa.GRAY)
             drawer.fill = ColorRGBa.WHITE
-
             // Draw particles from new positions buffer
             drawer.offsetGeometry(
                 geometry = geometry,

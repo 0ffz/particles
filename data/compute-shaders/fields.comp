@@ -17,9 +17,9 @@ layout (binding = 0) buffer particle2CellKeyBuffer {
     uint particle2CellKey[];
 };
 
-layout (binding = 1) buffer sortedParticleIndicesBuffer {
-    uint sortedParticleIndices[];
-};
+//layout (binding = 1) buffer sortedParticleIndicesBuffer {
+//    uint sortedParticleIndices[];
+//};
 
 layout (binding = 2) buffer cellStartIndicesBuffer {
     uint cellStartIndices[];
@@ -38,7 +38,7 @@ layout (binding = 5) buffer colorBuffer {
 };
 
 
-float lennardJonesForce(float distance) {
+lowp float lennardJonesForce(lowp float distance) {
     float inv_r = sigma / distance;
     float inv_r6 = inv_r * inv_r * inv_r * inv_r * inv_r * inv_r;
     float inv_r12 = inv_r6 * inv_r6;
@@ -66,7 +66,7 @@ void main() {
                 //TODO swap to a for loop and store a counts buffer for less memory accesses
                 for (uint i = startIndex; i < count; i++) {
                     if (particle2CellKey[i] != localCellId) break;
-                    vec2 otherPos = currParticles[sortedParticleIndices[i]].position;
+                    vec2 otherPos = currParticles[i].position;
                     if (otherPos == position) continue;
                     vec2 direction = position - otherPos;
                     float distance = length(direction);
@@ -80,7 +80,7 @@ void main() {
     int gridWidth = gridCols * gridSize;
     int gridHeight = gridRows * gridSize;
     float repelDist = sigma;
-    float repelForce = 2000.0;
+    float repelForce = 5000.0;
     if (position.x < repelDist) netForce += vec2(repelForce, 0);
     else if (position.x > gridWidth - repelDist) netForce += vec2(-repelForce, 0);
     if (position.y < repelDist) netForce += vec2(0, repelForce);

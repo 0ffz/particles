@@ -20,7 +20,7 @@ inline fun calculateNetForce(particle: Vector2, vararg nearbyCells: Collection<V
             val direction = particle - other
             val distance = direction.length
             if (distance > 2.5 * sigma) continue
-            val forceMagnitude = lennardJonesForce(distance).coerceAtMost(maxForce)
+            val forceMagnitude = lennardJonesForce(distance)//.coerceAtMost(maxForce)
             netForce += direction.normalized * forceMagnitude
         }
     }

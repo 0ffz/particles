@@ -1,11 +1,15 @@
 import extensions.FPSDisplay
 import helpers.Buffers
 import helpers.Drawing.offsetGeometry
-import org.openrndr.Fullscreen
-import org.openrndr.application
+import kotlinx.coroutines.channels.Channel
+import org.openrndr.*
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.*
+import org.openrndr.draw.drawThread
+import org.openrndr.draw.launch
+import org.openrndr.draw.vertexBuffer
+import org.openrndr.draw.vertexFormat
 import org.openrndr.extra.noise.Random
+import org.openrndr.internal.finish
 import shaders.FieldsSimulation
 import shaders.GPUSort
 import shaders.UpdateIndices
@@ -21,7 +25,8 @@ fun main() = application {
 //        width = 1000
 //        height = 1000
         fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
-        windowResizable = true
+//        windowResizable = true
+        vsync = false
     }
 
     program {
@@ -84,33 +89,49 @@ fun main() = application {
 
         var swapIndex = 0
 
-        // Run every frame
+        window.presentationMode = PresentationMode.MANUAL
+
+        var paused = false
+        val manualFrames = Channel<Unit>()
+        val drawRateBias = 500 // Higher number means preferring drawing to simulation performance
+
+        keyboard.keyDown.listen {
+            when (it.key) {
+                KEY_SPACEBAR -> {
+                    paused = !paused
+                    manualFrames.trySend(Unit)
+                }
+
+                KEY_ARROW_RIGHT -> {
+                    if (paused) {
+//                        lastRendered = System.currentTimeMillis()
+                        manualFrames.trySend(Unit)
+                    }
+                }
+            }
+        }
+        keyboard.keyRepeat.listen {
+            when (it.key) {
+                KEY_ARROW_RIGHT -> {
+                    if (paused) {
+                        manualFrames.trySend(Unit)
+                    }
+                }
+            }
+        }
+        var step = 0
+        // Run on draw request
         extend {
-            // Swapping grid information at each step
-            val currPositions = positionBuffers[swapIndex % 2]
-            val prevPositions = positionBuffers[(swapIndex + 1) % 2]
-            swapIndex++
-
-            // Write and sort grid buffers
-            updateIndices.run(currPositions)
-            gpuSort.sort(currPositions, prevPositions)
-            gpuSort.calculateOffsets()
-
-            // Execute compute shader to get new positions
-            fieldsSimulation.run(
-                cellOffsets = cellOffsets,
-                currPositions = currPositions,
-                prevPositions = prevPositions,
-            )
-
             // compute shader writes to previous buffer
-            val newPositions = prevPositions
+            val newPositions = positionBuffers[(swapIndex + 1) % 2]
 
             // Draw
+//            val drawer = drawThread.drawer
             drawer.clear(ColorRGBa.GRAY)
             drawer.fill = ColorRGBa.WHITE
 
             // Draw particles from new positions buffer
+
             drawer.offsetGeometry(
                 geometry = geometry,
                 newPositions = newPositions,
@@ -119,6 +140,37 @@ fun main() = application {
                 size = sigma,
             )
         }
-        extend(FPSDisplay())
+
+        extend(FPSDisplay({ step }))
+        var lastRendered = System.nanoTime()
+        val drawThread = drawThread()
+        drawThread.launch {
+            while(true) {
+                if(paused) manualFrames.receive()
+                // Swapping grid information at each step
+                val currPositions = positionBuffers[swapIndex % 2]
+                val prevPositions = positionBuffers[(swapIndex + 1) % 2]
+                swapIndex++
+                step++
+
+                // Write and sort grid buffers
+                updateIndices.run(currPositions)
+                gpuSort.sort(currPositions, prevPositions)
+                gpuSort.calculateOffsets()
+
+                // Execute compute shader to get new positions
+                fieldsSimulation.run(
+                    cellOffsets = cellOffsets,
+                    currPositions = currPositions,
+                    prevPositions = prevPositions,
+                )
+                val currTime = System.nanoTime()
+                if(currTime - lastRendered > 1e9 / drawRateBias) {
+                    lastRendered = System.nanoTime()
+                    window.requestDraw()
+                    finish()
+                }
+            }
+        }
     }
 }

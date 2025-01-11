@@ -7,14 +7,16 @@ import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
 import org.openrndr.math.Matrix44
 
-class FPSDisplay : Extension {
+class FPSDisplay(
+    val getCurrentStep: () -> Int,
+) : Extension {
     override var enabled: Boolean = true
     
     var frames = 0
-    var startTime: Double = 0.0
+    var startTime: Long = 0L
     
     override fun setup(program: Program) {
-        startTime = program.seconds
+        startTime = System.nanoTime()
     }
     
     override fun afterDraw(drawer: Drawer, program: Program) {
@@ -25,10 +27,10 @@ class FPSDisplay : Extension {
             drawer.view = Matrix44.IDENTITY
             drawer.ortho()
 
-            drawer.fill = ColorRGBa.BLACK
-            drawer.text("fps: ${(frames / (program.seconds - startTime)).toInt()}", y = 22.0)
             drawer.fill = ColorRGBa.PINK
-            drawer.text("fps: ${(frames / (program.seconds - startTime)).toInt()}", y = 20.0, x = 2.0)
+            val now = System.nanoTime()
+            drawer.text("fps: ${(frames / ((now - startTime) / 1e9)).toInt()}", y = 20.0, x = 2.0)
+            drawer.text("simulation rate: ${(getCurrentStep() / ((now - startTime) / 1e9)).toInt()}", y = 40.0, x = 2.0)
         }
     }
 }

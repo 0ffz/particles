@@ -30,7 +30,6 @@ class FieldsSimulation(
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
         buffer("particle2CellKeyBuffer", particle2CellKey)
         buffer("cellStartIndicesBuffer", cellOffsets)
-        buffer("colorBuffer", colorBuffer)
     }
 
     fun run(
@@ -42,6 +41,7 @@ class FieldsSimulation(
         buffer("cellStartIndicesBuffer", cellOffsets)
         buffer("currParticlesBuffer", currPositions)
         buffer("prevParticlesBuffer", prevPositions)
+        buffer("colorBuffer", colorBuffer)
         fieldsShader.execute(computeWidth, computeHeight)
     }
 }

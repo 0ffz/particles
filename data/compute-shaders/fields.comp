@@ -38,7 +38,7 @@ layout (binding = 5) buffer colorBuffer {
 };
 
 
-const float maxForce = 100000;
+const float maxForce = 5;
 
 float lennardJonesForce(float distance) {
     float inv_r = sigma / distance;
@@ -105,5 +105,5 @@ void main() {
     prevParticles[id].position.y = mod(nextPosition.y, gridRows * gridSize);
 
     // Update color based on netForce
-    colors[id] = vec4(log(length(netForce)) / 35.0, 0, 0, 1);
+    colors[id] = vec4(log(length(netForce)) / maxForce, 0, 0, 1);
 }

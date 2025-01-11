@@ -108,6 +108,5 @@ fun main() = application {
                 })
             }
         }
-        extend(FPSDisplay())
     }
 }

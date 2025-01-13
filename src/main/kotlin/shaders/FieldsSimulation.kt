@@ -1,5 +1,6 @@
 package shaders
 
+import SimulationSettings
 import org.openrndr.draw.ComputeShader
 import org.openrndr.draw.VertexBuffer
 import java.io.File
@@ -8,8 +9,7 @@ class FieldsSimulation(
     val gridSize: Int,
     val gridRows: Int,
     val gridCols: Int,
-    val epsilon: Double,
-    val sigma: Double,
+    val settings: SimulationSettings,
     val deltaT: Double,
     val count: Int,
     val computeWidth: Int,
@@ -23,8 +23,6 @@ class FieldsSimulation(
         uniform("gridSize", gridSize)
         uniform("gridRows", gridRows)
         uniform("gridCols", gridCols)
-        uniform("epsilon", epsilon)
-        uniform("sigma", sigma)
         uniform("dT", deltaT)
         uniform("count", count)
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
@@ -37,6 +35,8 @@ class FieldsSimulation(
         currPositions: VertexBuffer,
         prevPositions: VertexBuffer,
     ) = fieldsShader.apply {
+        uniform("epsilon", settings.epsilon)
+        uniform("sigma", SimulationConstants.sigma)
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
         buffer("cellStartIndicesBuffer", cellOffsets)
         buffer("currParticlesBuffer", currPositions)

@@ -1,36 +1,64 @@
 import extensions.FPSDisplay
 import helpers.Buffers
 import helpers.Drawing.offsetGeometry
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.time.delay
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.drawThread
-import org.openrndr.draw.launch
-import org.openrndr.draw.vertexBuffer
-import org.openrndr.draw.vertexFormat
+import org.openrndr.draw.*
+import org.openrndr.extra.gui.GUI
+import org.openrndr.extra.gui.addTo
 import org.openrndr.extra.noise.Random
 import org.openrndr.internal.finish
+import org.openrndr.panel.controlManager
+import org.openrndr.panel.style.*
 import shaders.FieldsSimulation
 import shaders.GPUSort
 import shaders.UpdateIndices
 import kotlin.math.sqrt
+import kotlin.time.Duration.Companion.nanoseconds
 
 fun main() = application {
-    val gridSize = (2.5 * sigma).toInt()
-    val computeWidth = sqrt(targetCount / 32.0).toInt()
-    val computeHeight = computeWidth
-    val count = computeWidth * computeHeight * 32
-
     configure {
-//        width = 1000
-//        height = 1000
-        fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
+        width = 1000
+        height = 600
+//        fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
 //        windowResizable = true
         vsync = false
     }
 
     program {
-        println(width)
+//        val font = loadFont("data/fonts/Jetbrains Mono.otf", 16.0)
+//        drawer.fontMap = font
+//        drawer.fontMap.addTo() = font
+        // Create simulation settings and attach to the gui
+        val settings = SimulationSettings()
+        controlManager {
+            this.controlManager.fontManager
+        }
+        val test = styleSheet {
+//            background = Color.RGBa(ColorRGBa.PINK)
+//            color = Color.RGBa(ColorRGBa.BLACK)
+//            this.fontFamily = "data/fonts/Jetbrains_Mono.otf"
+        }
+        val gui = GUI(
+            defaultStyles = defaultStyles(
+                controlFontSize = 17.0,
+            ) + test
+        ).apply {
+            compartmentsCollapsedByDefault = false
+
+            add(SimulationConstants)
+            add(settings)
+        }
+        extend(gui) // Load saved values right away
+        val gridSize = (2.5 * SimulationConstants.sigma).toInt()
+        val computeWidth = sqrt(targetCount / 32.0).toInt()
+        val computeHeight = computeWidth
+        val count = computeWidth * computeHeight * 32
+
         val area = drawer.bounds//.offsetEdges(-10.0)
         val gridCols = width / gridSize
         val gridRows = height / gridSize
@@ -68,8 +96,7 @@ fun main() = application {
             gridSize = gridSize,
             gridRows = gridRows,
             gridCols = gridCols,
-            epsilon = epsilon,
-            sigma = sigma,
+            settings = settings,
             deltaT = deltaT,
             count = count,
             computeWidth = computeWidth,
@@ -120,6 +147,7 @@ fun main() = application {
             }
         }
         var step = 0
+        extend(FPSDisplay { step })
         // Run on draw request
         extend {
             // compute shader writes to previous buffer
@@ -137,16 +165,20 @@ fun main() = application {
                 newPositions = newPositions,
                 colorBuffer = colorBuffer,
                 count = count,
-                size = sigma,
+                size = SimulationConstants.sigma,
             )
         }
 
-        extend(FPSDisplay({ step }))
         var lastRendered = System.nanoTime()
+        var lastSimulation = lastRendered
         val drawThread = drawThread()
+        val targetSimulationSpeed = 60.0
+        var restarting = false
         drawThread.launch {
-            while(true) {
-                if(paused) manualFrames.receive()
+            while (true) {
+                if(restarting) break
+                // match target sim speed
+                if (paused) manualFrames.receive()
                 // Swapping grid information at each step
                 val currPositions = positionBuffers[swapIndex % 2]
                 val prevPositions = positionBuffers[(swapIndex + 1) % 2]
@@ -165,12 +197,24 @@ fun main() = application {
                     prevPositions = prevPositions,
                 )
                 val currTime = System.nanoTime()
-                if(currTime - lastRendered > 1e9 / drawRateBias) {
+                if (currTime - lastRendered > 1e9 / drawRateBias) {
                     lastRendered = System.nanoTime()
                     window.requestDraw()
                     finish()
                 }
+
+                val curr = System.nanoTime()
+                val timeBetweenSimulations = 1e9 / targetSimulationSpeed
+                if (curr - lastSimulation < 1e9 / targetSimulationSpeed) {
+                    delay(timeBetweenSimulations.nanoseconds)
+                } else {
+                    lastSimulation = System.nanoTime()
+                }
             }
+        }
+        SimulationConstants.restartEvent.listen {
+            println("Restarting simulation...")
+            restarting = true
         }
     }
 }

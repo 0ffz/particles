@@ -1,20 +1,18 @@
 package shaders
 
+import SimulationConstants
 import SimulationSettings
 import org.openrndr.draw.ComputeShader
 import org.openrndr.draw.VertexBuffer
 import java.io.File
 
 class FieldsSimulation(
-    val gridSize: Int,
+    val gridSize: Double,
     val gridRows: Int,
     val gridCols: Int,
     val settings: SimulationSettings,
-    val deltaT: Double,
     val count: Int,
     val computeWidth: Int,
-    val computeHeight: Int,
-//    val sortedParticleIndices: VertexBuffer,
     val particle2CellKey: VertexBuffer,
     val cellOffsets: VertexBuffer,
     val colorBuffer: VertexBuffer,
@@ -23,11 +21,9 @@ class FieldsSimulation(
         uniform("gridSize", gridSize)
         uniform("gridRows", gridRows)
         uniform("gridCols", gridCols)
-        uniform("dT", deltaT)
         uniform("count", count)
+        uniform("sigma", SimulationConstants.sigma)
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
-        buffer("particle2CellKeyBuffer", particle2CellKey)
-        buffer("cellStartIndicesBuffer", cellOffsets)
     }
 
     fun run(
@@ -36,12 +32,15 @@ class FieldsSimulation(
         prevPositions: VertexBuffer,
     ) = fieldsShader.apply {
         uniform("epsilon", settings.epsilon)
-        uniform("sigma", SimulationConstants.sigma)
+        uniform("dT", SimulationSettings.deltaT)
+        uniform("maxForce", SimulationSettings.maxForce)
+        uniform("maxVelocity", SimulationSettings.maxVelocity)
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
-        buffer("cellStartIndicesBuffer", cellOffsets)
+        buffer("cellOffsetsBuffer", cellOffsets)
+        buffer("particle2CellKeyBuffer", particle2CellKey)
         buffer("currParticlesBuffer", currPositions)
         buffer("prevParticlesBuffer", prevPositions)
         buffer("colorBuffer", colorBuffer)
-        fieldsShader.execute(computeWidth, computeHeight)
+        fieldsShader.execute(computeWidth)
     }
 }

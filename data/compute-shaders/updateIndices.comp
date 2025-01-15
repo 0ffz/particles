@@ -3,17 +3,14 @@ layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 struct ParticleProps {
     vec2 position;
+    vec2 velocity;
 };
 
-uniform int gridSize;
+uniform float gridSize;
 uniform int gridCols;
 
-struct Indices {
-    uint index;
-};
-
 layout (binding = 0) buffer keysBuffer {
-    Indices keys[];
+    uint keys[];
 };
 
 //layout (binding = 1) buffer indicesBuffer {
@@ -21,12 +18,13 @@ layout (binding = 0) buffer keysBuffer {
 //};
 
 layout (binding = 1) buffer positionsBuffer {
-    ParticleProps positions[];
+    ParticleProps particles[];
 };
 
 void main() {
     uint id = gl_GlobalInvocationID.x;
-    vec2 position = positions[id].position;
+//    if(id > numValues)
+    vec2 position = particles[id].position;
 
     // Get its grid index
     int xGrid = int(position.x / gridSize);
@@ -34,5 +32,5 @@ void main() {
     uint cellId = xGrid + yGrid * gridCols;
 
 //    indices[id].index = id;
-    keys[id].index = cellId;
+    keys[id] = cellId;
 }

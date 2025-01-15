@@ -6,22 +6,23 @@ import java.io.File
 
 class UpdateIndices(
     val numValues: Int,
-    gridSize: Int,
+    gridSize: Double,
     gridCols: Int,
-    keys: VertexBuffer,
+    val keys: VertexBuffer,
 //    indices: VertexBuffer,
 ) {
     val computeShader = ComputeShader.fromCode(File("data/compute-shaders/updateIndices.comp").readText(), "updateIndices").apply {
         uniform("gridSize", gridSize)
         uniform("gridCols", gridCols)
-        buffer("keysBuffer", keys)
+//        buffer("keysBuffer", keys)
 //        buffer("indicesBuffer", indices)
     }
 
     fun run(positions: VertexBuffer) {
         computeShader.apply {
             buffer("positionsBuffer", positions)
+            buffer("keysBuffer", keys)
         }
-        computeShader.execute(numValues)
+        computeShader.execute(numValues / 32)
     }
 }

@@ -8,6 +8,7 @@ uniform int stepIndex;
 
 struct ParticleProps {
     vec2 position;
+    vec2 velocity;
 };
 
 layout (binding = 0) buffer keysBuffer {

@@ -56,6 +56,6 @@ class GPUSort(
     ) = offsetsShader.run {
         buffer("keysBuffer", sortByKey)
         buffer("offsetsBuffer", offsets)
-        execute(numValues)
+        execute(numValues / 32)
     }
 }

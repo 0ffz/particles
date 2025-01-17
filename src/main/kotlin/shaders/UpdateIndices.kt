@@ -1,8 +1,10 @@
 package shaders
 
+import helpers.Helpers
 import org.openrndr.draw.ComputeShader
 import org.openrndr.draw.VertexBuffer
 import java.io.File
+import kotlin.io.path.Path
 
 class UpdateIndices(
     val numValues: Int,
@@ -11,7 +13,7 @@ class UpdateIndices(
     val keys: VertexBuffer,
 //    indices: VertexBuffer,
 ) {
-    val computeShader = ComputeShader.fromCode(File("data/compute-shaders/updateIndices.comp").readText(), "updateIndices").apply {
+    val computeShader = Helpers.computeShader(Path("data/compute-shaders/updateIndices.comp"), "updateIndices").apply {
         uniform("gridSize", gridSize)
         uniform("gridCols", gridCols)
 //        buffer("keysBuffer", keys)

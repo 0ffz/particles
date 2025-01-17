@@ -1,22 +1,25 @@
 package shaders
 
+import helpers.Helpers
 import org.openrndr.draw.ComputeShader
 import org.openrndr.draw.VertexBuffer
 import java.io.File
+import kotlin.io.path.Path
 
 class GPUSort(
     val numValues: Int,
 //    val indices: VertexBuffer,
     val sortByKey: VertexBuffer,
     val offsets: VertexBuffer,
+    val types: VertexBuffer,
 ) {
-    val sorterShader = ComputeShader.fromCode(File("data/compute-shaders/sorter.comp").readText(), "sorter").apply {
+    val sorterShader = Helpers.computeShader(Path("data/compute-shaders/sorter.comp"), "sorter").apply {
         uniform("numValues", numValues)
 //        buffer("keysBuffer", sortByKey)
 //        buffer("valuesBuffer", indices)
     }
 
-    val offsetsShader = ComputeShader.fromCode(File("data/compute-shaders/offsets.comp").readText(), "offsets").apply {
+    val offsetsShader = Helpers.computeShader(Path("data/compute-shaders/offsets.comp"), "offsets").apply {
         uniform("numValues", numValues)
 //        buffer("keysBuffer", sortByKey)
 //        buffer("offsetsBuffer", offsets)
@@ -31,6 +34,7 @@ class GPUSort(
             buffer("keysBuffer", sortByKey)
             buffer("valuesBuffer", values)
             buffer("prevValuesBuffer", prevValues)
+            buffer("typesBuffer", types)
         }
 
         val numPairs = Integer.highestOneBit(numValues) * 2
@@ -51,9 +55,7 @@ class GPUSort(
         }
     }
 
-    fun calculateOffsets(
-//        keys: VertexBuffer,
-    ) = offsetsShader.run {
+    fun calculateOffsets() = offsetsShader.run {
         buffer("keysBuffer", sortByKey)
         buffer("offsetsBuffer", offsets)
         execute(numValues / 32)

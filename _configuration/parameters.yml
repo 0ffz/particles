@@ -1,0 +1,7 @@
+particles:
+  Hydrogen: 1000
+interactions:
+  Hydrogen-Hydrogen:
+    lennardJones:
+      epsilon: 1.0
+      sigma: 1.0

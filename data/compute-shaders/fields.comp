@@ -1,4 +1,5 @@
 #version 430
+#include "common.comp"
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 uniform float gridSize;
@@ -10,11 +11,6 @@ uniform float dT;
 uniform int count;
 uniform float maxForce;
 uniform float maxVelocity;
-
-struct ParticleProps {
-    vec2 position;
-    vec2 velocity;
-};
 
 layout (binding = 0) buffer particle2CellKeyBuffer {
     uint particle2CellKey[];
@@ -40,13 +36,11 @@ layout (binding = 5) buffer colorBuffer {
     vec4 colors[];
 };
 
-float lennardJonesForce(float distance) {
-    float inv_r = sigma / distance;
-    float inv_r6 = inv_r * inv_r * inv_r * inv_r * inv_r * inv_r;
-    float inv_r12 = inv_r6 * inv_r6;
-    return min(24.0 * epsilon * (2.0 * inv_r12 - inv_r6) / distance, maxForce);
-    //    return 24.0 * epsilon * (2.0 * inv_r12 - inv_r6) / distance;
-}
+layout (binding = 6) buffer particleTypesBuffer {
+    uint particleTypes[];
+};
+
+//{{ forceFunctions }}
 
 void main() {
     // Get the index of the particle we're currently working on from current work group invocation
@@ -54,11 +48,12 @@ void main() {
     const uint id = gl_GlobalInvocationID.x;
     vec2 position = currParticles[id].position.xy;
     vec2 velocity = currParticles[id].velocity.xy;
+    uint type = particleTypes[id];
 
     // Get its grid index
     int xGrid = int(position.x / gridSize);
     int yGrid = int(position.y / gridSize);
-    uint cellId = xGrid + yGrid * gridCols;
+    uint cellId = cellId(xGrid, yGrid, gridCols);
 
     vec2 netForce = vec2(0.0, 0.0);
     //    if (xGrid != 0 && yGrid != 0 && xGrid != (gridCols - 1) && yGrid != (gridRows - 1)) {
@@ -74,19 +69,26 @@ void main() {
                 vec2 otherPos = currParticles[i].position;
                 if (otherPos == position) continue;
                 vec2 direction = position - otherPos;
-                float distance = length(direction);
-                if (distance > 2.5 * sigma) continue;
-                netForce += normalize(direction) * lennardJonesForce(distance);
+                float dist = length(direction);
+                if (dist > 2.5 * sigma) continue;
+                float forceBetweenParticles = 0;
+                uint otherType = particleTypes[i];
+                // TODO swap this with a function that has no collisions on 16 bit inputs
+                uint hash = (otherType ^ type) << 16 | (otherType | type);
+                switch(hash) {
+                    //{{ forceCalculations }}
+                }
+
+                netForce += normalize(direction) * forceBetweenParticles;
             }
         }
     }
 
-    // Update position, cap velocity
-    //    vec2 prevPosition = prevParticles[id].position;
-    //    vec2 velocity = position - prevPosition;
+    // Cap velocity and force
     velocity = length(velocity) > maxVelocity ? normalize(velocity) * maxVelocity : velocity;
-    //    float forceAmplitude = length(netForce);
-    //    netForce = forceAmplitude > maxForce ? normalize(netForce) * maxForce : netForce;
+    netForce = length(netForce) > maxForce ? normalize(netForce) * maxForce : netForce;
+
+    // Update position
     vec2 nextPosition = position + velocity * dT + ((netForce * dT * dT) / 2);
 
     // Write back to buffers (Verlet integration)

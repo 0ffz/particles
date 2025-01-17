@@ -9,7 +9,7 @@ import org.openrndr.math.Vector3
 
 object Buffers {
     fun circleFanGeometry(): VertexBuffer {
-        val numSegments = 10
+        val numSegments = 15
         val geometry = vertexBuffer(vertexFormat {
             position(3)
         }, numSegments + 2)
@@ -35,7 +35,7 @@ object Buffers {
         }
     }
 
-    fun uInt(count: Int) = vertexBuffer(vertexFormat {
-        attribute("index", VertexElementType.UINT32)
+    fun uInt(count: Int, name: String = "index") = vertexBuffer(vertexFormat {
+        attribute(name, VertexElementType.UINT32)
     }, count)
 }

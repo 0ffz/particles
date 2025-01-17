@@ -3,7 +3,18 @@ import org.gradle.internal.os.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-group = "org.openrndr.template"
+@Suppress("DSL_SCOPE_VIOLATION")
+plugins {
+    java
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinx.serialization)
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.runtime)
+    alias(libs.plugins.gitarchive.tomarkdown).apply(false)
+    alias(libs.plugins.versions)
+}
+
+group = "me.dvyy"
 version = "1.0.0"
 
 val applicationMainClass = "FieldsGPUKt"
@@ -93,23 +104,24 @@ val applicationLogging = Logging.FULL
 
 // ------------------------------------------------------------------------------------------------------------------ //
 
-@Suppress("DSL_SCOPE_VIOLATION")
-plugins {
-    java
-    alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.shadow)
-    alias(libs.plugins.runtime)
-    alias(libs.plugins.gitarchive.tomarkdown).apply(false)
-    alias(libs.plugins.versions)
-}
-
 repositories {
     mavenCentral()
     mavenLocal()
 }
 
+kotlin {
+    // add _scripting to main source set
+    sourceSets {
+        val main by getting {
+            kotlin.srcDir("src/main/kotlin")
+            kotlin.srcDir("_scripting")
+        }
+    }
+}
 dependencies {
 
+    implementation("org.jetbrains.kotlinx:kandy-lets-plot:0.8.0-RC1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 //    implementation(libs.jsoup)
 //    implementation(libs.gson)
 //    implementation(libs.csv)
@@ -122,9 +134,11 @@ dependencies {
         Logging.NONE -> {
             runtimeOnly(libs.slf4j.nop)
         }
+
         Logging.SIMPLE -> {
             runtimeOnly(libs.slf4j.simple)
         }
+
         Logging.FULL -> {
             runtimeOnly(libs.log4j.slf4j2)
             runtimeOnly(libs.log4j.core)
@@ -174,7 +188,7 @@ tasks {
     }
     named<org.beryx.runtime.JPackageTask>("jpackage") {
         doLast {
-            val destPath = if(OperatingSystem.current().isMacOsX)
+            val destPath = if (OperatingSystem.current().isMacOsX)
                 "build/jpackage/openrndr-application.app/Contents/Resources/data"
             else
                 "build/jpackage/openrndr-application/data"
@@ -229,7 +243,7 @@ tasks {
         val nonStableKeywords = listOf("alpha", "beta", "rc")
 
         fun isNonStable(
-            version: String
+            version: String,
         ) = nonStableKeywords.any {
             version.lowercase().contains(it)
         }
@@ -266,11 +280,13 @@ class Openrndr {
             "aarch64", "arm-v8" -> "macos-arm64"
             else -> "macos"
         }
+
         currOs.isLinux -> when (currArch) {
             "x86-64" -> "linux-x64"
             "aarch64" -> "linux-arm64"
             else -> throw IllegalArgumentException("architecture not supported: $currArch")
         }
+
         else -> throw IllegalArgumentException("os not supported: ${currOs.name}")
     }
 
@@ -308,6 +324,7 @@ class Openrndr {
         }
     }
 }
+
 val openrndr = Openrndr()
 
 if (properties["openrndr.tasks"] == "true") {

@@ -1,15 +1,11 @@
 #version 430
+#include "common.comp"
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 uniform int numValues;
 uniform int groupWidth;
 uniform int groupHeight;
 uniform int stepIndex;
-
-struct ParticleProps {
-    vec2 position;
-    vec2 velocity;
-};
 
 layout (binding = 0) buffer keysBuffer {
     uint keys[];
@@ -21,6 +17,10 @@ layout (binding = 1) buffer valuesBuffer {
 
 layout (binding = 2) buffer prevValuesBuffer {
     ParticleProps prevValues[];
+};
+
+layout (binding = 3) buffer typesBuffer {
+    uint types[];
 };
 
 void main() {
@@ -37,6 +37,8 @@ void main() {
     ParticleProps valueHigh = values[indexHigh];
     ParticleProps prevValueLow = prevValues[indexLow];
     ParticleProps prevValueHigh = prevValues[indexHigh];
+    uint typeLow = types[indexLow];
+    uint typeHigh = types[indexHigh];
 
     if (keyLow > keyHigh) {
         keys[indexLow] = keyHigh;
@@ -45,5 +47,7 @@ void main() {
         values[indexHigh] = valueLow;
         prevValues[indexLow] = prevValueHigh;
         prevValues[indexHigh] = prevValueLow;
+        types[indexLow] = typeHigh;
+        types[indexHigh] = typeLow;
     }
 }

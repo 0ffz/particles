@@ -2,9 +2,10 @@ package shaders
 
 import SimulationConstants
 import SimulationSettings
-import org.openrndr.draw.ComputeShader
+import dsl.ParticlesConfiguration
+import helpers.Helpers
 import org.openrndr.draw.VertexBuffer
-import java.io.File
+import kotlin.io.path.Path
 
 class FieldsSimulation(
     val gridSize: Double,
@@ -16,8 +17,23 @@ class FieldsSimulation(
     val particle2CellKey: VertexBuffer,
     val cellOffsets: VertexBuffer,
     val colorBuffer: VertexBuffer,
+    config: ParticlesConfiguration,
 ) {
-    val fieldsShader = ComputeShader.fromCode(File("data/compute-shaders/fields.comp").readText(), "fields").apply {
+    val fieldsShader = Helpers.computeShader(
+        Path("data/compute-shaders/fields.comp"),
+        "fields",
+        templates = mapOf(
+            "forceFunctions" to config.functions.joinToString(separator = "\n") { it.render() },
+            "forceCalculations" to config.interactions.joinToString(separator = "\n") { interaction ->
+                """
+                case 0x${interaction.hash}: {
+                    forceBetweenParticles += ${interaction.functions.joinToString(separator = " + ") { "${it.name}(dist)" }};
+                    break;
+                }
+                """.trimIndent()
+            }
+        )
+    ).apply {
         uniform("gridSize", gridSize)
         uniform("gridRows", gridRows)
         uniform("gridCols", gridCols)
@@ -30,6 +46,7 @@ class FieldsSimulation(
         cellOffsets: VertexBuffer,
         currPositions: VertexBuffer,
         prevPositions: VertexBuffer,
+        particleTypes: VertexBuffer,
     ) = fieldsShader.apply {
         uniform("epsilon", settings.epsilon)
         uniform("dT", SimulationSettings.deltaT)
@@ -41,6 +58,7 @@ class FieldsSimulation(
         buffer("currParticlesBuffer", currPositions)
         buffer("prevParticlesBuffer", prevPositions)
         buffer("colorBuffer", colorBuffer)
+        buffer("particleTypesBuffer", particleTypes)
         fieldsShader.execute(computeWidth)
     }
 }

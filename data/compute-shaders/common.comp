@@ -1,0 +1,8 @@
+struct ParticleProps {
+    vec2 position;
+    vec2 velocity;
+};
+
+uint cellId(int xGrid, int yGrid, int gridCols) {
+    return uint(xGrid + yGrid * gridCols);
+}

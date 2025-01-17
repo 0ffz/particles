@@ -1,15 +1,13 @@
-import extensions.FPSDisplay
+import dsl.InteractionFunction
+import dsl.ParticlesConfiguration
 import helpers.Buffers
 import helpers.Drawing.offsetGeometry
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.yield
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
-import org.openrndr.extra.gui.GUI
 import org.openrndr.extra.noise.Random
 import org.openrndr.internal.finish
-import org.openrndr.panel.style.defaultStyles
 import org.openrndr.shape.Rectangle
 import shaders.FieldsSimulation
 import shaders.GPUSort
@@ -20,6 +18,7 @@ import kotlin.math.sqrt
 
 class FieldsGPU(
     val screenSize: Rectangle,
+    val config: ParticlesConfiguration,
 ) : Extension {
     override var enabled = true
 
@@ -32,7 +31,7 @@ class FieldsGPU(
         val smallestSize = (2.5 * SimulationConstants.sigma)
         val cols = (screenSize.width / smallestSize).toInt()
         val rows = (screenSize.height / smallestSize).toInt()
-        if(rows * cols > count) {
+        if (rows * cols > count) {
             sqrt((screenSize.width * screenSize.height) / count) + 1.0
         } else smallestSize
     }
@@ -49,6 +48,7 @@ class FieldsGPU(
     init {
         println("Total grid cells: ${gridCols * gridRows}, total particles: $count")
     }
+
     // Initialize buffers
     val positionBuffers = List(2) { listId ->
         vertexBuffer(
@@ -90,6 +90,13 @@ class FieldsGPU(
 
     //        val sortedParticleIndices = Buffers.uInt(count)
     val cellOffsets = Buffers.uInt(count)
+    val particleTypes = Buffers.uInt(count, "particleType").apply {
+        put {
+            repeat(count) {
+                write(it % config.particleTypes.size)
+            }
+        }
+    }
     val colorBuffer = Buffers.colorBuffer(ColorRGBa.BLACK, count)
     val geometry = Buffers.circleFanGeometry()
 
@@ -112,6 +119,7 @@ class FieldsGPU(
         particle2CellKey = particle2CellKey,
         cellOffsets = cellOffsets,
         colorBuffer = colorBuffer,
+        config = config,
     )
 
     val gpuSort = GPUSort(
@@ -119,6 +127,7 @@ class FieldsGPU(
 //            indices = sortedParticleIndices,
         sortByKey = particle2CellKey,
         offsets = cellOffsets,
+        types = particleTypes,
     )
 
     var swapIndex = 0
@@ -199,6 +208,7 @@ class FieldsGPU(
                     cellOffsets = cellOffsets,
                     currPositions = currPositions,
                     prevPositions = prevPositions,
+                    particleTypes = particleTypes
                 )
                 val currTime = System.nanoTime()
                 if (currTime - lastRendered > 1e9 / drawRateBias) {
@@ -206,7 +216,6 @@ class FieldsGPU(
                     window.requestDraw()
                     finish()
                 }
-                yield()
 
 //                val curr = System.nanoTime()
 //                val timeBetweenSimulations = 1e9 / targetSimulationSpeed
@@ -261,6 +270,8 @@ class FieldsGPU(
         drawer.offsetGeometry(
             geometry = geometry,
             newPositions = newPositions,
+            types = particleTypes,
+            configuration = config,
             colorBuffer = colorBuffer,
             count = count,
             size = SimulationConstants.sigma,
@@ -268,30 +279,3 @@ class FieldsGPU(
     }
 }
 
-fun main() = application {
-    configure {
-//        width = 1000
-//        height = 600
-        fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
-        windowResizable = true
-        vsync = false
-    }
-
-    program {
-        window.presentationMode = PresentationMode.MANUAL
-        // Create simulation settings and attach to the gui
-        val gui = GUI(
-            defaultStyles = defaultStyles(
-                controlFontSize = 17.0,
-            )
-        ).apply {
-            compartmentsCollapsedByDefault = false
-
-            add(SimulationConstants)
-            add(SimulationSettings)
-        }
-        extend(gui) // Load saved values right away
-        extend(FPSDisplay { SimulationSettings.step })
-        extend(FieldsGPU(drawer.bounds))
-    }
-}

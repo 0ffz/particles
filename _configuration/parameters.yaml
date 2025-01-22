@@ -1,0 +1,8 @@
+particles:
+  hydrogen: 1000
+hydrogen-oxygen:
+  sigma: 5.0
+  epsilon: 1000.0
+hydrogen-hydrogen:
+  sigma: 5.0
+  epsilon: 1.0

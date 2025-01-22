@@ -8,12 +8,14 @@ import org.openrndr.draw.Drawer
 import org.openrndr.draw.RenderTarget
 import org.openrndr.events.Event
 import org.openrndr.extra.camera.ChangeEvents
+import org.openrndr.extra.gui.GUI
 import org.openrndr.math.Matrix44
 import org.openrndr.math.Vector2
 import org.openrndr.math.transforms.buildTransform
 
 class CustomCamera2D(
     val scrollRate: Double = 0.1,
+    val gui: GUI,
 ) : Extension, ChangeEvents {
     override var enabled = true
 
@@ -37,6 +39,7 @@ class CustomCamera2D(
             rotationCenter = it.position
         }
         mouse.dragged.listen {
+            if(gui.visible && it.position.x < gui.appearance.barWidth) return@listen
             if (!it.propagationCancelled) {
                 when (it.button) {
                     MouseButton.LEFT -> view = buildTransform {

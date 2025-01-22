@@ -1,2 +1,2 @@
-rootProject.name = "particles-openrndr"
+rootProject.name = "particles"
 

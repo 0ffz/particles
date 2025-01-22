@@ -38,7 +38,7 @@ data class FieldsApplication(
                 add(SimulationConstants)
                 add(SimulationSettings)
             }
-            extend(CustomCamera2D())
+            extend(CustomCamera2D(gui = gui))
             extend(gui) // Load saved values right away
             extend(FPSDisplay(gui) { SimulationSettings.step })
             extend(FieldsGPU(drawer.bounds, config))

@@ -1,22 +1,32 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-@Suppress("DSL_SCOPE_VIOLATION")
 plugins {
     java
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlinx.serialization)
+//    alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.shadow)
     alias(libs.plugins.runtime)
     alias(libs.plugins.gitarchive.tomarkdown).apply(false)
     alias(libs.plugins.versions)
+    `maven-publish`
 }
 
-group = "me.dvyy"
-version = "1.0.0"
 
+group = "me.dvyy"
+version = "0.0.1"
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "me.dvyy"
+            artifactId = "particles"
+
+            from(components["java"])
+        }
+    }
+}
 val applicationMainClass = "FieldsGPUKt"
 
 /**  ## additional ORX features to be added to this project */
@@ -107,6 +117,7 @@ val applicationLogging = Logging.FULL
 repositories {
     mavenCentral()
     mavenLocal()
+    maven("https://repo.kotlin.link")
 }
 
 kotlin {
@@ -119,9 +130,17 @@ kotlin {
     }
 }
 dependencies {
-
     implementation("org.jetbrains.kotlinx:kandy-lets-plot:0.8.0-RC1")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlin-statistics-jvm:0.4.0-RC1")
+//    implementation("space.kscience:plotlykt-server:0.7.1.1")
+
+    implementation("io.ktor:ktor-server-config-yaml:3.0.3") {
+        isTransitive = false
+    }
+
+//    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
+    implementation("com.sksamuel.hoplite:hoplite-core:2.9.0")
+    implementation("com.sksamuel.hoplite:hoplite-yaml:2.9.0")
 //    implementation(libs.jsoup)
 //    implementation(libs.gson)
 //    implementation(libs.csv)
@@ -171,21 +190,21 @@ application {
 }
 
 tasks {
-    named<ShadowJar>("shadowJar") {
-        manifest {
-            attributes["Main-Class"] = applicationMainClass
-            attributes["Implementation-Version"] = project.version
-        }
-        minimize {
-            exclude(dependency("org.openrndr:openrndr-gl3:.*"))
-            exclude(dependency("org.jetbrains.kotlin:kotlin-reflect:.*"))
-            exclude(dependency("org.slf4j:slf4j-simple:.*"))
-            exclude(dependency("org.apache.logging.log4j:log4j-slf4j2-impl:.*"))
-            exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
-            exclude(dependency("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:.*"))
-            exclude(dependency("org.bytedeco:.*"))
-        }
-    }
+//    named<ShadowJar>("shadowJar") {
+//        manifest {
+//            attributes["Main-Class"] = applicationMainClass
+//            attributes["Implementation-Version"] = project.version
+//        }
+//        minimize {
+//            exclude(dependency("org.openrndr:openrndr-gl3:.*"))
+//            exclude(dependency("org.jetbrains.kotlin:kotlin-reflect:.*"))
+//            exclude(dependency("org.slf4j:slf4j-simple:.*"))
+//            exclude(dependency("org.apache.logging.log4j:log4j-slf4j2-impl:.*"))
+//            exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
+//            exclude(dependency("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:.*"))
+//            exclude(dependency("org.bytedeco:.*"))
+//        }
+//    }
     named<org.beryx.runtime.JPackageTask>("jpackage") {
         doLast {
             val destPath = if (OperatingSystem.current().isMacOsX)

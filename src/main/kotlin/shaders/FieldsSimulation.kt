@@ -27,7 +27,11 @@ class FieldsSimulation(
             "forceCalculations" to config.interactions.joinToString(separator = "\n") { interaction ->
                 """
                 case 0x${interaction.hash}: {
-                    forceBetweenParticles += ${interaction.functions.joinToString(separator = " + ") { "${it.name}(dist)" }};
+                    forceBetweenParticles += ${
+                    interaction.functions.joinToString(separator = " + ") {
+                        "${it.function.name}(dist${it.getParameters().joinToString(prefix = ", ", separator = ", ")})"
+                    }
+                };
                     break;
                 }
                 """.trimIndent()

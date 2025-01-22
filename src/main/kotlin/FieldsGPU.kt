@@ -1,9 +1,11 @@
-import dsl.InteractionFunction
 import dsl.ParticlesConfiguration
 import helpers.Buffers
 import helpers.Drawing.offsetGeometry
 import kotlinx.coroutines.channels.Channel
-import org.openrndr.*
+import org.openrndr.Extension
+import org.openrndr.KEY_ARROW_RIGHT
+import org.openrndr.KEY_SPACEBAR
+import org.openrndr.Program
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
 import org.openrndr.extra.noise.Random

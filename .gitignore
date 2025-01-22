@@ -2,3 +2,5 @@
 build
 .idea
 application.log
+gui-parameters
+.kotlin

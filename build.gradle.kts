@@ -6,7 +6,7 @@ plugins {
     java
     alias(libs.plugins.kotlin.jvm)
 //    alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.shadow)
+//    alias(libs.plugins.shadow)
     alias(libs.plugins.runtime)
     alias(libs.plugins.gitarchive.tomarkdown).apply(false)
     alias(libs.plugins.versions)
@@ -26,8 +26,14 @@ publishing {
             from(components["java"])
         }
     }
+    repositories {
+        maven {
+            name = "mineinabyss"
+            url = uri("https://repo.mineinabyss.com/snapshots/")
+            credentials(PasswordCredentials::class)
+        }
+    }
 }
-
 val applicationMainClass = "FieldsGPUKt"
 
 /**  ## additional ORX features to be added to this project */
@@ -121,15 +127,6 @@ repositories {
     maven("https://repo.kotlin.link")
 }
 
-kotlin {
-    // add _scripting to main source set
-    sourceSets {
-        val main by getting {
-            kotlin.srcDir("src/main/kotlin")
-            kotlin.srcDir("_scripting")
-        }
-    }
-}
 dependencies {
     implementation("org.jetbrains.kotlinx:kandy-lets-plot:0.8.0-RC1")
 //    implementation("space.kscience:plotlykt-server:0.7.1.1")
@@ -314,20 +311,20 @@ class Openrndr {
         dependencies {
             runtimeOnly(openrndr("gl3"))
             runtimeOnly(openrndrNatives("gl3"))
-            implementation(openrndr("openal"))
+            api(openrndr("openal"))
             runtimeOnly(openrndrNatives("openal"))
-            implementation(openrndr("application"))
-            implementation(openrndr("svg"))
-            implementation(openrndr("animatable"))
-            implementation(openrndr("extensions"))
-            implementation(openrndr("filter"))
-            implementation(openrndr("dialogs"))
+            api(openrndr("application"))
+            api(openrndr("svg"))
+            api(openrndr("animatable"))
+            api(openrndr("extensions"))
+            api(openrndr("filter"))
+            api(openrndr("dialogs"))
             if ("video" in openrndrFeatures) {
                 implementation(openrndr("ffmpeg"))
                 runtimeOnly(openrndrNatives("ffmpeg"))
             }
             for (feature in orxFeatures) {
-                implementation(orx(feature))
+                api(orx(feature))
             }
             for (feature in ormlFeatures) {
                 implementation(orml(feature))

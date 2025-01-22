@@ -1,4 +1,5 @@
 import me.dvyy.particles.dsl.particles
+import me.dvyy.particles.potentials.PairwisePotentials
 import org.openrndr.color.ColorRGBa
 
 fun main() = particles {

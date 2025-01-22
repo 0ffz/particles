@@ -1,9 +1,7 @@
-package shaders
+package me.dvyy.particles.shaders
 
-import helpers.Helpers
-import org.openrndr.draw.ComputeShader
+import me.dvyy.particles.helpers.Helpers
 import org.openrndr.draw.VertexBuffer
-import java.io.File
 import kotlin.io.path.Path
 
 class GPUSort(
@@ -13,13 +11,13 @@ class GPUSort(
     val offsets: VertexBuffer,
     val types: VertexBuffer,
 ) {
-    val sorterShader = Helpers.computeShader(Path("data/compute-shaders/sorter.comp"), "sorter").apply {
+    val sorterShader = Helpers.computeShader(Path("/data/compute-shaders/sorter.comp"), "sorter").apply {
         uniform("numValues", numValues)
 //        buffer("keysBuffer", sortByKey)
 //        buffer("valuesBuffer", indices)
     }
 
-    val offsetsShader = Helpers.computeShader(Path("data/compute-shaders/offsets.comp"), "offsets").apply {
+    val offsetsShader = Helpers.computeShader(Path("/data/compute-shaders/offsets.comp"), "offsets").apply {
         uniform("numValues", numValues)
 //        buffer("keysBuffer", sortByKey)
 //        buffer("offsetsBuffer", offsets)

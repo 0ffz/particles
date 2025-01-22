@@ -27,6 +27,7 @@ publishing {
         }
     }
 }
+
 val applicationMainClass = "FieldsGPUKt"
 
 /**  ## additional ORX features to be added to this project */
@@ -131,19 +132,13 @@ kotlin {
 }
 dependencies {
     implementation("org.jetbrains.kotlinx:kandy-lets-plot:0.8.0-RC1")
-    implementation("org.jetbrains.kotlinx:kotlin-statistics-jvm:0.4.0-RC1")
 //    implementation("space.kscience:plotlykt-server:0.7.1.1")
-
-    implementation("io.ktor:ktor-server-config-yaml:3.0.3") {
-        isTransitive = false
-    }
-
 //    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-    implementation("com.sksamuel.hoplite:hoplite-core:2.9.0")
-    implementation("com.sksamuel.hoplite:hoplite-yaml:2.9.0")
-//    implementation(libs.jsoup)
-//    implementation(libs.gson)
-//    implementation(libs.csv)
+
+    implementation("com.charleskorn.kaml:kaml:0.67.0")
+//    implementation("io.ktor:ktor-server-config-yaml:3.0.3") {
+//        isTransitive = false
+//    }
 
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)

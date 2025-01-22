@@ -1,9 +1,9 @@
-package shaders
+package me.dvyy.particles.shaders
 
-import SimulationConstants
-import SimulationSettings
-import dsl.ParticlesConfiguration
-import helpers.Helpers
+import me.dvyy.particles.SimulationConstants
+import me.dvyy.particles.SimulationSettings
+import me.dvyy.particles.dsl.ParticlesConfiguration
+import me.dvyy.particles.helpers.Helpers
 import org.openrndr.draw.VertexBuffer
 import kotlin.io.path.Path
 
@@ -20,7 +20,7 @@ class FieldsSimulation(
     config: ParticlesConfiguration,
 ) {
     val fieldsShader = Helpers.computeShader(
-        Path("data/compute-shaders/fields.comp"),
+        Path("/data/compute-shaders/fields.comp"),
         "fields",
         templates = mapOf(
             "forceFunctions" to config.functions.joinToString(separator = "\n") { it.render() },

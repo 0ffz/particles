@@ -1,4 +1,4 @@
-package dsl
+package me.dvyy.particles.dsl
 
 //data class FunctionWithParameters(
 //    val function: InteractionFunction,

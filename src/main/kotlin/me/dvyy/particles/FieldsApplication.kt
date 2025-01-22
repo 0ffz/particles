@@ -1,6 +1,8 @@
-import dsl.ParticlesConfiguration
-import extensions.CustomCamera2D
-import extensions.FPSDisplay
+package me.dvyy.particles
+
+import me.dvyy.particles.dsl.ParticlesConfiguration
+import me.dvyy.particles.extensions.CustomCamera2D
+import me.dvyy.particles.extensions.FPSDisplay
 import org.openrndr.Fullscreen
 import org.openrndr.PresentationMode
 import org.openrndr.application

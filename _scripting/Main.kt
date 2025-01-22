@@ -1,4 +1,4 @@
-import dsl.particles
+import me.dvyy.particles.dsl.particles
 import org.openrndr.color.ColorRGBa
 
 fun main() = particles {

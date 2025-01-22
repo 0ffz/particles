@@ -1,6 +1,8 @@
-import dsl.ParticlesConfiguration
-import helpers.Buffers
-import helpers.Drawing.offsetGeometry
+package me.dvyy.particles
+
+import me.dvyy.particles.dsl.ParticlesConfiguration
+import me.dvyy.particles.helpers.Buffers
+import me.dvyy.particles.helpers.Drawing.offsetGeometry
 import kotlinx.coroutines.channels.Channel
 import org.openrndr.Extension
 import org.openrndr.KEY_ARROW_RIGHT
@@ -11,9 +13,9 @@ import org.openrndr.draw.*
 import org.openrndr.extra.noise.Random
 import org.openrndr.internal.finish
 import org.openrndr.shape.Rectangle
-import shaders.FieldsSimulation
-import shaders.GPUSort
-import shaders.UpdateIndices
+import me.dvyy.particles.shaders.FieldsSimulation
+import me.dvyy.particles.shaders.GPUSort
+import me.dvyy.particles.shaders.UpdateIndices
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.sqrt

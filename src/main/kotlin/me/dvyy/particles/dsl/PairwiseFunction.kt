@@ -1,4 +1,4 @@
-package dsl
+package me.dvyy.particles.dsl
 
 import org.intellij.lang.annotations.Language
 

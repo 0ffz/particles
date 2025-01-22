@@ -1,9 +1,8 @@
-package helpers
+package me.dvyy.particles.helpers
 
-import dsl.ParticlesConfiguration
+import me.dvyy.particles.dsl.ParticlesConfiguration
 import org.intellij.lang.annotations.Language
 import org.openrndr.draw.*
-import org.openrndr.extra.olive.Olive
 
 object Drawing {
     fun Drawer.offsetGeometry(

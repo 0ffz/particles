@@ -1,4 +1,4 @@
-import dsl.PairwiseFunction
+import me.dvyy.particles.dsl.PairwiseFunction
 
 object PairwisePotentials {
     object LennardJones : PairwiseFunction(

@@ -1,4 +1,4 @@
-package shaders
+package me.dvyy.particles.shaders
 
 class Debug {
 //            drawer.isolated {

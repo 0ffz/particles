@@ -1,6 +1,7 @@
+package me.dvyy.particles
+
 import org.openrndr.extra.parameters.Description
 import org.openrndr.extra.parameters.DoubleParameter
-import kotlin.math.sqrt
 
 @Description("Live simulation settings")
 object SimulationSettings {

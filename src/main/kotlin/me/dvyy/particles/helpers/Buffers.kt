@@ -1,4 +1,4 @@
-package helpers
+package me.dvyy.particles.helpers
 
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.VertexBuffer

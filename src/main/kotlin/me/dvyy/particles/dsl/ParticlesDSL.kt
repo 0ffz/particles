@@ -1,8 +1,10 @@
-package dsl
+package me.dvyy.particles.dsl
 
-import FieldsApplication
-import io.ktor.server.config.yaml.*
+import me.dvyy.particles.FieldsApplication
+import me.dvyy.particles.helpers.YamlConfig
 import org.openrndr.color.ColorRGBa
+import kotlin.io.path.Path
+import kotlin.io.path.inputStream
 
 @DslMarker
 annotation class ParticlesDSLMarker
@@ -14,15 +16,17 @@ data class ParticlesConfiguration(
     val parameters: YamlConfig,
 )
 
-class ParticlesDSL {
-    private val config = YamlConfig("_configuration/parameters.yaml") ?: error("Configuration file not found")
+class ParticlesDSL(
+    configPath: String,
+) {
+    private val config = YamlConfig(Path(configPath).inputStream()) ?: error("Configuration file not found")
 
     //    private val functions = mutableListOf<PairwiseFunction>()
     private val particleTypes = mutableListOf<ParticleType>()
     private val interactions: ParticleInteractions = ParticleInteractions(particleTypes)
 
     fun config(key: String, default: Any? = null): String =
-        config.propertyOrNull(key)?.getString() ?: default?.toString() ?: error("Key $key not found in config")
+        config.propertyOrNull(key) ?: default?.toString() ?: error("Key $key not found in config")
 
     fun particle(
         name: String,
@@ -71,7 +75,10 @@ class ParticlesDSL {
 }
 
 @ParticlesDSLMarker
-fun particles(block: ParticlesDSL.() -> Unit) {
-    ParticlesDSL().apply(block).start()
+fun particles(
+    config: String = "_configuration/parameters.yaml",
+    block: ParticlesDSL.() -> Unit,
+) {
+    ParticlesDSL(config).apply(block).start()
 }
 

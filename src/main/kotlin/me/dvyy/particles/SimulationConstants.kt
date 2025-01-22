@@ -1,5 +1,5 @@
-import kotlinx.serialization.Serializable
-import org.openrndr.draw.persistent
+package me.dvyy.particles
+
 import org.openrndr.events.Event
 import org.openrndr.extra.parameters.ActionParameter
 import org.openrndr.extra.parameters.Description
@@ -8,7 +8,6 @@ import kotlin.math.pow
 import kotlin.properties.ReadWriteProperty
 
 @Description("Simulation constants")
-@Serializable
 object SimulationConstants {
     @DoubleParameter("sigma", 0.0, 100.0, precision = 1)
     var sigma = 2.0

@@ -1,4 +1,4 @@
-package extensions
+package me.dvyy.particles.extensions
 
 import org.openrndr.Extension
 import org.openrndr.Program

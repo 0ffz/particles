@@ -1,9 +1,7 @@
-package shaders
+package me.dvyy.particles.shaders
 
-import helpers.Helpers
-import org.openrndr.draw.ComputeShader
+import me.dvyy.particles.helpers.Helpers
 import org.openrndr.draw.VertexBuffer
-import java.io.File
 import kotlin.io.path.Path
 
 class UpdateIndices(
@@ -13,7 +11,7 @@ class UpdateIndices(
     val keys: VertexBuffer,
 //    indices: VertexBuffer,
 ) {
-    val computeShader = Helpers.computeShader(Path("data/compute-shaders/updateIndices.comp"), "updateIndices").apply {
+    val computeShader = Helpers.computeShader(Path("/data/compute-shaders/updateIndices.comp"), "updateIndices").apply {
         uniform("gridSize", gridSize)
         uniform("gridCols", gridCols)
 //        buffer("keysBuffer", keys)

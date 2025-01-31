@@ -1,3 +1,9 @@
+@file:Repository("https://repo.mineinabyss.com/snapshots/")
+@file:DependsOn("me.dvyy:particles-dsl:0.0.2")
+
+import me.dvyy.particles.dsl.particles
+import org.openrndr.color.ColorRGBa
+
 particles {
     application {
         fullscreen = false
@@ -5,12 +11,12 @@ particles {
     val hydrogen = particle(
         name = "hydrogen",
         color = ColorRGBa.WHITE,
-        radius = 1.0,
+        radius = 5.0,
     )
     val oxygen = particle(
         name = "oxygen",
         color = ColorRGBa.RED,
-        radius = 1.0,
+        radius = 5.0,
     )
 
     val lennardJones = PairwisePotentials.LennardJones
@@ -19,7 +25,7 @@ particles {
         allPairs {
             lennardJones {
                 it.sigma set config("$pairKey.sigma", default = 5.0)
-                it.epsilon set config("$pairKey.sigma", default = 1.0)
+                it.epsilon set config("$pairKey.epsilon", default = 1.0)
             }
         }
 //        (hydrogen - hydrogen) {

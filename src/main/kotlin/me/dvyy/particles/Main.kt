@@ -9,7 +9,7 @@ import kotlin.script.experimental.api.valueOrThrow
 
 fun main() {
     println("Compiling particles script...")
-    val res = ParticlesScripting().evalFile(File("particles.kts"))
+    val res = ParticlesScripting().evalFile(File("particles.main.kts"))
     res.reports.forEach {
         if (it.severity > ScriptDiagnostic.Severity.DEBUG) {
             println(" : ${it.message}" + if (it.exception == null) "" else ": ${it.exception}")
@@ -23,7 +23,7 @@ fun main() {
         }
 
         is ResultValue.Value -> {
-            (returned.value as ParticlesDSL).start()
+            FieldsApplication((returned.value as ParticlesDSL).build()).start()
         }
 
         ResultValue.NotEvaluated -> {}

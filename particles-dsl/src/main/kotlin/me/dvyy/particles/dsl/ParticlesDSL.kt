@@ -1,7 +1,5 @@
 package me.dvyy.particles.dsl
 
-import me.dvyy.particles.FieldsApplication
-import me.dvyy.particles.helpers.YamlConfig
 import org.openrndr.color.ColorRGBa
 import kotlin.io.path.Path
 import kotlin.io.path.inputStream
@@ -81,10 +79,6 @@ class ParticlesDSL(
         parameters = config,
         application = application.copy(),
     )
-
-    fun start() {
-        FieldsApplication(build()).start()
-    }
 }
 
 @ParticlesDSLMarker

@@ -138,7 +138,7 @@ class FieldsGPU(
 
     var paused = false
     val manualFrames = Channel<Unit>()
-    val drawRateBias = 500 // Higher number means preferring drawing to simulation performance
+    val drawRateBias = 1000 // Higher number means preferring drawing to simulation performance
 
     override fun setup(program: Program): Unit = with(program) {
         initializeRandomPositions()
@@ -216,9 +216,9 @@ class FieldsGPU(
                 )
                 val currTime = System.nanoTime()
                 if (currTime - lastRendered > 1e9 / drawRateBias) {
-                    lastRendered = System.nanoTime()
                     window.requestDraw()
                     finish()
+                    lastRendered = System.nanoTime()
                 }
 
 //                val curr = System.nanoTime()
@@ -278,7 +278,6 @@ class FieldsGPU(
             configuration = config,
             colorBuffer = colorBuffer,
             count = count,
-            size = SimulationConstants.sigma,
         )
     }
 }

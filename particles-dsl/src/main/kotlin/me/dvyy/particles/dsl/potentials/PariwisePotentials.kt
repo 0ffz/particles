@@ -1,4 +1,4 @@
-package me.dvyy.particles.potentials
+package me.dvyy.particles.dsl.potentials
 
 import me.dvyy.particles.dsl.PairwiseFunction
 

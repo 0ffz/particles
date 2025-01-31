@@ -10,26 +10,8 @@ plugins {
     alias(libs.plugins.runtime)
     alias(libs.plugins.gitarchive.tomarkdown).apply(false)
     alias(libs.plugins.versions)
-    `maven-publish`
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "me.dvyy"
-            artifactId = "particles"
-
-            from(components["java"])
-        }
-    }
-    repositories {
-        maven {
-            name = "mineinabyss"
-            url = uri("https://repo.mineinabyss.com/snapshots/")
-            credentials(PasswordCredentials::class)
-        }
-    }
-}
 val applicationMainClass = "me.dvyy.particles.MainKt"
 
 /**  ## additional ORX features to be added to this project */
@@ -124,7 +106,7 @@ dependencies {
 //    implementation("space.kscience:plotlykt-server:0.7.1.1")
 //    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
 
-    implementation("com.charleskorn.kaml:kaml:0.67.0")
+    implementation(project(":particles-dsl"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.logging)
@@ -140,13 +122,8 @@ dependencies {
 }
 
 // ------------------------------------------------------------------------------------------------------------------ //
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "21"
+kotlin {
+    jvmToolchain(21)
 }
 
 // ------------------------------------------------------------------------------------------------------------------ //

@@ -1,4 +1,4 @@
-package me.dvyy.particles.helpers
+package me.dvyy.particles.dsl
 
 import com.charleskorn.kaml.*
 import java.io.InputStream

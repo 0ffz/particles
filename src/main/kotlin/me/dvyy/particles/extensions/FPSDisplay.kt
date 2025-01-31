@@ -5,14 +5,17 @@ import org.openrndr.Program
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
 import org.openrndr.draw.isolated
+import org.openrndr.draw.loadFont
 import org.openrndr.extra.gui.GUI
 import org.openrndr.math.Matrix44
+import org.openrndr.resourceUrl
 
 class FPSDisplay(
     val gui: GUI,
     val getCurrentStep: () -> Int,
 ) : Extension {
     override var enabled: Boolean = true
+    val font = loadFont(resourceUrl("/data/fonts/default.otf"), 16.0)
     
     var frames = 0
     var startTime: Long = 0L
@@ -28,6 +31,7 @@ class FPSDisplay(
             // -- set view and projections
             drawer.view = Matrix44.IDENTITY
             drawer.ortho()
+            drawer.fontMap = font
 
             drawer.fill = ColorRGBa.PINK
             val now = System.nanoTime()

@@ -12,9 +12,9 @@ sealed interface ParameterValue {
 }
 
 class FunctionWithParameters(
-    internal val function: PairwiseFunction,
+    val function: PairwiseFunction,
 ) {
-    internal val setParams = mutableMapOf<InteractionParameter, ParameterValue>()
+    val setParams = mutableMapOf<InteractionParameter, ParameterValue>()
 
     infix fun InteractionParameter.set(value: Any) {
         setParams[this] = ParameterValue.Value(value)

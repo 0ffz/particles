@@ -6,6 +6,8 @@ import org.openrndr.draw.VertexElementType
 import org.openrndr.draw.vertexBuffer
 import org.openrndr.draw.vertexFormat
 import org.openrndr.math.Vector3
+import kotlin.math.cos
+import kotlin.math.sin
 
 object Buffers {
     fun circleFanGeometry(): VertexBuffer {
@@ -19,8 +21,8 @@ object Buffers {
             val angleStep = (2 * Math.PI) / numSegments
             for (i in 0 ..numSegments) {
                 val angle = i * angleStep
-                val x = Math.cos(angle)
-                val y = Math.sin(angle)
+                val x = cos(angle)
+                val y = sin(angle)
                 write(Vector3(x, y, 0.0))
             }
         }

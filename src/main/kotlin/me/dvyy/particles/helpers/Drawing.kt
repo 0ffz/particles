@@ -12,20 +12,23 @@ object Drawing {
         configuration: ParticlesConfiguration,
         colorBuffer: VertexBuffer,
         count: Int,
-        size: Double,
     ) = isolated {
         shadeStyle = shadeStyle {
             vertexPreamble = glsl(
                 """
                     out vec4 color;
                     out uint particleType;
+                
+                    const float[] sizes = float[](
+                        ${configuration.particleTypes.joinToString(", ") { "${it.radius}" }}
+                    );
                 """.trimIndent()
             )
 
             // Draw geometry offset by positions
             vertexTransform = glsl(
                 """
-                    mat4 translationMatrix = mat4($size / 2); // Identity matrix scaled
+                    mat4 translationMatrix = mat4(sizes[i_particleType] / 2); // Identity matrix scaled
                     translationMatrix[3] = vec4(i_position, 0.0, 1.0);
                     x_viewMatrix = x_viewMatrix * translationMatrix;
                     color = i_color;

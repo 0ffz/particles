@@ -17,6 +17,6 @@ jobs:
           fetch-depth: 0
       - uses: MineInAbyss/publish-action@develop
         with:
-          build-tasks: 'installShadowDist'
+          build-tasks: 'shadowDistZip'
           release-files: |
             build/distributions/*.zip

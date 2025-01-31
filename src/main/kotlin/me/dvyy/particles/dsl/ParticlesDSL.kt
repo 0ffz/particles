@@ -89,6 +89,6 @@ class ParticlesDSL(
 
 @ParticlesDSLMarker
 fun particles(
-    config: String = "_configuration/parameters.yaml",
+    config: String = "parameters.yml",
     block: ParticlesDSL.() -> Unit,
 ) = ParticlesDSL(config).apply(block)

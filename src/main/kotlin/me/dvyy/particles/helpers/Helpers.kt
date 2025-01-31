@@ -1,16 +1,15 @@
 package me.dvyy.particles.helpers
 
 import org.openrndr.draw.ComputeShader
-import org.openrndr.resourceText
 import java.nio.file.Path
 import kotlin.io.path.div
-import kotlin.io.path.readText
 
 object Helpers {
     private val templateRegex = Regex("// ?\\{\\{([^}]+)}}")
 
-    fun resourceStream(path: Path) = this::class.java.getResourceAsStream(path.toString())?.bufferedReader()
+    fun resourceStream(path: Path) = this::class.java.getResourceAsStream(path.joinToString(prefix = "/", separator = "/"))?.bufferedReader()
         ?: error("Resource not found: $path")
+
     fun computeShader(
         path: Path,
         name: String,

@@ -13,10 +13,6 @@ plugins {
     `maven-publish`
 }
 
-
-group = "me.dvyy"
-version = "0.0.1"
-
 publishing {
     publications {
         create<MavenPublication>("maven") {
@@ -225,9 +221,12 @@ class Openrndr {
     init {
         dependencies {
             runtimeOnly(openrndr("gl3"))
-            runtimeOnly(openrndrNatives("gl3"))
+            for(platform in listOf("windows", "macos", "linux-x64", "linux-arm64")) {
+                runtimeOnly("org.openrndr:openrndr-gl3-natives-$platform:$openrndrVersion")
+            }
+//            runtimeOnly(openrndrNatives("gl3"))
+//            runtimeOnly(openrndrNatives("openal"))
             implementation(openrndr("openal"))
-            runtimeOnly(openrndrNatives("openal"))
             implementation(openrndr("application"))
             implementation(openrndr("svg"))
             implementation(openrndr("animatable"))

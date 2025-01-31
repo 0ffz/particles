@@ -1,9 +1,13 @@
 package me.dvyy.particles
 
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import me.dvyy.particles.dsl.ParticlesConfiguration
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.Drawing.offsetGeometry
-import kotlinx.coroutines.channels.Channel
+import me.dvyy.particles.shaders.FieldsSimulation
+import me.dvyy.particles.shaders.GPUSort
+import me.dvyy.particles.shaders.UpdateIndices
 import org.openrndr.Extension
 import org.openrndr.KEY_ARROW_RIGHT
 import org.openrndr.KEY_SPACEBAR
@@ -13,9 +17,6 @@ import org.openrndr.draw.*
 import org.openrndr.extra.noise.Random
 import org.openrndr.internal.finish
 import org.openrndr.shape.Rectangle
-import me.dvyy.particles.shaders.FieldsSimulation
-import me.dvyy.particles.shaders.GPUSort
-import me.dvyy.particles.shaders.UpdateIndices
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.sqrt
@@ -23,6 +24,7 @@ import kotlin.math.sqrt
 class FieldsGPU(
     val screenSize: Rectangle,
     val config: ParticlesConfiguration,
+    val onResetRequested: () -> Unit,
 ) : Extension {
     override var enabled = true
 
@@ -32,7 +34,7 @@ class FieldsGPU(
     // Due to our grid datastructure below, we need at least as many particles as there are grid cells,
     // for low particle counts we raise the grid cell size enough to fit in the particle count
     val gridSize = run {
-        val smallestSize = (2.5 * SimulationConstants.sigma)
+        val smallestSize = 2.5 * SimulationConstants.minGridSize
         val cols = (screenSize.width / smallestSize).toInt()
         val rows = (screenSize.height / smallestSize).toInt()
         if (rows * cols > count) {
@@ -139,6 +141,24 @@ class FieldsGPU(
     var paused = false
     val manualFrames = Channel<Unit>()
     val drawRateBias = 1000 // Higher number means preferring drawing to simulation performance
+    var stopping = false
+
+    override fun shutdown(program: Program) {
+        println("Destroying buffers...")
+        paused = true
+        stopping = true
+        updateIndices.computeShader.destroy()
+        fieldsSimulation.fieldsShader.destroy()
+        gpuSort.sorterShader.destroy()
+        gpuSort.offsetsShader.destroy()
+        positionBuffers.forEach { it.destroy() }
+        particle2CellKey.destroy()
+        cellOffsets.destroy()
+        particleTypes.destroy()
+        colorBuffer.destroy()
+        geometry.destroy()
+        simulationThread.dispatcher.cancel()
+    }
 
     override fun setup(program: Program): Unit = with(program) {
         initializeRandomPositions()
@@ -170,7 +190,6 @@ class FieldsGPU(
         var lastRendered = System.nanoTime()
         var lastSimulation = lastRendered
         val targetSimulationSpeed = 60.0
-        var stopping = false
         program.ended.listen {
             stopping = true
         }
@@ -228,16 +247,6 @@ class FieldsGPU(
 //                } else {
 //                    lastSimulation = System.nanoTime()
 //                }
-            }
-        }
-        SimulationConstants.restartEvent.listen {
-            println("Restarting simulation...")
-            paused = true
-            // Await simulation thread stop
-            simulationThread.launch {
-                initializeRandomPositions()
-                paused = false
-                manualFrames.trySend(Unit)
             }
         }
     }

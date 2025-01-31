@@ -27,6 +27,12 @@ class FunctionWithParameters(
         }
     }
 
+    fun getByName(name: String): Any {
+        val param = function.parameters.find { it.name == name } ?: error("Parameter $name not found")
+        val value = setParams[param] ?: error("Parameter $name not set")
+        return getParameter(value)
+    }
+
     fun getParameter(param: ParameterValue): Any = when (param) {
         is ParameterValue.Value -> param.value
     }

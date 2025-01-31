@@ -6,7 +6,6 @@ uniform float gridSize;
 uniform int gridRows;
 uniform int gridCols;
 uniform float epsilon;
-uniform float sigma;
 uniform float dT;
 uniform int count;
 uniform float maxForce;
@@ -70,7 +69,7 @@ void main() {
                 if (otherPos == position) continue;
                 vec2 direction = position - otherPos;
                 float dist = length(direction);
-                if (dist > 2.5 * sigma) continue;
+                if (dist > gridSize) continue;
                 float forceBetweenParticles = 0;
                 uint otherType = particleTypes[i];
                 // TODO swap this with a function that has no collisions on 16 bit inputs

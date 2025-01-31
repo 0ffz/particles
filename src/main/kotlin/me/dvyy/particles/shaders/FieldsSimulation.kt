@@ -42,7 +42,6 @@ class FieldsSimulation(
         uniform("gridRows", gridRows)
         uniform("gridCols", gridCols)
         uniform("count", count)
-        uniform("sigma", SimulationConstants.sigma)
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
     }
 
@@ -52,7 +51,6 @@ class FieldsSimulation(
         prevPositions: VertexBuffer,
         particleTypes: VertexBuffer,
     ) = fieldsShader.apply {
-        uniform("epsilon", settings.epsilon)
         uniform("dT", SimulationSettings.deltaT)
         uniform("maxForce", SimulationSettings.maxForce)
         uniform("maxVelocity", SimulationSettings.maxVelocity)

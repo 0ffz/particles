@@ -30,35 +30,60 @@ annotation class Repository(vararg val urls: String)
 annotation class DependsOn(vararg val urls: String)
 
 class ParticlesScripting {
-    fun evalFile(scriptFile: File): ResultWithDiagnostics<EvaluationResult> {
-        val cacheBaseDir = Path("build/particles-cache").createDirectories()
-        val compilationConfiguration = createJvmCompilationConfigurationFromTemplate<SimpleScript> {
-            defaultImports(
-                "me.dvyy.particles.dsl.*",
-                "me.dvyy.particles.dsl.potentials.*",
-                "org.openrndr.color.*",
-                "me.dvyy.particles.scripting.Repository",
-                "me.dvyy.particles.scripting.DependsOn",
-            )
+    val cacheBaseDir = Path("build/particles-cache")
 
-            jvm {
-                jvmTarget.put("21")
-                dependenciesFromCurrentContext(wholeClasspath = true)
+    val compilationConfiguration = createJvmCompilationConfigurationFromTemplate<SimpleScript> {
+        defaultImports(
+            "me.dvyy.particles.dsl.*",
+            "me.dvyy.particles.dsl.potentials.*",
+            "org.openrndr.color.*",
+            "me.dvyy.particles.scripting.Repository",
+            "me.dvyy.particles.scripting.DependsOn",
+        )
+
+        jvm {
+            jvmTarget.put("21")
+            dependenciesFromCurrentContext(wholeClasspath = true)
+        }
+    }
+
+    val host = BasicJvmScriptingHost(ScriptingHostConfiguration {
+        jvm {
+            compilationCache(
+                CompiledScriptJarsCache { script, scriptCompilationConfiguration ->
+                    cacheBaseDir.resolve(
+                        compiledScriptUniqueName(script, scriptCompilationConfiguration) + ".jar"
+                    ).toFile()
+                }
+            )
+        }
+    })
+
+    fun evalFile(scriptFile: File): ResultWithDiagnostics<EvaluationResult> {
+        cacheBaseDir.createDirectories()
+        return host.eval(scriptFile.toScriptSource(), compilationConfiguration, null)
+    }
+
+    fun <T> evalResult(scriptFile: File): T? {
+        val res = evalFile(scriptFile)
+        res.reports.forEach {
+            if (it.severity > ScriptDiagnostic.Severity.DEBUG) {
+                println(" : ${it.message}" + if (it.exception == null) "" else ": ${it.exception}")
+            }
+        }
+
+        return when (val returned = res.valueOrThrow().returnValue) {
+            is ResultValue.Error -> {
+                println("Error: ${returned.error}")
+                null
             }
 
-            hostConfiguration(ScriptingHostConfiguration {
-                jvm {
-                    compilationCache(
-                        CompiledScriptJarsCache { script, scriptCompilationConfiguration ->
-                            cacheBaseDir.resolve(
-                                compiledScriptUniqueName(script, scriptCompilationConfiguration) + ".jar"
-                            ).toFile()
-                        }
-                    )
-                }
-            })
+            is ResultValue.Value -> {
+                returned.value as T
+            }
+
+            else -> null
         }
-        return BasicJvmScriptingHost().eval(scriptFile.toScriptSource(), compilationConfiguration, null)
     }
 }
 

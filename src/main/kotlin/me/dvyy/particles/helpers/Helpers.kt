@@ -27,7 +27,7 @@ object Helpers {
                 else -> line
             }
         }.joinToString("\n")
-        println(templatedLines)
+//        println(templatedLines)
         return ComputeShader.fromCode(templatedLines, name)
     }
 }

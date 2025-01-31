@@ -17,10 +17,10 @@ data class FieldsApplication(
 ) {
     fun start() = application {
         configure {
-//        width = 1000
-//        height = 600
-            fullscreen = Fullscreen.CURRENT_DISPLAY_MODE
+            fullscreen = if(config.application.fullscreen) Fullscreen.CURRENT_DISPLAY_MODE else Fullscreen.DISABLED
             windowResizable = true
+            width = config.application.width
+            height = config.application.height
             vsync = false
         }
 
@@ -46,5 +46,4 @@ data class FieldsApplication(
             extend(FieldsGPU(drawer.bounds, config))
         }
     }
-
 }

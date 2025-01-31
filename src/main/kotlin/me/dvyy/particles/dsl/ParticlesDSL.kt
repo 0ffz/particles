@@ -14,6 +14,13 @@ data class ParticlesConfiguration(
     val interactions: List<PairInteractions>,
     val functions: List<PairwiseFunction>,
     val parameters: YamlConfig,
+    val application: ApplicationConfiguration,
+)
+
+data class ApplicationConfiguration(
+    var fullscreen: Boolean = false,
+    var width: Int = 1280,
+    var height: Int = 720,
 )
 
 class ParticlesDSL(
@@ -24,6 +31,7 @@ class ParticlesDSL(
     //    private val functions = mutableListOf<PairwiseFunction>()
     private val particleTypes = mutableListOf<ParticleType>()
     private val interactions: ParticleInteractions = ParticleInteractions(particleTypes)
+    val application = ApplicationConfiguration()
 
     fun config(key: String, default: Any? = null): String =
         config.propertyOrNull(key) ?: default?.toString() ?: error("Key $key not found in config")
@@ -43,6 +51,10 @@ class ParticlesDSL(
 
     fun interactions(block: ParticleInteractions.() -> Unit) {
         interactions.block()
+    }
+
+    fun application(block: ApplicationConfiguration.() -> Unit) {
+        application.block()
     }
 
 //    fun <T> function(
@@ -67,6 +79,7 @@ class ParticlesDSL(
         interactions = interactions.pairInteractions,
         functions = interactions.pairInteractions.flatMap { it.functions.map { it.function } }.distinct(),
         parameters = config,
+        application = application.copy(),
     )
 
     fun start() {
@@ -78,7 +91,4 @@ class ParticlesDSL(
 fun particles(
     config: String = "_configuration/parameters.yaml",
     block: ParticlesDSL.() -> Unit,
-) {
-    ParticlesDSL(config).apply(block).start()
-}
-
+) = ParticlesDSL(config).apply(block)

@@ -33,4 +33,5 @@ shadow = { id = "com.gradleup.shadow", version = "8.3.5" }
 runtime = { id = "org.beryx.runtime", version = "1.13.0" }
 gitarchive-tomarkdown = { id = "org.openrndr.extra.gitarchiver.tomarkdown", version.ref = "orx" }
 versions = { id = "com.github.ben-manes.versions", version = "0.50.0" }
+graalvm-nativeimage = "org.graalvm.buildtools.native:0.10.3"
 

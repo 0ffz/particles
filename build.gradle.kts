@@ -151,6 +151,7 @@ tasks {
             exclude(dependency("com.fasterxml.jackson.core:jackson-databind:.*"))
             exclude(dependency("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:.*"))
             exclude(dependency("org.bytedeco:.*"))
+            exclude(project(":particles-dsl"))
         }
     }
 }

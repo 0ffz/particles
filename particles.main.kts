@@ -1,7 +1,8 @@
 @file:Repository("https://repo.mineinabyss.com/snapshots/")
-@file:DependsOn("me.dvyy:particles-dsl:0.0.2")
+@file:DependsOn("me.dvyy:particles-dsl:0.0.3")
 
 import me.dvyy.particles.dsl.particles
+import me.dvyy.particles.dsl.potentials.PairwisePotentials
 import org.openrndr.color.ColorRGBa
 
 particles {

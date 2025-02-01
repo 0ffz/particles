@@ -38,14 +38,14 @@ class ParticlesDSL(
         name: String,
         color: ColorRGBa,
         radius: Double,
-    ): ParticleType {
-        return ParticleType(
-            name = name,
-            color = color,
-            radius = radius,
-            id = particleTypes.size.toUInt(),
-        ).also { particleTypes.add(it) }
-    }
+        distribution: Double = 1.0,
+    ) = ParticleType(
+        name = name,
+        color = color,
+        radius = radius,
+        distribution = distribution,
+        id = particleTypes.size.toUInt(),
+    ).also { particleTypes.add(it) }
 
     fun interactions(block: ParticleInteractions.() -> Unit) {
         interactions.block()

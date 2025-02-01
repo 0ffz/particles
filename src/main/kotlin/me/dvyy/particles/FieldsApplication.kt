@@ -8,8 +8,6 @@ import me.dvyy.particles.scripting.ParticlesScripting
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.Drawer
-import org.openrndr.draw.drawThread
-import org.openrndr.draw.launch
 import org.openrndr.extra.color.presets.DIM_GRAY
 import org.openrndr.extra.gui.GUI
 import org.openrndr.extra.gui.GUIAppearance
@@ -18,13 +16,6 @@ import kotlin.io.path.Path
 
 class FieldsApplication {
     val scripting = ParticlesScripting()
-    val managerExtension = object: Extension {
-        override var enabled: Boolean = true
-
-        override fun beforeDraw(drawer: Drawer, program: Program) {
-
-        }
-    }
 
     var program: Program? = null
 
@@ -71,25 +62,26 @@ class FieldsApplication {
         configure {
 //            fullscreen = if (config.application.fullscreen) Fullscreen.CURRENT_DISPLAY_MODE else Fullscreen.DISABLED
             windowResizable = true
-//            width = config.application.width
-//            height = config.application.height
+            width = 1280
+            height = 720
             vsync = false
         }
 
         this@FieldsApplication.program = program {
             window.presentationMode = PresentationMode.MANUAL
+//            extend(ProjectChooser {
+//                loadProjectFromPath()
+//            })
+            loadProjectFromPath()
 
-//            this.dispatcher.launch {
-                loadProjectFromPath()
+//            keyboard.keyDown.listen {
+//                if (it.name == "s") {
+//                    program.launch {
+//                        closeProject()
+//                        loadProjectFromPath()
+//                    }
+//                }
 //            }
-            keyboard.keyDown.listen {
-                if (it.name == "s") {
-                    program.launch {
-                        closeProject()
-                        loadProjectFromPath()
-                    }
-                }
-            }
         }
         SimulationConstants.restartEvent.listen {
             println("Restarting simulation...")

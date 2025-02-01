@@ -18,6 +18,6 @@ jobs:
           fetch-depth: 0
       - uses: MineInAbyss/publish-action@develop
         with:
-          build-tasks: 'shadowDistZip'
+          build-tasks: 'shadowDistZip publish'
           release-files: |
             build/distributions/*.zip

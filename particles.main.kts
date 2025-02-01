@@ -17,6 +17,7 @@ particles {
         name = "oxygen",
         color = ColorRGBa.RED,
         radius = 5.0,
+        distribution = 2.0,
     )
 
     val lennardJones = PairwisePotentials.LennardJones

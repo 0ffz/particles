@@ -98,8 +98,19 @@ class FieldsGPU(
     val cellOffsets = Buffers.uInt(count)
     val particleTypes = Buffers.uInt(count, "particleType").apply {
         put {
+            val distTotal = config.particleTypes.sumOf { it.distribution }
+            val counts = config.particleTypes
+                .map { ((it.distribution / distTotal) * count).toInt() }
+
+            // Add particles based on distribution, ensuring we always get exactly `count` particles
+            var type = 0
+            var offset = 0
             repeat(count) {
-                write(it % config.particleTypes.size)
+                write(type)
+                if (it - offset >= counts[type] && it != counts.lastIndex) {
+                    type++
+                    offset = it
+                }
             }
         }
     }
@@ -236,8 +247,8 @@ class FieldsGPU(
                 val currTime = System.nanoTime()
                 if (currTime - lastRendered > 1e9 / drawRateBias) {
                     window.requestDraw()
-                    finish()
                     lastRendered = System.nanoTime()
+                    finish()
                 }
 
 //                val curr = System.nanoTime()

@@ -1,7 +1,8 @@
 package me.dvyy.particles.helpers
 
-import me.dvyy.particles.dsl.ParticlesConfiguration
+import me.dvyy.particles.dsl.ParticlesConfig
 import org.intellij.lang.annotations.Language
+import org.openrndr.color.ColorRGBa
 import org.openrndr.draw.*
 
 object Drawing {
@@ -9,7 +10,7 @@ object Drawing {
         geometry: VertexBuffer,
         newPositions: VertexBuffer,
         types: VertexBuffer,
-        configuration: ParticlesConfiguration,
+        configuration: ParticlesConfig,
         colorBuffer: VertexBuffer,
         count: Int,
     ) = isolated {
@@ -20,7 +21,7 @@ object Drawing {
                     out uint particleType;
                 
                     const float[] sizes = float[](
-                        ${configuration.particleTypes.joinToString(", ") { "${it.radius}" }}
+                        ${configuration.particles.values.joinToString(", ") { "${it.radius}" }}
                     );
                 """.trimIndent()
             )
@@ -43,7 +44,10 @@ object Drawing {
                 flat in uint particleType;
                 
                 const vec4[] colors = vec4[](
-                    ${configuration.particleTypes.joinToString(", ") { "vec4(${it.color.r}, ${it.color.g}, ${it.color.b}, ${it.color.alpha})" }}
+                    ${configuration.particles.values.joinToString(", ") {
+                        val color = ColorRGBa.fromHex(it.color)
+                        "vec4(${color.r}, ${color.g}, ${color.b}, ${color.alpha})" }
+                    }
                 );
                 """.trimIndent()
             )

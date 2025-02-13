@@ -1,8 +1,7 @@
 package me.dvyy.particles.shaders
 
-import me.dvyy.particles.SimulationConstants
 import me.dvyy.particles.SimulationSettings
-import me.dvyy.particles.dsl.ParticlesConfiguration
+import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.Helpers
 import org.openrndr.draw.VertexBuffer
 import kotlin.io.path.Path
@@ -17,19 +16,22 @@ class FieldsSimulation(
     val particle2CellKey: VertexBuffer,
     val cellOffsets: VertexBuffer,
     val colorBuffer: VertexBuffer,
-    config: ParticlesConfiguration,
+    config: ParticlesConfig,
 ) {
     val fieldsShader = Helpers.computeShader(
         Path("/data/compute-shaders/fields.comp"),
         "fields",
         templates = mapOf(
+            "uniforms" to config.pairwiseInteraction.joinToString("\n") { interaction ->
+                interaction.uniformStrings()
+            },
             "forceFunctions" to config.functions.joinToString(separator = "\n") { it.render() },
-            "forceCalculations" to config.interactions.joinToString(separator = "\n") { interaction ->
+            "forceCalculations" to config.pairwiseInteraction.joinToString(separator = "\n") { interaction ->
                 """
-                case 0x${interaction.hash}: {
+                case 0x${interaction.type.hash}: {
                     forceBetweenParticles += ${
                     interaction.functions.joinToString(separator = " + ") {
-                        "${it.function.name}(dist${it.getParameters().joinToString(prefix = ", ", separator = ", ")})"
+                        it.renderFunctionCall()
                     }
                 };
                     break;
@@ -51,6 +53,12 @@ class FieldsSimulation(
         prevPositions: VertexBuffer,
         particleTypes: VertexBuffer,
     ) = fieldsShader.apply {
+//        configurableUniforms.forEach {
+////            when(val default = it.parameter.default) {
+////                is Double -> uniform(it.uniformName, default)
+////            }
+//            uniform(it.uniformName, (it.parameter.default as String).toDouble())
+//        }
         uniform("dT", SimulationSettings.deltaT)
         uniform("maxForce", SimulationSettings.maxForce)
         uniform("maxVelocity", SimulationSettings.maxVelocity)

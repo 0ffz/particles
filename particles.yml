@@ -1,0 +1,22 @@
+## yaml-language-server: $schema=http://raw.githubusercontent.com/MineInAbyss/plugin-schemas/refs/heads/master/generated/mythicmobs.json
+particles:
+  hydrogen:
+    color: ffffff
+    radius: 5.0
+  oxygen:
+    color: ff0000
+    radius: 8.0
+    distribution: 5.0
+interactions:
+  hydrogen-oxygen:
+    lennardJones:
+      sigma: !param 5.0
+      epsilon: 5.0
+  hydrogen-hydrogen:
+    lennardJones:
+      sigma: !param 5.0
+      epsilon: !param 5.0
+  oxygen-oxygen:
+    lennardJones:
+      sigma: 10.0
+      epsilon: 5.0

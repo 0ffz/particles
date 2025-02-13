@@ -11,6 +11,8 @@ uniform int count;
 uniform float maxForce;
 uniform float maxVelocity;
 
+//{{ uniforms }}
+
 layout (binding = 0) buffer particle2CellKeyBuffer {
     uint particle2CellKey[];
 };

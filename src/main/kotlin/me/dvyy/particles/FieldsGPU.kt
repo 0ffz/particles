@@ -2,7 +2,7 @@ package me.dvyy.particles
 
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
-import me.dvyy.particles.dsl.ParticlesConfiguration
+import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.Drawing.offsetGeometry
 import me.dvyy.particles.shaders.FieldsSimulation
@@ -23,7 +23,7 @@ import kotlin.math.sqrt
 
 class FieldsGPU(
     val screenSize: Rectangle,
-    val config: ParticlesConfiguration,
+    val config: ParticlesConfig,
     val onResetRequested: () -> Unit,
 ) : Extension {
     override var enabled = true
@@ -98,8 +98,8 @@ class FieldsGPU(
     val cellOffsets = Buffers.uInt(count)
     val particleTypes = Buffers.uInt(count, "particleType").apply {
         put {
-            val distTotal = config.particleTypes.sumOf { it.distribution }
-            val counts = config.particleTypes
+            val distTotal = config.particles.values.sumOf { it.distribution }
+            val counts = config.particles.values
                 .map { ((it.distribution / distTotal) * count).toInt() }
 
             // Add particles based on distribution, ensuring we always get exactly `count` particles

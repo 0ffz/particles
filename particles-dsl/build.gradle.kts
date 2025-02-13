@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinx.serialization)
     `maven-publish`
 }
 
@@ -26,7 +27,7 @@ repositories {
 
 dependencies {
     val openRndrVersion = libs.versions.openrndr.get()
-    api("org.openrndr:openrndr-color:$openRndrVersion")
+//    api("org.openrndr:openrndr-color:$openRndrVersion")
     implementation("com.charleskorn.kaml:kaml:0.67.0")
 }
 

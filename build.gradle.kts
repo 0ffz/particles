@@ -110,15 +110,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)
     implementation(libs.kotlin.logging)
+    implementation("com.charleskorn.kaml:kaml:0.67.0")
 
     runtimeOnly(libs.slf4j.simple)
     testImplementation(libs.junit)
-
-    // kotlin scripting
-    val kotlinVersion = "2.1.0"
-    implementation("org.jetbrains.kotlin:kotlin-scripting-common:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm:$kotlinVersion")
-    implementation("org.jetbrains.kotlin:kotlin-scripting-jvm-host:$kotlinVersion")
 }
 
 // ------------------------------------------------------------------------------------------------------------------ //
@@ -223,7 +218,7 @@ class Openrndr {
             }
             if ("orx-tensorflow" in orxFeatures) runtimeOnly("org.openrndr.extra:$orxTensorflowBackend-natives-$os:$orxVersion")
             if ("orx-kinect-v1" in orxFeatures) runtimeOnly(orxNatives("orx-kinect-v1"))
-            if ("orx-olive" in orxFeatures) implementation(libs.kotlin.script.runtime)
+//            if ("orx-olive" in orxFeatures) implementation(libs.kotlin.script.runtime)
         }
     }
 }

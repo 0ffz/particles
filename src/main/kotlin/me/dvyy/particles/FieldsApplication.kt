@@ -1,25 +1,27 @@
 package me.dvyy.particles
 
-import me.dvyy.particles.dsl.ParticlesConfiguration
-import me.dvyy.particles.dsl.ParticlesDSL
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.decodeFromStream
+import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.extensions.CustomCamera2D
 import me.dvyy.particles.extensions.FPSDisplay
-import me.dvyy.particles.scripting.ParticlesScripting
-import org.openrndr.*
+import org.openrndr.PresentationMode
+import org.openrndr.Program
+import org.openrndr.application
 import org.openrndr.color.ColorRGBa
-import org.openrndr.draw.Drawer
 import org.openrndr.extra.color.presets.DIM_GRAY
 import org.openrndr.extra.gui.GUI
 import org.openrndr.extra.gui.GUIAppearance
+import org.openrndr.launch
 import org.openrndr.panel.style.defaultStyles
 import kotlin.io.path.Path
+import kotlin.io.path.inputStream
 
 class FieldsApplication {
-    val scripting = ParticlesScripting()
-
     var program: Program? = null
 
-    fun openProject(config: ParticlesConfiguration) = program!!.apply {
+    fun openProject(config: ParticlesConfig) = program!!.apply {
+        val parameters = YamlParameters(Path("parameters.yml"), config.configurableUniforms)
         // Create simulation settings and attach to the gui
         val gui = GUI(
             appearance = GUIAppearance(
@@ -53,9 +55,9 @@ class FieldsApplication {
     }
 
     fun loadProjectFromPath() {
-        val defaultPath = Path("particles.main.kts")
-        val dsl = scripting.evalResult<ParticlesDSL>(defaultPath.toFile()) ?: return
-        openProject(dsl.build())
+        val defaultPath = Path("particles.yml")
+        val config = Yaml.default.decodeFromStream<ParticlesConfig>(defaultPath.inputStream())
+        openProject(config)
     }
 
     fun start() = application {

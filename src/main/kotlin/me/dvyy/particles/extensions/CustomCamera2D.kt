@@ -15,7 +15,7 @@ import org.openrndr.math.transforms.buildTransform
 
 class CustomCamera2D(
     val scrollRate: Double = 0.1,
-    val gui: GUI,
+//    val gui: GUI,
 ) : Extension, ChangeEvents {
     override var enabled = true
 
@@ -39,7 +39,8 @@ class CustomCamera2D(
             rotationCenter = it.position
         }
         mouse.dragged.listen {
-            if(gui.visible && it.position.x < gui.appearance.barWidth) return@listen
+            if(it.position.x < 200) return@listen
+//            if(gui.visible && it.position.x < gui.appearance.barWidth) return@listen
             if (!it.propagationCancelled) {
                 when (it.button) {
                     MouseButton.LEFT -> view = buildTransform {

@@ -1,17 +1,17 @@
 simulation:
-  dT: "0.172"
-  maxForce: "26445.8"
+  dT: "0.001"
+  maxForce: "50000.0"
   maxVelocity: "100.0"
 interactions:
   hydrogen-oxygen:
     lennardJones:
-      sigma: "100.0"
-      epsilon: "60.0"
+      sigma: "8.0"
+      epsilon: "1.0"
   hydrogen-hydrogen:
     lennardJones:
-      sigma: "22.0"
-      epsilon: "42.0"
+      sigma: "23.0"
+      epsilon: "57.0"
   oxygen-oxygen:
     lennardJones:
-      sigma: "6.0"
-      epsilon: "29.0"
+      sigma: "81.0"
+      epsilon: "44.0"

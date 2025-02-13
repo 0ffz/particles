@@ -54,6 +54,7 @@ class FieldsSimulation(
     ) = fieldsShader.apply {
         parameters.dirtyUniforms.forEach {
             uniform(it.uniform.uniformName, (it.value as String).toDouble())
+            it.dirty = false
         }
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
         buffer("cellOffsetsBuffer", cellOffsets)

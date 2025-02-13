@@ -8,7 +8,7 @@ import org.openrndr.extra.parameters.DoubleParameter
 //@Description("Live simulation settings")
 class SimulationSettings {
     val uniforms = listOf(
-        UniformParameter.from(String.serializer(), "float", "dT", "simulation.dT", "0.001", precision = 3, range = 0.0..0.1),
+        UniformParameter.from(String.serializer(), "float", "dT", "simulation.dT", "0.001", precision = 4, range = 0.0..0.1),
         UniformParameter.from(String.serializer(), "float", "maxForce", "simulation.maxForce", "50000.0", range = 0.0..50000.0),
         UniformParameter.from(String.serializer(), "float", "maxVelocity", "simulation.maxVelocity", "100.0", range = 0.0..100.0),
     )

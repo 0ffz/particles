@@ -3,20 +3,12 @@ package me.dvyy.particles
 import com.charleskorn.kaml.Yaml
 import com.charleskorn.kaml.decodeFromStream
 import me.dvyy.particles.dsl.ParticlesConfig
-import me.dvyy.particles.dsl.pairwise.UniformParameter
 import me.dvyy.particles.extensions.CustomCamera2D
 import me.dvyy.particles.extensions.FPSDisplay
 import org.openrndr.*
 import org.openrndr.color.ColorRGBa
-import org.openrndr.extra.color.presets.DIM_GRAY
-import org.openrndr.extra.gui.GUI
-import org.openrndr.extra.gui.GUIAppearance
 import org.openrndr.panel.controlManager
-import org.openrndr.panel.elements.Range
-import org.openrndr.panel.elements.button
-import org.openrndr.panel.elements.clicked
-import org.openrndr.panel.elements.div
-import org.openrndr.panel.elements.slider
+import org.openrndr.panel.elements.*
 import org.openrndr.panel.style.*
 import org.openrndr.panel.style.Display
 import java.util.concurrent.atomic.AtomicInteger
@@ -32,21 +24,19 @@ class FieldsApplication {
             SimulationSettings().uniforms + config.configurableUniforms
         )
         // Create simulation settings and attach to the gui
-        val gui = GUI(
-            appearance = GUIAppearance(
-                baseColor = ColorRGBa.DIM_GRAY,
-            ),
-            defaultStyles = defaultStyles(
-                controlFontSize = 17.0,
-            )
-        ).apply {
-            compartmentsCollapsedByDefault = false
-
-            add(SimulationConstants)
-//            add(SimulationSettings)
-        }
-        val step = AtomicInteger(0)
-        extend(CustomCamera2D(gui = gui))
+//        val gui = GUI(
+//            appearance = GUIAppearance(
+//                baseColor = ColorRGBa.DIM_GRAY,
+//            ),
+//            defaultStyles = defaultStyles(
+//                controlFontSize = 17.0,
+//            )
+//        ).apply {
+//            compartmentsCollapsedByDefault = false
+//
+//            add(SimulationConstants)
+////            add(SimulationSettings)
+//        }
 //        extend(gui) // Load saved values right away
         extend(controlManager {
             controlManager.fontManager.register("JetBrains Mono", resourceUrl("/data/fonts/default.otf"))
@@ -82,11 +72,11 @@ class FieldsApplication {
                                         value = it.toDouble()
                                     }
                                     events.valueChanged.listen {
-                                        uniform.set(it.newValue.toString() )
+                                        uniform.set(it.newValue.toString())
                                     }
                                 }
                             }
-                    }
+                        }
                     button(label = "Save") {
                         clicked {
                             parameters.save()
@@ -110,7 +100,9 @@ class FieldsApplication {
                 }
             }
         })
-        extend(FPSDisplay(gui) { step.get() })
+        val step = AtomicInteger(0)
+        extend(CustomCamera2D())
+        extend(FPSDisplay() { step.get() })
         extend(FieldsGPU(drawer.bounds, config, parameters, onResetRequested = {
             program.launch {
                 closeProject()

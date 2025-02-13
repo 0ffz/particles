@@ -11,7 +11,7 @@ import org.openrndr.math.Matrix44
 import org.openrndr.resourceUrl
 
 class FPSDisplay(
-    val gui: GUI,
+//    val gui: GUI,
     val getCurrentStep: () -> Int,
 ) : Extension {
     override var enabled: Boolean = true
@@ -35,7 +35,7 @@ class FPSDisplay(
 
             drawer.fill = ColorRGBa.PINK
             val now = System.nanoTime()
-            val x = (if(gui.visible) gui.appearance.barWidth.toDouble() else 0.0) + 2.0
+            val x = 200.0 //(if(gui.visible) gui.appearance.barWidth.toDouble() else 0.0) + 2.0
             drawer.text("fps: ${(frames / ((now - startTime) / 1e9)).toInt()}", y = 20.0, x = x)
             drawer.text("simulation rate: ${(getCurrentStep() / ((now - startTime) / 1e9)).toInt()}", y = 40.0, x = x)
         }

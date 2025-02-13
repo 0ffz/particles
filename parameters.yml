@@ -1,8 +1,17 @@
-particles:
-  hydrogen: 1000
-hydrogen-oxygen:
-  sigma: 5.0
-  epsilon: 1000.0
-hydrogen-hydrogen:
-  sigma: 5.0
-  epsilon: 1.0
+simulation:
+  dT: "0.172"
+  maxForce: "26445.8"
+  maxVelocity: "100.0"
+interactions:
+  hydrogen-oxygen:
+    lennardJones:
+      sigma: "100.0"
+      epsilon: "60.0"
+  hydrogen-hydrogen:
+    lennardJones:
+      sigma: "22.0"
+      epsilon: "42.0"
+  oxygen-oxygen:
+    lennardJones:
+      sigma: "6.0"
+      epsilon: "29.0"

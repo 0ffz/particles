@@ -1,6 +1,6 @@
 package me.dvyy.particles.shaders
 
-import me.dvyy.particles.SimulationSettings
+import me.dvyy.particles.YamlParameters
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.Helpers
 import org.openrndr.draw.VertexBuffer
@@ -10,12 +10,11 @@ class FieldsSimulation(
     val gridSize: Double,
     val gridRows: Int,
     val gridCols: Int,
-    val settings: SimulationSettings,
     val count: Int,
     val computeWidth: Int,
     val particle2CellKey: VertexBuffer,
-    val cellOffsets: VertexBuffer,
     val colorBuffer: VertexBuffer,
+    val parameters: YamlParameters,
     config: ParticlesConfig,
 ) {
     val fieldsShader = Helpers.computeShader(
@@ -53,15 +52,9 @@ class FieldsSimulation(
         prevPositions: VertexBuffer,
         particleTypes: VertexBuffer,
     ) = fieldsShader.apply {
-//        configurableUniforms.forEach {
-////            when(val default = it.parameter.default) {
-////                is Double -> uniform(it.uniformName, default)
-////            }
-//            uniform(it.uniformName, (it.parameter.default as String).toDouble())
-//        }
-        uniform("dT", SimulationSettings.deltaT)
-        uniform("maxForce", SimulationSettings.maxForce)
-        uniform("maxVelocity", SimulationSettings.maxVelocity)
+        parameters.dirtyUniforms.forEach {
+            uniform(it.uniform.uniformName, (it.value as String).toDouble())
+        }
 //        buffer("sortedParticleIndicesBuffer", sortedParticleIndices)
         buffer("cellOffsetsBuffer", cellOffsets)
         buffer("particle2CellKeyBuffer", particle2CellKey)

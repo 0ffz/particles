@@ -19,12 +19,15 @@ import org.openrndr.internal.finish
 import org.openrndr.shape.Rectangle
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.sqrt
 
 class FieldsGPU(
     val screenSize: Rectangle,
     val config: ParticlesConfig,
+    val parameters: YamlParameters,
     val onResetRequested: () -> Unit,
+    val step: AtomicInteger,
 ) : Extension {
     override var enabled = true
 
@@ -83,8 +86,8 @@ class FieldsGPU(
 //                    write(Vector2.ZERO)
                     write(
                         Random.vector2(
-                            min = -SimulationSettings.startingVelocity,
-                            max = SimulationSettings.startingVelocity
+                            min = 10.0,//-SimulationSettings.startingVelocity,
+                            max = 10.0,//SimulationSettings.startingVelocity
                         )
                     )
                 }
@@ -130,12 +133,11 @@ class FieldsGPU(
         gridSize = gridSize,
         gridRows = gridRows,
         gridCols = gridCols,
-        settings = SimulationSettings,
         count = count,
         computeWidth = computeWidth,
         particle2CellKey = particle2CellKey,
-        cellOffsets = cellOffsets,
         colorBuffer = colorBuffer,
+        parameters = parameters,
         config = config,
     )
 
@@ -214,7 +216,7 @@ class FieldsGPU(
                 val currPositions = positionBuffers[swapIndex % 2]
                 val prevPositions = positionBuffers[(swapIndex + 1) % 2]
                 swapIndex++
-                SimulationSettings.step++
+                step.incrementAndGet()
 
                 // Write and sort grid buffers
                 updateIndices.run(currPositions)

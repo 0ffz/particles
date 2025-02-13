@@ -1,23 +1,47 @@
 package me.dvyy.particles.dsl.pairwise
 
+import kotlinx.serialization.KSerializer
 import me.dvyy.particles.dsl.Parameter
-import me.dvyy.particles.dsl.glsl.GLSLParameter
 
-data class UniformParameter(
+data class UniformParameter<T>(
     val name: String,
     val type: String,
-    val hash: String,
-    val parameter: Parameter.FromParams<*>
+    val hash: String? = null,
+    val parameter: Parameter.FromParams<T>,
+    val precision : Int = 0,
+    val range: ClosedFloatingPointRange<Double> = 0.0..100.0,
 ) {
-    val uniformName = "${name}_$hash"
+    val uniformName = if (hash != null) "${name}_$hash" else name
+
+    companion object {
+        fun <T> from(
+            serializer: KSerializer<T>,
+            type: String,
+            name: String,
+            path: String,
+            default: T,
+            precision : Int = 1,
+            range: ClosedFloatingPointRange<Double> = 0.0..100.0,
+        ): UniformParameter<T> {
+            return UniformParameter(
+                name,
+                type,
+                null,
+                Parameter.FromParams<T>(path, serializer, default),
+                precision,
+                range
+            )
+        }
+    }
 }
+
 class PairwiseInteractions(
     val type: ParticlePair,
     val functions: List<FunctionWithParams>,
 ) {
-    val uniforms: List<UniformParameter> = functions.flatMap {
+    val uniforms: List<UniformParameter<*>> = functions.flatMap {
         it.parameters.mapNotNull { (glsl, param) ->
-            if(param !is Parameter.FromParams<*>) return@mapNotNull null
+            if (param !is Parameter.FromParams<*>) return@mapNotNull null
             UniformParameter(
                 glsl.name,
                 glsl.type,

@@ -11,12 +11,12 @@ interactions:
   hydrogen-oxygen:
     lennardJones:
       sigma: !param 5.0
-      epsilon: 5.0
+      epsilon: !param 5.0
   hydrogen-hydrogen:
     lennardJones:
       sigma: !param 5.0
       epsilon: !param 5.0
   oxygen-oxygen:
     lennardJones:
-      sigma: 10.0
-      epsilon: 5.0
+      sigma: !param 10.0
+      epsilon: !param 5.0

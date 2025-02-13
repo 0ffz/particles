@@ -36,6 +36,6 @@ data class ParticlesConfig(
     }
 
     @Transient
-    val configurableUniforms: List<UniformParameter> = pairwiseInteraction
+    val configurableUniforms: List<UniformParameter<*>> = pairwiseInteraction
         .flatMap { it.uniforms }
 }

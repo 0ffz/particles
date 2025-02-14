@@ -1,4 +1,4 @@
-package template
+package me.dvyy.particles.compute
 
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.KslFloat4

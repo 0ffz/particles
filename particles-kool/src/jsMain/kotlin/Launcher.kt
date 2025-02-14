@@ -1,14 +1,7 @@
 import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJs
 import de.fabmax.kool.KoolConfigJs.Backend
-import de.fabmax.kool.modules.ksl.KslBlinnPhongShader
-import de.fabmax.kool.modules.ksl.KslPbrShader
-import de.fabmax.kool.pipeline.backend.RenderBackend
-import de.fabmax.kool.scene.addColorMesh
-import de.fabmax.kool.scene.addMesh
-import de.fabmax.kool.scene.defaultOrbitCamera
-import de.fabmax.kool.scene.scene
-import template.launchApp
+import me.dvyy.particles.launchApp
 
 /**
  * JS main function / app entry point: Creates a new KoolContext (with optional platform-specific configuration) and

@@ -9,13 +9,26 @@ object Buffers {
     fun positions(count: Int, width: Int, height: Int) =  StorageBuffer1d(count, GpuType.FLOAT4).apply {
         for (i in 0 until count) {
             this[i] =
-                Vec4f(Random.Default.nextInt(width).toFloat(), -Random.Default.nextInt(height).toFloat(), -10f, 0f)
+                Vec4f(Random.Default.nextInt(width).toFloat(), Random.Default.nextInt(height).toFloat(), -10f, 0f)
         }
     }
 
-    fun integers(count: Int) = StorageBuffer1d(count, GpuType.INT1)/*.apply {
+    fun velocities(count: Int, maxVelocity: Double) = StorageBuffer1d(count, GpuType.FLOAT4).apply {
         for (i in 0 until count) {
-            this[i] = 0
+            //TODO actually cap at maxVelocity
+            this[i] = Vec4f(
+                Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
+                Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
+                0f,
+                0f,
+            )
         }
-    }*/
+    }
+
+    fun integers(count: Int) = StorageBuffer1d(count, GpuType.INT1)
+    fun float4(count: Int) = StorageBuffer1d(count, GpuType.FLOAT4).apply {
+        for (i in 0 until count) {
+            this[i] = Vec4f(1f, 1f, 1f, 1f)
+        }
+    }
 }

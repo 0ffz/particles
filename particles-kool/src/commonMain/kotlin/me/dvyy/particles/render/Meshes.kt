@@ -1,19 +1,15 @@
 package me.dvyy.particles.render
 
 import de.fabmax.kool.math.Vec3f
+import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.modules.ksl.KslShader
 import de.fabmax.kool.modules.ksl.blocks.cameraData
-import de.fabmax.kool.modules.ksl.lang.KslFloat4
-import de.fabmax.kool.modules.ksl.lang.plus
-import de.fabmax.kool.modules.ksl.lang.times
-import de.fabmax.kool.modules.ksl.lang.toInt1
-import de.fabmax.kool.modules.ksl.lang.xyz
+import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.StorageBuffer1d
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
-import de.fabmax.kool.util.Color
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -21,7 +17,11 @@ import kotlin.math.sin
 object Meshes {
     fun particleMeshInstances(count: Int) = MeshInstanceList(count).apply { numInstances = count }
 
-    fun particleMesh(positions: StorageBuffer1d, instances: MeshInstanceList) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, instances = instances).apply {
+    fun particleMesh(
+        positions: StorageBuffer1d,
+        colors: StorageBuffer1d,
+        instances: MeshInstanceList,
+    ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, instances = instances).apply {
 //            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
 //                pipeline { cullMethod = CullMethod.NO_CULLING }
 ////                lightingCfg.ambientLight = AmbientLight.Uniform(MdColor.LIGHT_BLUE tone 400)
@@ -46,32 +46,37 @@ object Meshes {
 //            }).apply {
 //                storage1d("positionsBuffer", positionsBuffer)
 //            }
-            shader = KslShader("test") {
-                vertexStage {
-                    main {
-                        val camData = cameraData()
-                        val positionsBuffer = storage1d<KslFloat4>("positionsBuffer")
-                        val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
-                        val offset = int1Var(inInstanceIndex.toInt1())
-                        val positionOffset = positionsBuffer[offset].xyz
-                        outPosition set camData.viewProjMat * float4Value(
-                            position + positionOffset,
-                            1f.const
-                        )
-                    }
+        shader = KslShader("test") {
+            val interColor = interStageFloat4()
+
+            vertexStage {
+                main {
+                    val camData = cameraData()
+                    val positionsBuffer = storage1d<KslFloat4>("positionsBuffer")
+                    val colorsBuffer = storage1d<KslFloat4>("colorsBuffer")
+                    val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
+                    val offset = int1Var(inInstanceIndex.toInt1())
+                    val positionOffset = positionsBuffer[offset].xyz
+                    outPosition set camData.viewProjMat * float4Value(
+                        position + positionOffset.times(Vec3f(1f, -1f, 1f).const),
+                        1f.const
+                    )
+                    interColor.input set colorsBuffer[offset]
                 }
-                fragmentStage {
-                    main {
-                        colorOutput(Color("ff0000").toVec4f().const)
-                    }
+            }
+            fragmentStage {
+                main {
+                    colorOutput(interColor.output)//Color("ff0000").toVec4f().const)
                 }
-            }.apply {
-                storage1d("positionsBuffer", positions)
             }
-            generate {
-                fillPolygon(generateCirclePoints(10, radius = 1.5f))
-            }
+        }.apply {
+            storage1d("positionsBuffer", positions)
+            storage1d("colorsBuffer", colors)
         }
+        generate {
+            fillPolygon(generateCirclePoints(10, radius = 1f))
+        }
+    }
 
     fun generateCirclePoints(steps: Int, radius: Float = 1f): List<Vec3f> {
         val points = mutableListOf<Vec3f>()

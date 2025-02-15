@@ -6,8 +6,9 @@ import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.pipeline.StorageBuffer1d
 import de.fabmax.kool.scene.Scene
-import de.fabmax.kool.util.launchOnMainThread
+import de.fabmax.kool.util.logI
 import de.fabmax.kool.util.releaseWith
+import me.dvyy.particles.FieldsBuffers
 
 const val WORK_GROUP_SIZE = 64
 
@@ -26,7 +27,7 @@ object GPUSort {
     val resetBuffersShader = KslComputeShader("ResetBuffers") {
         computeStage(WORK_GROUP_SIZE) {
             val gridSize = uniformFloat1("gridSize")
-            val gridCols = uniformInt1("gridSize")
+            val gridCols = uniformInt1("gridCols")
             val keys = storage1d<KslInt1>("keys")
             val indices = storage1d<KslInt1>("indices")
             val positions = storage1d<KslFloat4>("positions")
@@ -50,53 +51,60 @@ object GPUSort {
             }
         }
     }
+
     val shader = KslComputeShader("GPUSort") {
         computeStage(WORK_GROUP_SIZE) {
-//        val groupWidth = uniformInt1("groupWidth")
-//        val groupHeight = uniformInt1("groupHeight")
-//        val stepIndex = uniformInt1("stepIndex")
+            val numValues = uniformInt1("numValues")
+            val groupWidth = uniformInt1("groupWidth")
+            val groupHeight = uniformInt1("groupHeight")
+            val stepIndex = uniformInt1("stepIndex")
 
             val keys = storage1d<KslInt1>("keys")
             val indices = storage1d<KslInt1>("indices")
-
-            val numValues = uniformInt1("numValues")
-            val stage = uniformInt1("stage")
-            val passOfStage = uniformInt1("passOfStage")
+            val currPositions = storage1d<KslFloat4>("currPositions")
+            val currVelocities = storage1d<KslFloat4>("currVelocities")
+            val prevPositions = storage1d<KslFloat4>("prevPositions")
+            val prevVelocities = storage1d<KslFloat4>("prevVelocities")
 
             main {
-                // get global invocation id
-                val idx = int1Var(inGlobalInvocationId.x.toInt1())
+                val i = int1Var(inGlobalInvocationId.x.toInt1())
+                val h = int1Var(i and (groupWidth - 1.const))
+                val indexLow = int1Var(h + (groupHeight + 1.const) * (i / groupWidth))
+                val indexHigh = int1Var(0.const)
+                `if`(stepIndex eq 0.const) {
+                    indexHigh set indexLow + (groupHeight - 2.const * h)
+                }.`else` {
+                    indexHigh set indexLow + (groupHeight + 1.const) / 2.const
+                }
 
-                // pairDistance = 1 << (stage - passOfStage)
-                val diff = int1Var(stage - passOfStage)
-                val pairDistance = int1Var(1.const shl diff)
+                `if`(indexHigh lt numValues) {
+                    val keyLow = int1Var(keys[indexLow])
+                    val keyHigh = int1Var(keys[indexHigh])
 
-                // blockWidth = 2 * pairDistance
-                val blockWidth = int1Var(2.const * pairDistance)
+                    `if`(keyLow gt keyHigh) {
+                        val sortLow = int1Var(indices[indexLow])
+                        val currPositionsLow = float4Var(currPositions[indexLow])
+                        val currVelocitiesLow = float4Var(currVelocities[indexLow])
+                        val prevPositionsLow = float4Var(prevPositions[indexLow])
+                        val prevVelocitiesLow = float4Var(prevVelocities[indexLow])
 
-                // leftId = (idx / pairDistance) * blockWidth + (idx rem pairDistance)
-                val leftId = int1Var((idx / pairDistance) * blockWidth + idx.rem(pairDistance))
-                // rightId = leftId + pairDistance
-                val rightId = int1Var(leftId + pairDistance)
-
-                `if`(rightId lt numValues) {
-                    // Determine sorting direction: ascending if ((idx / (1 << stage)) & 1) == 0
-                    val temp = int1Var(1.const shl stage)
-                    val ascending = bool1Var(((idx / temp) and 1.const) eq 0.const)
-
-                    // Load the two elements from the buffer
-                    val leftIndex = int1Var(indices[leftId])
-                    val rightIndex = int1Var(indices[rightId])
-                    val leftKey = int1Var(keys[leftId])
-                    val rightKey = int1Var(keys[rightId])
-
-                    // Decide whether to swap based on the comparison and the sort order
-                    val needSwap = bool1Var((leftKey gt rightKey) eq ascending)
-                    `if`(needSwap) {
-                        indices[leftId] = rightIndex
-                        indices[rightId] = leftIndex
-                        keys[leftId] = rightKey
-                        keys[rightId] = leftKey
+                        val sortHigh = int1Var(indices[indexHigh])
+                        val currPositionsHigh = float4Var(currPositions[indexHigh])
+                        val currVelocitiesHigh = float4Var(currVelocities[indexHigh])
+                        val prevPositionsHigh = float4Var(prevPositions[indexHigh])
+                        val prevVelocitiesHigh = float4Var(prevVelocities[indexHigh])
+                        keys[indexLow] = keyHigh
+                        keys[indexHigh] = keyLow
+                        indices[indexLow] = sortHigh
+                        indices[indexHigh] = sortLow
+                        currPositions[indexLow] = currPositionsHigh
+                        currPositions[indexHigh] = currPositionsLow
+                        currVelocities[indexLow] = currVelocitiesHigh
+                        currVelocities[indexHigh] = currVelocitiesLow
+                        prevPositions[indexLow] = prevPositionsHigh
+                        prevPositions[indexHigh] = prevPositionsLow
+                        prevVelocities[indexLow] = prevVelocitiesHigh
+                        prevVelocities[indexHigh] = prevVelocitiesLow
                     }
                 }
             }
@@ -105,42 +113,54 @@ object GPUSort {
 
     fun Scene.gpuSorting(
         count: Int,
-        keysBuffer: StorageBuffer1d,
-        indicesBuffer: StorageBuffer1d,
+        buffers: FieldsBuffers,
+        computePass: ComputePass,
     ) {
         val sorter = shader
         var keys by sorter.storage1d("keys")
         var indices by sorter.storage1d("indices")
         var numValues by sorter.uniform1i("numValues")
-        var stage by sorter.uniform1i("stage")
-        var passOfStage by sorter.uniform1i("passOfStage")
+        var groupWidthU by sorter.uniform1i("groupWidth")
+        var groupHeightU by sorter.uniform1i("groupHeight")
+        var stepIndexU by sorter.uniform1i("stepIndex")
+        var positions1 by sorter.storage1d("currPositions")
+        var positions2 by sorter.storage1d("prevPositions")
+        var velocities1 by sorter.storage1d("currVelocities")
+        var velocities2 by sorter.storage1d("prevVelocities")
 
-        keysBuffer.releaseWith(this)
-        indicesBuffer.releaseWith(this)
-//
         numValues = count
-        keys = keysBuffer
-        indices = indicesBuffer
-//
-        val pass = ComputePass("Sorting pass").apply {
+        keys = buffers.particleGridCellKeys
+        indices = buffers.sortIndices
+        positions1 = buffers.positionBuffers[0]
+        positions2 = buffers.positionBuffers[1]
+        velocities1 = buffers.velocitiesBuffers[0]
+        velocities2 = buffers.velocitiesBuffers[1]
+
+        computePass.apply {
             val numPairs = count.takeHighestOneBit() * 2
             val numStages = numPairs.countTrailingZeroBits()
-            for (stageIndex in 1..numStages) {
-                for (stepIndex in 0 until stageIndex) {
-                    addTask(sorter, numGroups = Vec3i(count / WORK_GROUP_SIZE)).onBeforeDispatch {
-                        stage = stageIndex
-                        passOfStage = stepIndex
+//            var steps = 0
+//            val maxSteps = 2
+            for (stageIndex in 0..<numStages) {
+                for (stepIndex in 0..stageIndex) {
+//                    steps++
+                    val groupWidth = 1 shl (stageIndex - stepIndex)
+                    val groupHeight = 2 * groupWidth - 1
+                    addTask(sorter, numGroups = Vec3i(numPairs / WORK_GROUP_SIZE, 1, 1)).apply {
+                        pipeline.swapPipelineData("$stageIndex, $stepIndex")
+                        groupWidthU = groupWidth
+                        groupHeightU = groupHeight
+                        stepIndexU = stepIndex
+                        onBeforeDispatch {
+//                            logI { "Dispatching $stageIndex, $stepIndex" }
+                            pipeline.swapPipelineData("$stageIndex, $stepIndex")
+                        }
                     }
+//                    if(steps >= maxSteps) return@apply
                 }
             }
         }
-        addComputePass(pass)
-//
-        launchOnMainThread {
-            keysBuffer.readbackBuffer()
-            indicesBuffer.readbackBuffer()
-            println((0 until count).map { keysBuffer.getI1(it) }.toString())
-            println((0 until count).map { indicesBuffer.getI1(it) }.toString())
-        }
+//        keysBuffer.releaseWith(this)
+//        indicesBuffer.releaseWith(this)
     }
 }

@@ -50,7 +50,7 @@ class FieldsBuffers(
  */
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
-    val count = (1_000_000 / 64) * 64
+    val count = (1_000_00 / 64) * 64
     val width = ctx.windowWidth
     val height = ctx.windowHeight
     val minGridSize = 5.0
@@ -156,11 +156,11 @@ fun launchApp(ctx: KoolContext) {
         addComputePass(sorting)
 
 //         RENDERING
-        setupUiScene(clearColor = ClearColorFill(Color("444444")))
-//        orbitCamera {
-//            minZoom = 0.0001
-//            zoom = 0.001
-//        }
+//        setupUiScene(clearColor = ClearColorFill(Color("444444")))
+        orbitCamera {
+            minZoom = 0.0001
+            zoom = 1.0
+        }
         val instances = Meshes.particleMeshInstances(count)
         addNode(Meshes.particleMesh(buffers.positionBuffers.first(), buffers.colorsBuffer, instances))
 //        onRelease {

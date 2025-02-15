@@ -1,9 +1,9 @@
 package me.dvyy.particles.render
 
 import de.fabmax.kool.math.Vec3f
-import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.modules.ksl.KslShader
 import de.fabmax.kool.modules.ksl.blocks.cameraData
+import de.fabmax.kool.modules.ksl.blocks.modelMatrix
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.StorageBuffer1d
@@ -57,10 +57,21 @@ object Meshes {
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
                     val positionOffset = positionsBuffer[offset].xyz
-                    outPosition set camData.viewProjMat * float4Value(
-                        position + positionOffset.times(Vec3f(1f, -1f, 1f).const),
-                        1f.const
-                    )
+
+                    // Extract the camera’s right and up vectors from the view matrix.
+                    // (Assuming viewMat is an orthonormal matrix, its transpose is its inverse.)
+                    val viewMat = camData.viewMat
+                    val cameraRight = float3Value(viewMat[0].x, viewMat[1].x, viewMat[2].x)
+                    val cameraUp    = float3Value(viewMat[0].y, viewMat[1].y, viewMat[2].y)
+
+                    // Compute the billboard vertex position:
+                    // The vertex’s x and y (from the quad geometry) are used to offset along the camera’s right and up directions.
+                    val worldPos = positionOffset.times(Vec3f(1f, -1f, 1f).const) + (cameraRight * position.x) + (cameraUp * position.y)
+//                    outPosition set camData.viewProjMat * modelProj * float4Value(
+//                        position + positionOffset.times(Vec3f(1f, -1f, 1f).const),
+//                        1f.const
+//                    )
+                    outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
                     interColor.input set colorsBuffer[offset]
                 }
             }
@@ -74,7 +85,7 @@ object Meshes {
             storage1d("colorsBuffer", colors)
         }
         generate {
-            fillPolygon(generateCirclePoints(10, radius = 1f))
+            fillPolygon(generateCirclePoints(10, radius = 2f))
         }
     }
 

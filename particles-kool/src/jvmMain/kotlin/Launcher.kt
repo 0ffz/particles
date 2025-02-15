@@ -11,7 +11,7 @@ fun main() = KoolApplication(
     config = KoolConfigJvm(
         windowTitle = "kool Template App",
         isVsync = false,
-        maxFrameRate = 144,
+        maxFrameRate = 90,
         renderBackend = Backend.OPEN_GL,
     )
 ) {

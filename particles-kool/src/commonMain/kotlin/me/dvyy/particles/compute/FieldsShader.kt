@@ -62,8 +62,8 @@ class FieldsShader {
                 val netForce = float2Var(float2Value(0f.const, 0f.const))
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
-                fori((-1).const, 1.const) { x ->
-                    fori((-1).const, 1.const) { y ->
+                fori((-1).const, 2.const) { x ->
+                    fori((-1).const, 2.const) { y ->
                         // Calculate the neighboring cell id as an integer
                         val localCellId = int1Var(cellId + x + (y * gridCols))
                         `if`((localCellId lt 0.const) or (localCellId ge (gridCols * gridRows)) or (cellId + y * gridCols gt gridCols * gridRows)) {
@@ -73,7 +73,7 @@ class FieldsShader {
                         fori(startIndex, count) { i ->
                             `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
                             val otherPos = float2Var(currPositions[i].xy)
-                            val otherVel = float2Var(currVelocities[i].xy)
+//                            val otherVel = float2Var(currVelocities[i].xy)
                             `if`((otherPos.x eq position.x) and (otherPos.y eq position.y)) { `continue`() }
                             val direction = float2Var(position - otherPos)
                             val dist = float1Var(length(direction))

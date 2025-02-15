@@ -50,7 +50,7 @@ class FieldsBuffers(
  */
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
-    val count = 1_0000
+    val count = (1_000_000 / 64) * 64
     val width = ctx.windowWidth
     val height = ctx.windowHeight
     val minGridSize = 5.0
@@ -155,7 +155,7 @@ fun launchApp(ctx: KoolContext) {
         }
         addComputePass(sorting)
 
-        // RENDERING
+//         RENDERING
         setupUiScene(clearColor = ClearColorFill(Color("444444")))
 //        orbitCamera {
 //            minZoom = 0.0001

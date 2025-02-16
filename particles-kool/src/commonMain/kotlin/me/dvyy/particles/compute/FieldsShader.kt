@@ -1,5 +1,6 @@
 package me.dvyy.particles.compute
 
+import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 
@@ -10,6 +11,7 @@ class FieldsShader {
             val gridSize = uniformFloat1("gridSize")
             val gridRows = uniformInt1("gridRows")
             val gridCols = uniformInt1("gridCols")
+            val gridDepth = uniformInt1("gridDepth")
             val epsilon = uniformFloat1("epsilon")
             val sigma = uniformFloat1("sigma")
             val dT = uniformFloat1("dT")
@@ -49,8 +51,8 @@ class FieldsShader {
 
                 // Load current particle properties
                 // Extract the 2D position from the stored vec4
-                val position = float2Var(currPositions[id].xy)
-                val velocity = float2Var(currVelocities[id].xy)
+                val position = float3Var(currPositions[id].xyz)
+                val velocity = float3Var(currVelocities[id].xyz)
 //                val type = int1Var(particleTypes[id])
 
                 // Compute grid indices based on the particle position
@@ -59,7 +61,7 @@ class FieldsShader {
                 // Compute the base cell id (convert to int for bounds checking)
                 val cellId = int1Var(cellId(xGrid, yGrid, gridCols))
 
-                val netForce = float2Var(float2Value(0f.const, 0f.const))
+                val netForce = float3Var(Vec3f.ZERO.const)
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
                 fori((-1).const, 2.const) { x ->
@@ -72,12 +74,12 @@ class FieldsShader {
                         val startIndex = int1Var(cellOffsets[localCellId])
                         fori(startIndex, count) { i ->
                             `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
-                            val otherPos = float2Var(currPositions[i].xy)
+                            val otherPos = float3Var(currPositions[i].xyz)
 //                            val otherVel = float2Var(currVelocities[i].xy)
                             `if`((otherPos.x eq position.x) and (otherPos.y eq position.y)) { `continue`() }
-                            val direction = float2Var(position - otherPos)
+                            val direction = float3Var(position - otherPos)
                             val dist = float1Var(length(direction))
-                            `if`(dist gt gridSize) { `continue`() }
+//                            `if`(dist gt gridSize) { `continue`() }
                             val forceBetweenParticles = float1Var(0f.const)
                             val otherType = int1Var(particleTypes[i])
                             // Compute a hash based on the particle types
@@ -91,7 +93,7 @@ class FieldsShader {
                             val invR6 = float1Var(invR * invR * invR * invR * invR * invR)
                             val invR12 = float1Var(invR6 * invR6)
                             val lennardJonesForce =
-                                float1Var(min(24f.const * epsilon * (2f.const * invR12 * invR6) / dist, maxForce))
+                                float1Var(min(24f.const * epsilon * (2f.const * invR12 - invR6) / dist, maxForce))
 
                             // TODO switch {{ forceCalculations }}
 
@@ -113,19 +115,23 @@ class FieldsShader {
 
                 // Compute next position with Verlet integration:
                 // nextPosition = position + velocity * dT + (netForce * dT^2) / 2
-                val nextPosition = float2Var(position + velocity * dT)// + ((netForce * dT * dT) / 2f.const))
+                val nextPosition = float3Var(position + velocity * dT)// + ((netForce * dT * dT) / 2f.const))
 
 //                nextPosition.x set nextPosition.x % gridCols.toFloat1() * gridSize
 //                nextPosition.y set nextPosition.y % gridRows.toFloat1() * gridSize
                 // Write back to the previous-particles buffer
                 // Here we use mod() to wrap positions inside the grid dimensions
-                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set gridSize * gridCols.toFloat1() - 1f.const  }
+                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set gridSize * gridCols.toFloat1() - 1f.const }
                 `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set gridSize * gridRows.toFloat1() - 1f.const }
                 `if`(nextPosition.x.gt(gridSize * gridCols.toFloat1())) { nextPosition.x set 1f.const }
                 `if`(nextPosition.y.gt(gridSize * gridRows.toFloat1())) { nextPosition.y set 1f.const }
+                `if`(gridDepth ne 0.const) {
+                    `if`(nextPosition.z.lt(0f.const)) { nextPosition.z set gridSize * gridDepth.toFloat1() - 1f.const }
+                    `if`(nextPosition.z.gt(gridSize * gridDepth.toFloat1())) { nextPosition.z set 1f.const }
+                }
 
-                prevPositions[id] = float4Value(nextPosition, 0f, 0f)
-                prevVelocities[id] = float4Value(velocity + netForce / 2f.const * dT, 0f, 0f)
+                prevPositions[id] = float4Value(nextPosition, 0f)
+                prevVelocities[id] = float4Value(velocity + netForce / 2f.const * dT, 0f)
                 // Update the color buffer based on the magnitude of the net force
                 colors[id] = float4Value(
                     log(length(netForce)) / (2f.const * log(1000f.const)),
@@ -146,6 +152,7 @@ class FieldsShader {
     // Uniforms
     var gridSize by shader.uniform1f("gridSize")
     var gridRows by shader.uniform1i("gridRows")
+    var gridDepth by shader.uniform1i("gridDepth")
     var gridCols by shader.uniform1i("gridCols")
     var epsilon by shader.uniform1f("epsilon")
     var sigma by shader.uniform1f("sigma")

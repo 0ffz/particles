@@ -1,14 +1,15 @@
 package me.dvyy.particles
 
 import OffsetsShader
-import ReorderBuffersShader
 import de.fabmax.kool.KoolContext
+import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec3i
+import de.fabmax.kool.math.spatial.BoundingBoxF
 import de.fabmax.kool.modules.ui2.setupUiScene
 import de.fabmax.kool.pipeline.ClearColorFill
 import de.fabmax.kool.pipeline.ComputePass
-import de.fabmax.kool.scene.OrthographicCamera
-import de.fabmax.kool.scene.defaultOrbitCamera
+import de.fabmax.kool.scene.PerspectiveCamera
+import de.fabmax.kool.scene.addLineMesh
 import de.fabmax.kool.scene.orbitCamera
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Color
@@ -24,15 +25,16 @@ import kotlin.math.sqrt
 class FieldsBuffers(
     val width: Int,
     val height: Int,
+    val depth: Int,
     val count: Int,
 ) {
     val positionBuffers = arrayOf(
-        Buffers.positions(count, width, height),
-        Buffers.positions(count, width, height)
+        Buffers.positions(count, width, height, depth),
+        Buffers.positions(count, width, height, depth)
     )
     val velocitiesBuffers = arrayOf(
-        Buffers.velocities(count, 20.0),
-        Buffers.velocities(count, 20.0),
+        Buffers.velocities(count, depth != 0, 20.0),
+        Buffers.velocities(count, depth != 0, 20.0),
     )
     val particleGridCellKeys = Buffers.integers(count)/*.apply {
         for (i in 0 until count) this[i] = count - i - 1//Random.nextInt(count)
@@ -44,16 +46,19 @@ class FieldsBuffers(
     val particleTypesBuffer = Buffers.integers(count)
     val colorsBuffer = Buffers.float4(count)
 }
+
 /**
  * Main application entry. This demo creates a small example scene, which you probably want to replace by your actual
  * game / application content.
  */
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
-    val count = (1_000_00 / 64) * 64
-    val width = ctx.windowWidth
-    val height = ctx.windowHeight
-    val minGridSize = 5.0
+    val threeDimensions = false
+    val count = (1_000_0 / 64) * 64
+    val width = 1920//ctx.windowWidth
+    val height = 1080//ctx.windowHeight
+    val depth = if (threeDimensions) ctx.windowWidth else 0
+    val minGridSize = 2.5 * 5.0
     val gridSize = run {
         val smallestSize = minGridSize
         val cols = (width / smallestSize).toInt()
@@ -64,7 +69,8 @@ fun launchApp(ctx: KoolContext) {
     }.toFloat()
     val gridCols = (width / gridSize).toInt().also { println("$it cols") }
     val gridRows = (height / gridSize).toInt().also { println("$it rows") }
-    val buffers = FieldsBuffers(width, height, count)
+    val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
+    val buffers = FieldsBuffers(width, height, depth, count)
     ctx.scenes += scene {
         var swapIndex = 0
         // COMPUTE
@@ -122,21 +128,22 @@ fun launchApp(ctx: KoolContext) {
             storage1d("offsets", buffers.offsetsBuffer)
         }
         sorting.addTask(offsets, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
-            onBeforeDispatch {
+//            onBeforeDispatch {
 //                offsets.storage1d("keys", particleGridCellKeys)
 //                offsets.storage1d("offsets", offsetsBuffer)
-            }
+//            }
         }
 
         val fields = FieldsShader().also {
             it.gridSize = gridSize
             it.gridRows = gridRows
+            it.gridDepth = gridDepth
             it.gridCols = gridCols
-            it.epsilon = 10f
-            it.sigma = 5f
+            it.epsilon = 100f
+            it.sigma = 2f
             it.dT = 0.01f
             it.count = count
-            it.maxForce = 10000f
+            it.maxForce = 100000f
             it.maxVelocity = 20f
             it.colors = buffers.colorsBuffer
         }
@@ -156,20 +163,32 @@ fun launchApp(ctx: KoolContext) {
         addComputePass(sorting)
 
 //         RENDERING
-//        setupUiScene(clearColor = ClearColorFill(Color("444444")))
-        orbitCamera {
-            minZoom = 0.0001
-            zoom = 1.0
+        val bb = BoundingBoxF(
+            Vec3f(0f),
+            Vec3f(gridSize * gridCols, -gridSize * gridRows, gridSize * gridDepth),
+        )
+
+        if (threeDimensions) orbitCamera {
+            maxZoom = 1000.0
+            minZoom = 1.0
+            zoom = 500.0
+            setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
         }
+        else setupUiScene(clearColor = ClearColorFill(Color("444444")))
         val instances = Meshes.particleMeshInstances(count)
         addNode(Meshes.particleMesh(buffers.positionBuffers.first(), buffers.colorsBuffer, instances))
+
+
+        addLineMesh {
+            addBoundingBox(bb, Color.WHITE)
+        }
 //        onRelease {
 //            positionsBuffer.release()
 //        }
         var iterations = 0
         onUpdate {
             iterations++
-            if(iterations % 90 * 5 == 0) launchOnMainThread {
+            if (iterations % 90 * 5 == 0) launchOnMainThread {
                 return@launchOnMainThread
 //            removeComputePass(sorting)
                 buffers.positionBuffers[0].readbackBuffer()

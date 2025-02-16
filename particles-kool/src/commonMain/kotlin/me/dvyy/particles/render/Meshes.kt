@@ -63,10 +63,11 @@ object Meshes {
                     val viewMat = camData.viewMat
                     val cameraRight = float3Value(viewMat[0].x, viewMat[1].x, viewMat[2].x)
                     val cameraUp    = float3Value(viewMat[0].y, viewMat[1].y, viewMat[2].y)
+                    //val cameraIn   = float3Value(viewMat[0].z, viewMat[1].z, viewMat[2].z)
 
                     // Compute the billboard vertex position:
                     // The vertex’s x and y (from the quad geometry) are used to offset along the camera’s right and up directions.
-                    val worldPos = positionOffset.times(Vec3f(1f, -1f, 1f).const) + (cameraRight * position.x) + (cameraUp * position.y)
+                    val worldPos = positionOffset.times(Vec3f(1f, -1f, 1f).const) + (cameraRight * position.x) + (cameraUp * position.y)// + (cameraIn * position.z)
 //                    outPosition set camData.viewProjMat * modelProj * float4Value(
 //                        position + positionOffset.times(Vec3f(1f, -1f, 1f).const),
 //                        1f.const
@@ -85,7 +86,7 @@ object Meshes {
             storage1d("colorsBuffer", colors)
         }
         generate {
-            fillPolygon(generateCirclePoints(10, radius = 2f))
+            fillPolygon(generateCirclePoints(10, radius = 1f))
         }
     }
 

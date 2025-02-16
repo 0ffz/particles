@@ -15,16 +15,11 @@ import de.fabmax.kool.scene.orbitCamera
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.RenderLoop
-import de.fabmax.kool.util.RenderLoopCoroutineDispatcher
 import de.fabmax.kool.util.debugOverlay
-import de.fabmax.kool.util.launchDelayed
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.io.buffered
 import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
@@ -66,28 +61,30 @@ class FieldsBuffers(
  */
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
-    val threeDimensions = false
-    val count = (1_000_0 / 64) * 64
+    val appScope = CoroutineScope(Dispatchers.RenderLoop)
+    val parameters = YamlParameters(path = Path("../assets/parameters.yml"), scope = appScope)
+    val state = FieldsState(parameters, appScope)
+
+    val count = (state.targetCount.value / 64) * 64
     val width = 1920//ctx.windowWidth
     val height = 1080//ctx.windowHeight
-    val depth = if (threeDimensions) ctx.windowWidth else 0
-    val minGridSize = 2.5 * 5.0
+    val depth = if (state.threeDimensions.value) ctx.windowWidth else 0
+
     val gridSize = run {
-        val smallestSize = minGridSize
+        val smallestSize = state.minGridSize.value
         val cols = (width / smallestSize).toInt()
         val rows = (height / smallestSize).toInt()
         if (rows * cols > count) {
             sqrt((width.toFloat() * height.toFloat()) / count) + 1.0
         } else smallestSize
     }.toFloat()
+
     val gridCols = (width / gridSize).toInt().also { println("$it cols") }
     val gridRows = (height / gridSize).toInt().also { println("$it rows") }
     val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
+
     val buffers = FieldsBuffers(width, height, depth, count)
 
-    val appScope = CoroutineScope(Dispatchers.RenderLoop)
-    val parameters = YamlParameters(path = Path("../assets/parameters.yml"), scope = appScope)
-    val state = FieldsState(parameters, appScope)
 
     ctx.scenes += scene {
         var swapIndex = 0
@@ -157,9 +154,7 @@ fun launchApp(ctx: KoolContext) {
             it.gridRows = gridRows
             it.gridDepth = gridDepth
             it.gridCols = gridCols
-            it.epsilon = 100f
             it.sigma = 2f
-            it.dT = 0.01f
             it.count = count
             it.maxForce = 100000f
             it.maxVelocity = 20f
@@ -176,6 +171,7 @@ fun launchApp(ctx: KoolContext) {
                 fields.cellOffsets = buffers.offsetsBuffer
                 fields.particle2CellKey = buffers.particleGridCellKeys
                 fields.epsilon = state.epsilon.value
+                fields.dT = state.dT.value
                 swapIndex++
             }
         }
@@ -187,7 +183,7 @@ fun launchApp(ctx: KoolContext) {
             Vec3f(gridSize * gridCols, -gridSize * gridRows, gridSize * gridDepth),
         )
 
-        if (threeDimensions) orbitCamera {
+        if (state.threeDimensions.value) orbitCamera {
             maxZoom = 1000.0
             minZoom = 1.0
             zoom = 500.0
@@ -255,7 +251,7 @@ fun launchApp(ctx: KoolContext) {
                         parameters.save()
                     }
                 },
-                fieldsState = state
+                state = state
             ).dock
         )
     }

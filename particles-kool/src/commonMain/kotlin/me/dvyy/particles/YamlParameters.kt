@@ -41,6 +41,8 @@ class YamlParameters(
     val yaml = Yaml.default
 
     //    val content = mutableStateOf<YamlMap?>(null)
+    @PublishedApi
+    internal var _content = YamlMap(emptyMap(), YamlPath.root)
     val content = MutableSharedFlow<YamlMap>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
@@ -52,43 +54,38 @@ class YamlParameters(
 
     val mutableStates = mutableMapOf<String, StateWithSerializer<*>>()
     private val params = mutableListOf<MutableStateValue<*>>()
-//    val mutableUniforms: List<MutableUniform<String>> = uniforms.map {
-//        MutableUniform<String>(it as UniformParameter<String>, it.parameter.default)//readOrDefault as String)
-//    }
-//    val dirtyUniforms get() = mutableUniforms.filter { it.dirty == true }
-
     init {
         load(path)
     }
 
-//    fun getNode(yamlPath: String): YamlNode =
-//        content.getPath(yamlPath)
-//
-//    fun <T> get(yamlPath: String, serializer: DeserializationStrategy<T>): Flow<T> =
-//        getNode(yamlPath)
-//            .map { yaml.decodeFromYamlNode(serializer, it) }
-//            .catch { logW { "Error reading config at $yamlPath: ${it.message}" } }
-//
-//    inline fun <reified T> get(yamlPath: String): Flow<T> = get(yamlPath, serializer<T>())
-
+    fun <T> decode(content: YamlNode, path: String, serializer: KSerializer<T>): T {
+        return yaml.decodeFromYamlNode(serializer, content.getPath(path))
+    }
     inline fun <reified T> get(
         yamlPath: String,
         default: T,
         serializer: KSerializer<T> = serializer<T>(),
     ): MutableStateValue<T> {
         val state = mutableStates.getOrPut(yamlPath) {
-            StateWithSerializer(mutableStateOf<T>(default), serializer)
+            StateWithSerializer(mutableStateOf<T>(runCatching { decode(_content, yamlPath, serializer) }.getOrDefault(default)), serializer)
         } as StateWithSerializer<T>
         require(serializer == state.serializer) { "Tried reading $yamlPath with serializer $serializer, but was already registered with ${state.serializer}" }
 
         scope.launch {
-            content.map { it.getPath(yamlPath) }
-                .map { yaml.decodeFromYamlNode(serializer, it) }
+            content.map { decode(it, yamlPath, serializer) }
                 .catch { logW { "Error reading config at $yamlPath: ${it.message}" } }
                 .collect { state.state.set(it) }
         }
         return state.state
     }
+
+//    inline fun <reified T> uniform(
+//        yamlPath: String,
+//        default: T,
+//        serializer: KSerializer<T> = serializer<T>(),
+//    ): MutableStateValue<T> {
+//        val state = get(yamlPath, default, serializer)
+//    }
     //    fun propertyOrNull(key: String): String? = runCatching { property(key) }.getOrNull()
 //    fun property(key: String): String = get(key).yamlScalar.content
 
@@ -110,7 +107,7 @@ class YamlParameters(
 
     fun load(path: Path = this.path) {
         val node: YamlMap = yaml.parseToYamlNode(FileSystemUtils.read(path)).yamlMap
-
+        _content = node
         content.tryEmit(node)
 //        params
 //            val readOrDefault = runCatching {

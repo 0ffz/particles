@@ -1,8 +1,14 @@
 simulation:
+  threeDimensions: true
+  size:
+    width: 500
+    height: 500
+    depth: 50
+  count: 10000
   dT: "0.001"
   maxForce: "50000.0"
-  maxVelocity: "100.0"
-  epsilon: 200
+  maxVelocity: "20.0"
+  epsilon: 100
 interactions:
   hydrogen-oxygen:
     lennardJones:

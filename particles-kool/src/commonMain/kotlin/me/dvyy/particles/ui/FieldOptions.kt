@@ -1,8 +1,10 @@
 package me.dvyy.particles.ui
 
+import de.fabmax.kool.KoolContext
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.modules.ui2.docking.Dock
 import de.fabmax.kool.modules.ui2.docking.UiDockable
+import de.fabmax.kool.toString
 import de.fabmax.kool.util.MdColor
 import kotlin.jvm.JvmName
 
@@ -11,6 +13,8 @@ class FieldOptions(
     val load: () -> Unit,
     val save: () -> Unit,
     val state: FieldsState,
+    val ctx: KoolContext,
+    val passesPerFrame: Int,
 ) {
     val windowDockable = UiDockable("Test")
     val colors = Colors.darkColors(
@@ -19,8 +23,15 @@ class FieldOptions(
     val dock = Dock("Dock").apply {
         dockingSurface.colors = colors
     }
+    val simsPs = mutableStateOf(0.0)
 
-    val windowSurface = WindowSurface(windowDockable) {
+    val ui = UiScene("fields-options") {
+        onUpdate {
+            simsPs.set(ctx.fps * passesPerFrame)
+        }
+        addNode(dock)
+    }
+    val parametersSurface = WindowSurface(windowDockable) {
         var isMinimizedToTitle by remember(false)
 
         modifier.align(AlignmentX.Start, AlignmentY.Top)
@@ -77,13 +88,20 @@ class FieldOptions(
         state.use().toFloat(),
         min = min,
         max = max,
+        txtFormat = { it.toInt().toString() },
         onChange = { state.value = it.toInt() },
     )
 
     fun UiScope.windowContent() = Column(Grow.Std, Grow.Std) {
+        val simulationRate = ctx.fps * passesPerFrame
+        Text("${simsPs.use().toString(2)} sims/s") {
+
+        }
         liveSlider("Count", state.targetCount, max = 100_000f)
         liveSlider("Min grid size", state.minGridSize, max = 100f)
         liveSlider("dT", state.dT, max = 0.1f)
+        liveSlider("Max velocity", state.maxVelocity, max = 100f)
+        liveSlider("Max force", state.maxForce, max = 100_000f)
         liveSlider("Epsilon", state.epsilon, max = 1000f)
         LabeledSwitch("3d", state.threeDimensions)
 //        Slider(value = fieldsState.epsilon.use(), max = 1_000f) {
@@ -106,7 +124,7 @@ class FieldOptions(
     }
 
     init {
-        dock.addDockableSurface(windowDockable, windowSurface)
+        dock.addDockableSurface(windowDockable, parametersSurface)
     }
 
 //        setupUiScene(ClearColorFill(Scene.DEFAULT_CLEAR_COLOR))

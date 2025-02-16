@@ -18,7 +18,6 @@ import de.fabmax.kool.util.debugOverlay
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.io.files.Path
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
@@ -61,7 +60,7 @@ class FieldsBuffers(
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
     val appScope = CoroutineScope(Dispatchers.RenderLoop)
-    val parameters = YamlParameters(path = Path("../assets/parameters.yml"), scope = appScope)
+    val parameters = YamlParameters(path = "../assets/parameters.yml", scope = appScope)
     val state = FieldsState(parameters, appScope)
 
     val count = (state.targetCount.value / 64) * 64

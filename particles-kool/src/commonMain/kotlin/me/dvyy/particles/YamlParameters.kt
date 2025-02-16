@@ -11,30 +11,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.io.buffered
-import kotlinx.io.files.Path
-import kotlinx.io.files.SystemFileSystem
-import kotlinx.io.readString
-import kotlinx.io.writeString
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 import me.dvyy.particles.YamlHelpers.convertMapToNestedMap
 import me.dvyy.particles.YamlHelpers.convertMapToYaml
 
-object FileSystemUtils {
-    fun read(path: Path): String = SystemFileSystem.source(path).buffered().use {
-        it.readString()
-    }
-
-    fun write(path: Path, content: String) {
-        SystemFileSystem.sink(path).buffered().use {
-            it.writeString(content)
-        }
-    }
-}
-
 class YamlParameters(
-    val path: Path,
+    val path: String,
     val scope: CoroutineScope,
 //    val uniforms: List<UniformParameter<*>>,
 ) {
@@ -54,6 +37,7 @@ class YamlParameters(
 
     val mutableStates = mutableMapOf<String, StateWithSerializer<*>>()
     private val params = mutableListOf<MutableStateValue<*>>()
+
     init {
         load(path)
     }
@@ -61,13 +45,20 @@ class YamlParameters(
     fun <T> decode(content: YamlNode, path: String, serializer: KSerializer<T>): T {
         return yaml.decodeFromYamlNode(serializer, content.getPath(path))
     }
+
     inline fun <reified T> get(
         yamlPath: String,
         default: T,
         serializer: KSerializer<T> = serializer<T>(),
     ): MutableStateValue<T> {
         val state = mutableStates.getOrPut(yamlPath) {
-            StateWithSerializer(mutableStateOf<T>(runCatching { decode(_content, yamlPath, serializer) }.getOrDefault(default)), serializer)
+            StateWithSerializer(
+                mutableStateOf<T>(
+                    runCatching { decode(_content, yamlPath, serializer) }.getOrDefault(
+                        default
+                    )
+                ), serializer
+            )
         } as StateWithSerializer<T>
         require(serializer == state.serializer) { "Tried reading $yamlPath with serializer $serializer, but was already registered with ${state.serializer}" }
 
@@ -89,7 +80,7 @@ class YamlParameters(
     //    fun propertyOrNull(key: String): String? = runCatching { property(key) }.getOrNull()
 //    fun property(key: String): String = get(key).yamlScalar.content
 
-    fun save(path: Path = this.path) {
+    fun save(path: String = this.path) {
         println(mutableStates)
         val pairs = mutableStates.map { (key, state) ->
             val encoded = state.encodeToString()
@@ -101,11 +92,11 @@ class YamlParameters(
 //            it.uniform.parameter.path to encoded
 //        }.toMap() //.sortedBy { it.first }.joinToString()
 
-        FileSystemUtils.write(Path(path.parent!!, path.name + "test"), output)
+        FileSystemUtils.write(path, output)
 //        path.createParentDirectories().also { if (it.notExists()) it.createFile() }
     }
 
-    fun load(path: Path = this.path) {
+    fun load(path: String = this.path) {
         val node: YamlMap = yaml.parseToYamlNode(FileSystemUtils.read(path)).yamlMap
         _content = node
         content.tryEmit(node)

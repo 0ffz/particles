@@ -54,7 +54,7 @@ kotlin {
                 implementation(project(":particles-dsl"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation("com.charleskorn.kaml:kaml:0.67.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
+//                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
         }
 

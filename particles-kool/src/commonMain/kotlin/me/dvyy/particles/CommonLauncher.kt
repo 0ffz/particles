@@ -4,23 +4,36 @@ import OffsetsShader
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec3i
+import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.math.spatial.BoundingBoxF
+import de.fabmax.kool.modules.ui2.UiScene
 import de.fabmax.kool.modules.ui2.setupUiScene
 import de.fabmax.kool.pipeline.ClearColorFill
 import de.fabmax.kool.pipeline.ComputePass
-import de.fabmax.kool.scene.PerspectiveCamera
 import de.fabmax.kool.scene.addLineMesh
 import de.fabmax.kool.scene.orbitCamera
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Color
+import de.fabmax.kool.util.RenderLoop
+import de.fabmax.kool.util.RenderLoopCoroutineDispatcher
 import de.fabmax.kool.util.debugOverlay
+import de.fabmax.kool.util.launchDelayed
 import de.fabmax.kool.util.launchOnMainThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.io.buffered
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.render.Meshes
+import me.dvyy.particles.ui.FieldOptions
+import me.dvyy.particles.ui.FieldsState
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 class FieldsBuffers(
     val width: Int,
@@ -71,6 +84,11 @@ fun launchApp(ctx: KoolContext) {
     val gridRows = (height / gridSize).toInt().also { println("$it rows") }
     val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
     val buffers = FieldsBuffers(width, height, depth, count)
+
+    val appScope = CoroutineScope(Dispatchers.RenderLoop)
+    val parameters = YamlParameters(path = Path("../assets/parameters.yml"), scope = appScope)
+    val state = FieldsState(parameters, appScope)
+
     ctx.scenes += scene {
         var swapIndex = 0
         // COMPUTE
@@ -157,6 +175,7 @@ fun launchApp(ctx: KoolContext) {
                 fields.particleTypes = buffers.particleTypesBuffer
                 fields.cellOffsets = buffers.offsetsBuffer
                 fields.particle2CellKey = buffers.particleGridCellKeys
+                fields.epsilon = state.epsilon.value
                 swapIndex++
             }
         }
@@ -206,5 +225,39 @@ fun launchApp(ctx: KoolContext) {
 
     }
 
+    ctx.scenes += UiScene("fields-options") {
+        addNode(
+            FieldOptions(
+                resetPositions = {
+                    launchOnMainThread {
+                        buffers.positionBuffers.forEach {
+                            for (i in 0 until count) {
+                                it[i] = Vec4f(
+                                    Random.Default.nextInt(width).toFloat(),
+                                    Random.Default.nextInt(height).toFloat(),
+                                    if (depth == 0) 0f else Random.Default.nextInt(depth).toFloat(),
+                                    0f
+                                )
+                            }
+                        }
+                    }
+                },
+                load = {
+                    launchOnMainThread {
+                        parameters.load()
+//                        SystemFileSystem.source(Path("../assets/parameters.yml")).buffered().readString().let { println(it) }
+//                        Assets.loadBlob("parameters.yml").getOrThrow().decodeToString()
+//                        FieldsState.fileText.set(asset.first().read().decodeToString().lineSequence().first())
+                    }
+                },
+                save = {
+                    launchOnMainThread {
+                        parameters.save()
+                    }
+                },
+                fieldsState = state
+            ).dock
+        )
+    }
     ctx.scenes += debugOverlay()
 }

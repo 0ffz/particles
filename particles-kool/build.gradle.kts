@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.project
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -49,6 +50,11 @@ kotlin {
                 implementation("de.fabmax.kool:kool-core:$koolVersion")
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+
+                implementation(project(":particles-dsl"))
+                implementation(libs.kotlinx.coroutines.core)
+                implementation("com.charleskorn.kaml:kaml:0.67.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
         }
 

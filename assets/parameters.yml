@@ -2,6 +2,7 @@ simulation:
   dT: "0.001"
   maxForce: "50000.0"
   maxVelocity: "100.0"
+  epsilon: 200
 interactions:
   hydrogen-oxygen:
     lennardJones:

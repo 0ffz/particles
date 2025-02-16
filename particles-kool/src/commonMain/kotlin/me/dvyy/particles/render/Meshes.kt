@@ -3,7 +3,6 @@ package me.dvyy.particles.render
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslShader
 import de.fabmax.kool.modules.ksl.blocks.cameraData
-import de.fabmax.kool.modules.ksl.blocks.modelMatrix
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.StorageBuffer1d
@@ -19,6 +18,8 @@ object Meshes {
 
     fun particleMesh(
         positions: StorageBuffer1d,
+        types: StorageBuffer1d,
+        particleTypeColors: StorageBuffer1d,
         colors: StorageBuffer1d,
         instances: MeshInstanceList,
     ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, instances = instances).apply {
@@ -54,6 +55,8 @@ object Meshes {
                     val camData = cameraData()
                     val positionsBuffer = storage1d<KslFloat4>("positionsBuffer")
                     val colorsBuffer = storage1d<KslFloat4>("colorsBuffer")
+                    val typeColorsBuffer = storage1d<KslFloat4>("typeColorsBuffer")
+                    val typesBuffer = storage1d<KslInt1>("typesBuffer")
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
                     val positionOffset = positionsBuffer[offset].xyz
@@ -73,7 +76,7 @@ object Meshes {
 //                        1f.const
 //                    )
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
-                    interColor.input set colorsBuffer[offset]
+                    interColor.input set typeColorsBuffer[typesBuffer[offset]]//colorsBuffer[offset]
                 }
             }
             fragmentStage {
@@ -84,6 +87,8 @@ object Meshes {
         }.apply {
             storage1d("positionsBuffer", positions)
             storage1d("colorsBuffer", colors)
+            storage1d("typeColorsBuffer", particleTypeColors)
+            storage1d("typesBuffer", types)
         }
         generate {
             fillPolygon(generateCirclePoints(10, radius = 1f))

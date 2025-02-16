@@ -1,6 +1,7 @@
 package me.dvyy.particles
 
 import OffsetsShader
+import com.charleskorn.kaml.Yaml
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec3i
@@ -22,36 +23,13 @@ import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
+import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.render.Meshes
 import me.dvyy.particles.ui.FieldOptions
 import me.dvyy.particles.ui.FieldsState
+import me.dvyy.particles.ui.UniformParameters
 import kotlin.math.sqrt
 import kotlin.random.Random
-
-class FieldsBuffers(
-    val width: Int,
-    val height: Int,
-    val depth: Int,
-    val count: Int,
-) {
-    val positionBuffers = arrayOf(
-        Buffers.positions(count, width, height, depth),
-        Buffers.positions(count, width, height, depth)
-    )
-    val velocitiesBuffers = arrayOf(
-        Buffers.velocities(count, depth != 0, 20.0),
-        Buffers.velocities(count, depth != 0, 20.0),
-    )
-    val particleGridCellKeys = Buffers.integers(count)/*.apply {
-        for (i in 0 until count) this[i] = count - i - 1//Random.nextInt(count)
-    }*/
-    val sortIndices = Buffers.integers(count)/*.apply {
-        for (i in 0 until count) this[i] = i
-    }*/
-    val offsetsBuffer = Buffers.integers(count)
-    val particleTypesBuffer = Buffers.integers(count)
-    val colorsBuffer = Buffers.float4(count)
-}
 
 /**
  * Main application entry. This demo creates a small example scene, which you probably want to replace by your actual
@@ -61,7 +39,10 @@ fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
     val appScope = CoroutineScope(Dispatchers.RenderLoop)
     val parameters = YamlParameters(path = "../assets/parameters.yml", scope = appScope)
+    val config =
+        Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("../assets/particles.yml"))
     val state = FieldsState(parameters, appScope)
+    val uniforms = UniformParameters(parameters, config)
 
     val count = (state.targetCount.value / 64) * 64
     val width = state.width.value
@@ -77,14 +58,14 @@ fun launchApp(ctx: KoolContext) {
         } else smallestSize
     }.toFloat()
 
-    val passesPerFrame = 500
+    val passesPerFrame = state.passesPerFrame
 
     val gridCols = (width / gridSize).toInt().also { println("$it cols") }
     val gridRows = (height / gridSize).toInt().also { println("$it rows") }
     val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
 
-    val buffers = FieldsBuffers(width, height, depth, count)
-
+    //TODO fix potential order being different when converting map values to list
+    val buffers = FieldsBuffers(config.particles.values.toList(), width, height, depth, count)
 
     ctx.scenes += scene {
         var swapIndex = 0
@@ -149,7 +130,7 @@ fun launchApp(ctx: KoolContext) {
 //            }
         }
 
-        val fields = FieldsShader().also {
+        val fields = FieldsShader(config).also {
             it.gridSize = gridSize
             it.gridRows = gridRows
             it.gridDepth = gridDepth
@@ -161,7 +142,7 @@ fun launchApp(ctx: KoolContext) {
             it.cellOffsets = buffers.offsetsBuffer
             it.particle2CellKey = buffers.particleGridCellKeys
         }
-        repeat(passesPerFrame) { passIndex ->
+        repeat(passesPerFrame.value) { passIndex ->
             sorting.addTask(fields.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
                 pipeline.swapPipelineData("fieldsPass$passIndex")
                 fields.prevPositions = buffers.positionBuffers[passIndex % 2]
@@ -175,6 +156,9 @@ fun launchApp(ctx: KoolContext) {
                     fields.dT = state.dT.value
                     fields.maxVelocity = state.maxVelocity.value
                     fields.maxForce = state.maxForce.value
+                    uniforms.uniformParams.forEach { (param, value) ->
+                        fields.shader.uniform1f(param.uniformName).set(value.value)
+                    }
                     swapIndex++
                 }
             }
@@ -232,7 +216,15 @@ fun launchApp(ctx: KoolContext) {
 //            }
         }
         val instances = Meshes.particleMeshInstances(count)
-        addNode(Meshes.particleMesh(buffers.positionBuffers.first(), buffers.colorsBuffer, instances))
+        addNode(
+            Meshes.particleMesh(
+                buffers.positionBuffers.first(),
+                buffers.particleTypesBuffer,
+                buffers.particleColors,
+                buffers.colorsBuffer,
+                instances
+            )
+        )
 
 
         addLineMesh {
@@ -292,7 +284,8 @@ fun launchApp(ctx: KoolContext) {
         },
         state = state,
         ctx = ctx,
-        passesPerFrame = passesPerFrame,
+        passesPerFrame = passesPerFrame.value,
+        uniforms = uniforms,
     ).ui
     ctx.scenes += debugOverlay()
 }

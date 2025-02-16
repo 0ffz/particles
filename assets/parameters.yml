@@ -1,24 +1,26 @@
 simulation:
+  count: 10000
+  minGridSize: 5.0
+  epsilon: 100.0
+  dT: 0.001
+  maxVelocity: 4.311595
+  maxForce: 50000.0
   threeDimensions: true
+  passesPerFrame: 100
   size:
     width: 500
     height: 500
-    depth: 50
-  count: 10000
-  dT: "0.001"
-  maxForce: "50000.0"
-  maxVelocity: "20.0"
-  epsilon: 100
+    depth: 100
 interactions:
   hydrogen-oxygen:
     lennardJones:
-      sigma: "8.0"
-      epsilon: "1.0"
+      sigma: 6.245179
+      epsilon: 200.0
   hydrogen-hydrogen:
     lennardJones:
-      sigma: "23.0"
-      epsilon: "57.0"
+      sigma: 5.767499
+      epsilon: 0.0
   oxygen-oxygen:
     lennardJones:
-      sigma: "81.0"
-      epsilon: "44.0"
+      sigma: 8.46739
+      epsilon: 3.9855075

@@ -3,8 +3,62 @@ package me.dvyy.particles.compute
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.serializer
+import me.dvyy.particles.dsl.Parameter
+import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.dsl.pairwise.UniformParameter
 
-class FieldsShader {
+class FunctionParameters(
+    val map: Map<String, Parameter<*>>,
+)
+
+abstract class PairwiseFunction {
+    fun <T> param(name: String, serializer: KSerializer<T>) {
+//        TODO()
+    }
+
+    abstract fun KslComputeStage.createFunction(): KslFunction<KslFloat1>
+    val dist = param("dist", Float.serializer())
+}
+
+class LennardJones : PairwiseFunction() {
+    val sigma = param("sigma", Float.serializer())
+    override fun KslComputeStage.createFunction(): KslFunction<KslFloat1> = functionFloat1("lennardJones") {
+        val dist = paramFloat1("dist")
+        val maxForce = paramFloat1("maxForce")
+        val sigma = paramFloat1("sigma")
+        val epsilon = paramFloat1("epsilon")
+
+        body {
+            val invR = float1Var(sigma / dist)
+            val invR6 = float1Var(invR * invR * invR * invR * invR * invR)
+            val invR12 = float1Var(invR6 * invR6)
+            min(24f.const * epsilon * (2f.const * invR12 - invR6) / dist, maxForce)
+        }
+    }
+
+//    fun KslFunction<>.callFunction(program: KslScopeBuilder) = program.run {
+//        parameters
+//        (this@callFunction as KslFunctionInt4).invoke(1u.const)
+//    }
+
+    fun KslProgram.setupUniforms() {
+        uniformFloat1("sigma")
+        uniformFloat1("epsilon")
+    }
+}
+
+fun UniformParameter<*>.toKsl(program: KslProgram): KslUniformScalar<*> = program.run {
+    when (type) {
+        "float" -> uniformFloat1(uniformName)
+        else -> error("Unknown parameter")
+    }
+}
+
+class FieldsShader(
+    val config: ParticlesConfig,
+) {
     val shader = KslComputeShader("Fields") {
         computeStage(WORK_GROUP_SIZE) {
             // Uniforms
@@ -18,13 +72,15 @@ class FieldsShader {
             val count = uniformInt1("count")
             val maxForce = uniformFloat1("maxForce")
             val maxVelocity = uniformFloat1("maxVelocity")
-            //{{ uniforms }}
+
+            config.configurableUniforms.forEach {
+                it.toKsl(program)
+            }
 
             // Storage buffers
             val particle2CellKey = storage1d<KslInt1>("particle2CellKey")
             // (binding = 1 is omitted, as in the GLSL code)
             val cellOffsets = storage1d<KslInt1>("cellOffsets")
-            val indexLookup = storage1d<KslInt1>("indexLookup")
             val currPositions = storage1d<KslFloat4>("currPositions")
             val prevPositions = storage1d<KslFloat4>("prevPositions")
             val currVelocities = storage1d<KslFloat4>("currVelocities")
@@ -33,7 +89,11 @@ class FieldsShader {
             val colors = storage1d<KslFloat4>("colors")
             val particleTypes = storage1d<KslInt1>("particleTypes")
 
-            //{{ forceFunctions }}
+            //TODO actually implement for generic function types
+            val lennardJones = LennardJones()
+            with(lennardJones) {
+                createFunction()
+            }
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
             val cellId = functionInt1("cellId") {
@@ -53,7 +113,7 @@ class FieldsShader {
                 // Extract the 2D position from the stored vec4
                 val position = float3Var(currPositions[id].xyz)
                 val velocity = float3Var(currVelocities[id].xyz)
-//                val type = int1Var(particleTypes[id])
+                val particleType = int1Var(particleTypes[id])
 
                 // Compute grid indices based on the particle position
                 val xGrid = int1Var((position.x / gridSize).toInt1())
@@ -83,21 +143,34 @@ class FieldsShader {
                             val forceBetweenParticles = float1Var(0f.const)
                             val otherType = int1Var(particleTypes[i])
                             // Compute a hash based on the particle types
-//                        val hash = ((otherType xor type) shl 16.const) or (otherType or type)
+                            val hash = int1Var((otherType xor particleType) shl 16.const) or (otherType or particleType)
 
-//                        float inv_r = sigma / dist;
-//                        float inv_r6 = inv_r * inv_r * inv_r * inv_r * inv_r * inv_r;
-//                        float inv_r12 = inv_r6 * inv_r6;
-//                        return min(24.0 * epsilon * (2.0 * inv_r12 - inv_r6) / dist, maxForce);
-                            val invR = float1Var(sigma / dist)
-                            val invR6 = float1Var(invR * invR * invR * invR * invR * invR)
-                            val invR12 = float1Var(invR6 * invR6)
-                            val lennardJonesForce =
-                                float1Var(min(24f.const * epsilon * (2f.const * invR12 - invR6) / dist, maxForce))
+                            // Prepare function calls for all pairwise interactions
+                            val functionCalls: List<Pair<List<KslScalarExpression<KslFloat1>>, Int>> =
+                                config.pairwiseInteraction.map { interaction ->
+                                    interaction.functions.map { functionWithParams ->
+                                        val kslFunc = functions[functionWithParams.function.name] as? KslFunctionFloat1
+                                            ?: error("Function ${functionWithParams.function.name} not registered")
+                                        kslFunc.invoke(
+                                            dist,
+                                            maxForce,
+                                            *functionWithParams.parameters.map { (glsl, param) ->
+                                                when (param) {
+                                                    is Parameter.Value<*> -> (param.value as Float).const
+                                                    is Parameter.FromParams<*> -> uniformFloat1("${glsl.name}_${functionWithParams.uniformPrefix}")
+                                                }
+                                            }.toTypedArray()
+                                        )
+                                    } to interaction.type.hash
+                                }
 
-                            // TODO switch {{ forceCalculations }}
+                            // Add to pairwise force based on particle interaction hash
+                            functionCalls.fold(`if`(false.const) {}) { acc, curr ->
+                                acc.elseIf(hash eq curr.second.const) {
+                                    forceBetweenParticles += curr.first.reduce { acc, curr -> acc + curr }
+                                }
+                            }
 
-                            forceBetweenParticles += lennardJonesForce
                             // (Insert your force calculation logic here which should modify forceBetweenParticles)
                             // Accumulate force (direction normalized multiplied by the calculated force)
                             netForce += normalize(direction) * forceBetweenParticles

@@ -27,7 +27,7 @@ data class ParticlesConfig(
             pair,
             interactions.map { (name, params) ->
                 FunctionWithParams(
-                    uniformPrefix = pair.hash,
+                    uniformPrefix = pair.hash.toString(),
                     function = LennardJones,
                     params = params,
                 )

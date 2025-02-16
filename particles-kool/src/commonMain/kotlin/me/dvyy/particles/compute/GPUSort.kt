@@ -65,6 +65,7 @@ object GPUSort {
             val currVelocities = storage1d<KslFloat4>("currVelocities")
             val prevPositions = storage1d<KslFloat4>("prevPositions")
             val prevVelocities = storage1d<KslFloat4>("prevVelocities")
+            val types = storage1d<KslInt1>("types")
 
             main {
                 val i = int1Var(inGlobalInvocationId.x.toInt1())
@@ -93,6 +94,8 @@ object GPUSort {
                         val currVelocitiesHigh = float4Var(currVelocities[indexHigh])
                         val prevPositionsHigh = float4Var(prevPositions[indexHigh])
                         val prevVelocitiesHigh = float4Var(prevVelocities[indexHigh])
+                        val typesLow = int1Var(types[indexLow])
+                        val typesHigh = int1Var(types[indexHigh])
                         keys[indexLow] = keyHigh
                         keys[indexHigh] = keyLow
                         indices[indexLow] = sortHigh
@@ -105,6 +108,8 @@ object GPUSort {
                         prevPositions[indexHigh] = prevPositionsLow
                         prevVelocities[indexLow] = prevVelocitiesHigh
                         prevVelocities[indexHigh] = prevVelocitiesLow
+                        types[indexLow] = typesHigh
+                        types[indexHigh] = typesLow
                     }
                 }
             }
@@ -127,6 +132,7 @@ object GPUSort {
         var positions2 by sorter.storage1d("prevPositions")
         var velocities1 by sorter.storage1d("currVelocities")
         var velocities2 by sorter.storage1d("prevVelocities")
+        var types by sorter.storage1d("types")
 
         numValues = count
         keys = buffers.particleGridCellKeys
@@ -135,6 +141,7 @@ object GPUSort {
         positions2 = buffers.positionBuffers[1]
         velocities1 = buffers.velocitiesBuffers[0]
         velocities2 = buffers.velocitiesBuffers[1]
+        types = buffers.particleTypesBuffer
 
         computePass.apply {
             val numPairs = count.takeHighestOneBit() * 2

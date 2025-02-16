@@ -15,6 +15,7 @@ class FieldOptions(
     val state: FieldsState,
     val ctx: KoolContext,
     val passesPerFrame: Int,
+    val uniforms: UniformParameters,
 ) {
     val windowDockable = UiDockable("Test")
     val colors = Colors.darkColors(
@@ -99,11 +100,20 @@ class FieldOptions(
         }
         liveSlider("Count", state.targetCount, max = 100_000f)
         liveSlider("Min grid size", state.minGridSize, max = 100f)
-        liveSlider("dT", state.dT, max = 0.1f)
+        liveSlider("dT", state.dT, max = 0.05f)
         liveSlider("Max velocity", state.maxVelocity, max = 100f)
         liveSlider("Max force", state.maxForce, max = 100_000f)
         liveSlider("Epsilon", state.epsilon, max = 1000f)
         LabeledSwitch("3d", state.threeDimensions)
+
+        uniforms.uniformParams
+            .groupBy { it.first.parameter.path.substringBeforeLast(".").substringAfter(".") }
+            .forEach { (name, params) ->
+                Text(name) { sectionTitleStyle() }
+                params.forEach { (param, state) ->
+                    liveSlider(param.name, state, max = 200f)
+                }
+            }
 //        Slider(value = fieldsState.epsilon.use(), max = 1_000f) {
 //            modifier
 //                .width(Grow.Std)

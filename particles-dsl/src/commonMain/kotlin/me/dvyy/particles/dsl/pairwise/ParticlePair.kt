@@ -6,8 +6,8 @@ data class ParticlePair(
     val first: ParticleId,
     val second: ParticleId,
 ) {
-    val hashTop: UInt = first.id xor second.id shl 16 or second.id or first.id
+    val hash: Int = (first.id xor second.id shl 16 or second.id or first.id).toInt()
 
-    @OptIn(ExperimentalStdlibApi::class)
-    val hash = hashTop.toHexString()
+//    @OptIn(ExperimentalStdlibApi::class)
+//    val hash = hashTop.toHexString()
 }

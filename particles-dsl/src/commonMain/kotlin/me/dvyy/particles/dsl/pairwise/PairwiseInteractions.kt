@@ -45,7 +45,7 @@ class PairwiseInteractions(
             UniformParameter(
                 glsl.name,
                 glsl.type,
-                type.hash,
+                type.hash.toString(),
                 param
             )
         }

@@ -1,17 +1,16 @@
 package me.dvyy.particles.dsl.pairwise
 
 import me.dvyy.particles.dsl.glsl.GLSLParameter
-import org.intellij.lang.annotations.Language
 
 abstract class PairwiseFunction(
     val name: String,
-    @Language(
-        "glsl", prefix = """
-    float sigma;
-    float epsilon;
-    float func(float dist) {
-    """, suffix = "}"
-    )
+//    @Language(
+//        "glsl", prefix = """
+//    float sigma;
+//    float epsilon;
+//    float func(float dist) {
+//    """, suffix = "}"
+//    )
     val body: String,
 ) {
     // TODO immutability - split into builder

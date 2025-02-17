@@ -55,13 +55,14 @@ fun UiScope.MenuSlider2(
     txtFormat: (Float) -> String = { it.toString(precision) },
     onChange: (Float) -> Unit
 ) {
+    fun boundedChange(value: Float) { onChange(value.coerceAtLeast(min)) }
     MenuRow {
         Text(label) { labelStyle(Grow.Std) }
         TextField(txtFormat(value)) {
-            modifier.onChange { onChange(it.toFloat()) }
+            modifier.onChange { it.toFloatOrNull()?.let { boundedChange(it) } }
                 .onWheelY {
                     val multiplier = if(KeyboardInput.isShiftDown) 1f else 10f
-                    onChange(value + multiplier * (0.1f).pow(precision) * it.pointer.deltaScrollY.toFloat())
+                    boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.deltaScrollY.toFloat())
                 }
                 .align(yAlignment = AlignmentY.Center)
                 .padding(vertical = sizes.smallGap * 0.5f)

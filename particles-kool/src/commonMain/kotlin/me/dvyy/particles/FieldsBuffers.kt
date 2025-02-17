@@ -1,5 +1,6 @@
 package me.dvyy.particles
 
+import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.util.Color
 import me.dvyy.particles.dsl.Particle
 
@@ -19,6 +20,7 @@ class FieldsBuffers(
         Buffers.velocities(count, depth != 0, 20.0),
         Buffers.velocities(count, depth != 0, 20.0),
     )
+    val prevForcesBuffer = Buffers.float4(count, default = Vec4f.ZERO)
     val particleGridCellKeys = Buffers.integers(count)
     val sortIndices = Buffers.integers(count)
     val offsetsBuffer = Buffers.integers(count)

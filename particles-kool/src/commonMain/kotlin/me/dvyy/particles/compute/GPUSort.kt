@@ -65,6 +65,7 @@ object GPUSort {
             val currVelocities = storage1d<KslFloat4>("currVelocities")
             val prevPositions = storage1d<KslFloat4>("prevPositions")
             val prevVelocities = storage1d<KslFloat4>("prevVelocities")
+            val prevForces = storage1d<KslFloat4>("prevForces")
             val types = storage1d<KslInt1>("types")
 
             main {
@@ -83,33 +84,26 @@ object GPUSort {
                     val keyHigh = int1Var(keys[indexHigh])
 
                     `if`(keyLow gt keyHigh) {
-                        val sortLow = int1Var(indices[indexLow])
-                        val currPositionsLow = float4Var(currPositions[indexLow])
-                        val currVelocitiesLow = float4Var(currVelocities[indexLow])
-                        val prevPositionsLow = float4Var(prevPositions[indexLow])
-                        val prevVelocitiesLow = float4Var(prevVelocities[indexLow])
-
-                        val sortHigh = int1Var(indices[indexHigh])
-                        val currPositionsHigh = float4Var(currPositions[indexHigh])
-                        val currVelocitiesHigh = float4Var(currVelocities[indexHigh])
-                        val prevPositionsHigh = float4Var(prevPositions[indexHigh])
-                        val prevVelocitiesHigh = float4Var(prevVelocities[indexHigh])
-                        val typesLow = int1Var(types[indexLow])
-                        val typesHigh = int1Var(types[indexHigh])
-                        keys[indexLow] = keyHigh
-                        keys[indexHigh] = keyLow
-                        indices[indexLow] = sortHigh
-                        indices[indexHigh] = sortLow
-                        currPositions[indexLow] = currPositionsHigh
-                        currPositions[indexHigh] = currPositionsLow
-                        currVelocities[indexLow] = currVelocitiesHigh
-                        currVelocities[indexHigh] = currVelocitiesLow
-                        prevPositions[indexLow] = prevPositionsHigh
-                        prevPositions[indexHigh] = prevPositionsLow
-                        prevVelocities[indexLow] = prevVelocitiesHigh
-                        prevVelocities[indexHigh] = prevVelocitiesLow
-                        types[indexLow] = typesHigh
-                        types[indexHigh] = typesLow
+                        fun swapFloats(buffer: KslStorage1d<KslStorage1dType<KslFloat4>>) {
+                            val currLow = float4Var(buffer[indexLow])
+                            val currHigh = float4Var(buffer[indexHigh])
+                            buffer[indexLow] = currHigh
+                            buffer[indexHigh] = currLow
+                        }
+                        fun swapInts(buffer: KslStorage1d<KslStorage1dType<KslInt1>>) {
+                            val currLow = int1Var(buffer[indexLow])
+                            val currHigh = int1Var(buffer[indexHigh])
+                            buffer[indexLow] = currHigh
+                            buffer[indexHigh] = currLow
+                        }
+                        swapFloats(currPositions)
+                        swapFloats(currVelocities)
+                        swapFloats(prevPositions)
+                        swapFloats(prevVelocities)
+                        swapFloats(prevForces)
+                        swapInts(types)
+                        swapInts(keys)
+                        swapInts(indices)
                     }
                 }
             }
@@ -132,6 +126,7 @@ object GPUSort {
         var positions2 by sorter.storage1d("prevPositions")
         var velocities1 by sorter.storage1d("currVelocities")
         var velocities2 by sorter.storage1d("prevVelocities")
+        var prevForces by sorter.storage1d("prevForces")
         var types by sorter.storage1d("types")
 
         numValues = count
@@ -141,16 +136,14 @@ object GPUSort {
         positions2 = buffers.positionBuffers[1]
         velocities1 = buffers.velocitiesBuffers[0]
         velocities2 = buffers.velocitiesBuffers[1]
+        prevForces = buffers.prevForcesBuffer
         types = buffers.particleTypesBuffer
 
         computePass.apply {
             val numPairs = count.takeHighestOneBit() * 2
             val numStages = numPairs.countTrailingZeroBits()
-//            var steps = 0
-//            val maxSteps = 2
             for (stageIndex in 0..<numStages) {
                 for (stepIndex in 0..stageIndex) {
-//                    steps++
                     val groupWidth = 1 shl (stageIndex - stepIndex)
                     val groupHeight = 2 * groupWidth - 1
                     addTask(sorter, numGroups = Vec3i(numPairs / WORK_GROUP_SIZE, 1, 1)).apply {
@@ -159,11 +152,9 @@ object GPUSort {
                         groupHeightU = groupHeight
                         stepIndexU = stepIndex
                         onBeforeDispatch {
-//                            logI { "Dispatching $stageIndex, $stepIndex" }
                             pipeline.swapPipelineData("$stageIndex, $stepIndex")
                         }
                     }
-//                    if(steps >= maxSteps) return@apply
                 }
             }
         }

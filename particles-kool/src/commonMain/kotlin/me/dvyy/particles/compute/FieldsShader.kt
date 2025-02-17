@@ -83,6 +83,7 @@ class FieldsShader(
             val prevPositions = storage1d<KslFloat4>("prevPositions")
             val currVelocities = storage1d<KslFloat4>("currVelocities")
             val prevVelocities = storage1d<KslFloat4>("prevVelocities")
+            val prevForces = storage1d<KslFloat4>("prevForces")
 
             val colors = storage1d<KslFloat4>("colors")
             val particleTypes = storage1d<KslInt1>("particleTypes")
@@ -186,7 +187,8 @@ class FieldsShader(
 
                 // Compute next position with Verlet integration:
                 // nextPosition = position + velocity * dT + (netForce * dT^2) / 2
-                val nextPosition = float3Var(position + velocity * dT)// + ((netForce * dT * dT) / 2f.const))
+                val nextPosition = float3Var(position + velocity * dT + ((netForce * dT * dT) / 2f.const))
+                val nextVelocity = float3Var(velocity + ((prevForces[id].xyz + netForce) * dT) / 2f.const)
 
 //                nextPosition.x set nextPosition.x % gridCols.toFloat1() * gridSize
 //                nextPosition.y set nextPosition.y % gridRows.toFloat1() * gridSize
@@ -202,7 +204,8 @@ class FieldsShader(
                 }
 
                 prevPositions[id] = float4Value(nextPosition, 0f)
-                prevVelocities[id] = float4Value(velocity + netForce / 2f.const * dT, 0f)
+                prevVelocities[id] = float4Value(nextVelocity, 0f)
+                prevForces[id] = float4Value(netForce, 0f)
                 // Update the color buffer based on the magnitude of the net force
                 colors[id] = float4Value(
                     log(length(netForce)) / (2f.const * log(1000f.const)),
@@ -238,6 +241,7 @@ class FieldsShader(
     var prevPositions by shader.storage1d("prevPositions")
     var currVelocities by shader.storage1d("currVelocities")
     var prevVelocities by shader.storage1d("prevVelocities")
+    var prevForces by shader.storage1d("prevForces")
     var colors by shader.storage1d("colors")
 
     var particleTypes by shader.storage1d("particleTypes")

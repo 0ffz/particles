@@ -131,6 +131,7 @@ fun launchApp(ctx: KoolContext) {
             it.particleTypes = buffers.particleTypesBuffer
             it.cellOffsets = buffers.offsetsBuffer
             it.particle2CellKey = buffers.particleGridCellKeys
+            it.prevForces = buffers.prevForcesBuffer
         }
         repeat(passesPerFrame.value) { passIndex ->
             sorting.addTask(fields.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
@@ -138,6 +139,7 @@ fun launchApp(ctx: KoolContext) {
                 fields.prevPositions = buffers.positionBuffers[passIndex % 2]
                 fields.currPositions = buffers.positionBuffers[(passIndex + 1) % 2]
                 fields.prevVelocities = buffers.velocitiesBuffers[passIndex % 2]
+                fields.currVelocities = buffers.velocitiesBuffers[(passIndex + 1) % 2]
                 fields.currVelocities = buffers.velocitiesBuffers[(passIndex + 1) % 2]
 
                 onBeforeDispatch {

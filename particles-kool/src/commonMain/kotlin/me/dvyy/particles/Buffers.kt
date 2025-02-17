@@ -33,9 +33,9 @@ object Buffers {
     fun integers(count: Int) = StorageBuffer1d(count, GpuType.INT1)
     fun floats(count: Int) = StorageBuffer1d(count, GpuType.FLOAT1)
 
-    fun float4(count: Int) = StorageBuffer1d(count, GpuType.FLOAT4).apply {
+    fun float4(count: Int, default: Vec4f = Vec4f.ONES) = StorageBuffer1d(count, GpuType.FLOAT4).apply {
         for (i in 0 until count) {
-            this[i] = Vec4f(1f, 1f, 1f, 1f)
+            this[i] = default
         }
     }
 }

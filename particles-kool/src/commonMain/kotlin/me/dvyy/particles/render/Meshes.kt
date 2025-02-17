@@ -90,7 +90,7 @@ object Meshes {
             storage1d("typesBuffer", buffers.particleTypesBuffer)
         }
         generate {
-            fillPolygon(generateCirclePoints(10, radius = 1f))
+            fillPolygon(generateCirclePoints(20, radius = 1f))
         }
     }
 

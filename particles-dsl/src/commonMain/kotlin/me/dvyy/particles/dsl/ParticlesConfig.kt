@@ -1,5 +1,6 @@
 package me.dvyy.particles.dsl
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import me.dvyy.particles.dsl.pairwise.*
@@ -7,9 +8,13 @@ import me.dvyy.particles.dsl.pairwise.*
 @Serializable
 data class ParticlesConfig(
     val application: ApplicationConfiguration = ApplicationConfiguration(),
-    val particles: Map<String, Particle> = mapOf(),
+    @SerialName("particles")
+    val nameToParticle: Map<String, Particle> = mapOf(),
     val interactions: Map<String, Map<String, Map<String, Parameter<String>>>> = mapOf(),
 ) {
+    @Transient
+    val particles = nameToParticle.values.toList()
+
     @Transient
     val functions: List<PairwiseFunction> = listOf(LennardJones)
 
@@ -17,7 +22,7 @@ data class ParticlesConfig(
     private var highestId = 0u
 
     @Transient
-    val particleIds: Map<String, ParticleId> = particles.mapValues { ParticleId(highestId++) }
+    val particleIds: Map<String, ParticleId> = nameToParticle.mapValues { ParticleId(highestId++) }
 
     @Transient
     val pairwiseInteraction: List<PairwiseInteractions> = interactions.map { (name, interactions) ->

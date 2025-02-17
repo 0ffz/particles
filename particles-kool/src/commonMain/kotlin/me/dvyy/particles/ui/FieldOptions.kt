@@ -71,11 +71,13 @@ class FieldOptions(
         name: String, state: MutableStateValue<Float>,
         min: Float = 0f,
         max: Float = 1f,
+        precision: Int = 2,
     ): Unit = MenuSlider2(
         name,
         state.use(),
         min = min,
         max = max,
+        precision = precision,
         onChange = { state.value = it },
     )
 
@@ -100,10 +102,9 @@ class FieldOptions(
         }
         liveSlider("Count", state.targetCount, max = 100_000f)
         liveSlider("Min grid size", state.minGridSize, max = 100f)
-        liveSlider("dT", state.dT, max = 0.05f)
+        liveSlider("dT", state.dT, max = 0.05f, precision = 3)
         liveSlider("Max velocity", state.maxVelocity, max = 100f)
         liveSlider("Max force", state.maxForce, max = 100_000f)
-        liveSlider("Epsilon", state.epsilon, max = 1000f)
         LabeledSwitch("3d", state.threeDimensions)
 
         uniforms.uniformParams
@@ -130,7 +131,6 @@ class FieldOptions(
                 modifier.onClick { load() }
             }
         }
-        Text("File content: " + state.epsilon.use()) { }
     }
 
     init {

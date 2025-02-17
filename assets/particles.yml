@@ -3,11 +3,15 @@ particles:
   hydrogen:
     color: ffffff
     radius: 1.0
-    distribution: 2.0
+    distribution: 2
   oxygen:
     color: ff0000
     radius: 1.5
-    distribution: 1.0
+    distribution: 1
+  hidden:
+    color: 000000
+    radius: 0
+    distribution : 1
 interactions:
   hydrogen-oxygen:
     lennardJones:

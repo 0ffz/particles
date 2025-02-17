@@ -19,6 +19,7 @@ import de.fabmax.kool.util.debugOverlay
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
@@ -64,8 +65,7 @@ fun launchApp(ctx: KoolContext) {
     val gridRows = (height / gridSize).toInt().also { println("$it rows") }
     val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
 
-    //TODO fix potential order being different when converting map values to list
-    val buffers = FieldsBuffers(config.particles.values.toList(), width, height, depth, count)
+    val buffers = FieldsBuffers(config.particles, width, height, depth, count)
 
     ctx.scenes += scene {
         var swapIndex = 0
@@ -78,12 +78,9 @@ fun launchApp(ctx: KoolContext) {
             uniform1i("gridCols", gridCols)
             storage1d("keys", buffers.particleGridCellKeys)
             storage1d("indices", buffers.sortIndices)
+            storage1d("positions", buffers.positionBuffers[0])
         }
-        sorting.addTask(reset, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
-            onBeforeDispatch {
-                reset.storage1d("positions", buffers.positionBuffers[0])
-            }
-        }
+        sorting.addTask(reset, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1))
 
         // Sort by grid cells
         gpuSorting(count, buffers = buffers, computePass = sorting)
@@ -129,7 +126,6 @@ fun launchApp(ctx: KoolContext) {
             it.gridRows = gridRows
             it.gridDepth = gridDepth
             it.gridCols = gridCols
-            it.sigma = 2f
             it.count = count
             it.colors = buffers.colorsBuffer
             it.particleTypes = buffers.particleTypesBuffer
@@ -146,7 +142,6 @@ fun launchApp(ctx: KoolContext) {
 
                 onBeforeDispatch {
                     pipeline.swapPipelineData("fieldsPass$passIndex")
-                    fields.epsilon = state.epsilon.value
                     fields.dT = state.dT.value
                     fields.maxVelocity = state.maxVelocity.value
                     fields.maxForce = state.maxForce.value
@@ -198,9 +193,20 @@ fun launchApp(ctx: KoolContext) {
 //            positionsBuffer.release()
 //        }
         var iterations = 0
+//        launchOnMainThread {
+//            while(true) {
+//                config.particles.forEach { from ->
+//                    from.convertTo.forEach { (to, options) ->
+//                        options.every
+//                        delay()
+//                    }
+//                }
+//            }
+//        }
         onUpdate {
             iterations++
             if (iterations % 90 * 5 == 0) launchOnMainThread {
+                buffers.particleTypesBuffer.readbackBuffer()
                 return@launchOnMainThread
                 buffers.positionBuffers[0].readbackBuffer()
                 buffers.velocitiesBuffers[0].readbackBuffer()

@@ -1,7 +1,10 @@
 package me.dvyy.particles.ui
 
+import de.fabmax.kool.input.InputStack
+import de.fabmax.kool.input.KeyboardInput
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString
+import kotlin.math.pow
 
 object UiSizes {
     val hGap: Dp get() = Dp(2f)
@@ -48,12 +51,21 @@ fun UiScope.MenuSlider2(
     value: Float,
     min: Float,
     max: Float,
-    txtFormat: (Float) -> String = { it.toString(2) },
+    precision: Int = 2,
+    txtFormat: (Float) -> String = { it.toString(precision) },
     onChange: (Float) -> Unit
 ) {
     MenuRow {
         Text(label) { labelStyle(Grow.Std) }
-        Text(txtFormat(value)) { labelStyle() }
+        TextField(txtFormat(value)) {
+            modifier.onChange { onChange(it.toFloat()) }
+                .onWheelY {
+                    val multiplier = if(KeyboardInput.isShiftDown) 1f else 10f
+                    onChange(value + multiplier * (0.1f).pow(precision) * it.pointer.deltaScrollY.toFloat())
+                }
+                .align(yAlignment = AlignmentY.Center)
+                .padding(vertical = sizes.smallGap * 0.5f)
+        }
     }
     MenuRow {
         Slider(value, min, max) {

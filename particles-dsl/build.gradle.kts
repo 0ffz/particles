@@ -7,14 +7,8 @@ plugins {
     alias(libs.plugins.kotlinx.serialization)
 }
 
-repositories {
-    mavenCentral()
-}
-
-
 kotlin {
-    // kotlin multiplatform (jvm + js) setup:
-    jvm { }
+    jvm()
     jvmToolchain(21)
 
     js {
@@ -36,13 +30,11 @@ kotlin {
     }
 
     sourceSets {
-
         val commonMain by getting {
             dependencies {
                 implementation("com.charleskorn.kaml:kaml:0.67.0")
             }
         }
-
     }
 }
 

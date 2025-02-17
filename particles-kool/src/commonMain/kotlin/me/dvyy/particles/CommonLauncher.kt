@@ -5,7 +5,6 @@ import com.charleskorn.kaml.Yaml
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec3i
-import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.math.spatial.BoundingBoxF
 import de.fabmax.kool.pipeline.ClearColorFill
 import de.fabmax.kool.pipeline.ComputePass
@@ -19,18 +18,19 @@ import de.fabmax.kool.util.debugOverlay
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.render.Meshes
-import me.dvyy.particles.ui.FieldOptions
-import me.dvyy.particles.ui.FieldsState
-import me.dvyy.particles.ui.UniformParameters
+import me.dvyy.particles.ui.*
+import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
+import me.dvyy.particles.ui.windows.FieldParamsWindow
+import org.koin.core.context.startKoin
+import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.module
 import kotlin.math.sqrt
-import kotlin.random.Random
 
 /**
  * Main application entry. This demo creates a small example scene, which you probably want to replace by your actual
@@ -40,12 +40,11 @@ fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
     val appScope = CoroutineScope(Dispatchers.RenderLoop)
     val parameters = YamlParameters(path = "parameters.yml", scope = appScope)
-    val config =
-        Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("particles.yml"))
-    val state = FieldsState(parameters, appScope)
+    val config = Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("particles.yml"))
+    val state = AppState(parameters, appScope)
     val uniforms = UniformParameters(parameters, config)
 
-    val count = (state.targetCount.value / 64) * 64
+    val count = state.targetCount.value
     val width = state.width.value
     val height = state.height.value
     val depth = if (state.threeDimensions.value) state.depth.value else 0
@@ -67,7 +66,20 @@ fun launchApp(ctx: KoolContext) {
 
     val buffers = FieldsBuffers(config.particles, width, height, depth, count)
 
-    ctx.scenes += scene {
+    val application = startKoin {
+        modules(module {
+            single { parameters }
+            single { state }
+            single { uniforms }
+            single { buffers }
+            single<KoolContext> { ctx }
+        }, module {
+            singleOf(::ParticlesViewModel)
+            singleOf(::FieldParamsWindow)
+            singleOf(::AppUI)
+        })
+    }
+    val appScene = scene {
         var swapIndex = 0
         // COMPUTE
         val sorting = ComputePass("Particles Compute")
@@ -166,6 +178,7 @@ fun launchApp(ctx: KoolContext) {
             maxZoom = width.toDouble()
             minZoom = 1.0
             zoom = width.toDouble() / 2
+            zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
             setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
         }
         else {
@@ -175,6 +188,7 @@ fun launchApp(ctx: KoolContext) {
                 minZoom = 1.0
                 leftDragMethod = OrbitInputTransform.DragMethod.PAN
                 middleDragMethod = OrbitInputTransform.DragMethod.ROTATE
+                zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
                 zoom = width.toDouble() / 2
                 setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
             }
@@ -223,39 +237,7 @@ fun launchApp(ctx: KoolContext) {
             }
         }
     }
-
-    ctx.scenes += FieldOptions(
-        resetPositions = {
-            launchOnMainThread {
-                buffers.positionBuffers.forEach {
-                    for (i in 0 until count) {
-                        it[i] = Vec4f(
-                            Random.Default.nextInt(width).toFloat(),
-                            Random.Default.nextInt(height).toFloat(),
-                            if (depth == 0) 0f else Random.Default.nextInt(depth).toFloat(),
-                            0f
-                        )
-                    }
-                }
-            }
-        },
-        load = {
-            launchOnMainThread {
-                parameters.load()
-//                        SystemFileSystem.source(Path("../assets/parameters.yml")).buffered().readString().let { println(it) }
-//                        Assets.loadBlob("parameters.yml").getOrThrow().decodeToString()
-//                        FieldsState.fileText.set(asset.first().read().decodeToString().lineSequence().first())
-            }
-        },
-        save = {
-            launchOnMainThread {
-                parameters.save()
-            }
-        },
-        state = state,
-        ctx = ctx,
-        passesPerFrame = passesPerFrame.value,
-        uniforms = uniforms,
-    ).ui
+    ctx.scenes += appScene
+    ctx.scenes += application.koin.get<AppUI>().ui
     ctx.scenes += debugOverlay()
 }

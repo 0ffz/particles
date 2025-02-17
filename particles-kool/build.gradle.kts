@@ -1,4 +1,3 @@
-import org.gradle.kotlin.dsl.project
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -7,15 +6,9 @@ plugins {
     kotlin("multiplatform")
 }
 
-repositories {
-    mavenCentral()
-    maven("https://oss.sonatype.org/content/repositories/snapshots")
-    mavenLocal()
-}
-
 kotlin {
     // kotlin multiplatform (jvm + js) setup:
-    jvm { }
+    jvm()
     jvmToolchain(21)
 
     js {
@@ -35,7 +28,7 @@ kotlin {
             target.set("es2015")
         }
     }
-    
+
     sourceSets {
         val koolVersion = "0.17.0-SNAPSHOT"
         val lwjglVersion = "3.3.5"
@@ -53,6 +46,7 @@ kotlin {
 
                 implementation(project(":particles-dsl"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.koin.core)
                 implementation("com.charleskorn.kaml:kaml:0.67.0")
 //                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
@@ -72,7 +66,7 @@ kotlin {
                 }
             }
         }
-        
+
         val jsMain by getting {
             dependencies {
                 // add additional js-specific dependencies here...

@@ -26,8 +26,11 @@ jsoup = { group = "org.jsoup", name = "jsoup", version = "1.17.1" }
 gson = { group = "com.google.code.gson", name = "gson", version = "2.10.1" }
 csv = { group = "com.github.doyaaaaaken", name = "kotlin-csv-jvm", version = "1.9.2" }
 
+koin-core = "io.insert-koin:koin-core:4.0.2"
+
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version = "8.3.5" }
 runtime = { id = "org.beryx.runtime", version = "1.13.0" }

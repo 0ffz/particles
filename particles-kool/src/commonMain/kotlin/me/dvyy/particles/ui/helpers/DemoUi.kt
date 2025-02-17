@@ -1,6 +1,5 @@
-package me.dvyy.particles.ui
+package me.dvyy.particles.ui.helpers
 
-import de.fabmax.kool.input.InputStack
 import de.fabmax.kool.input.KeyboardInput
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString

@@ -39,9 +39,9 @@ import kotlin.random.Random
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
     val appScope = CoroutineScope(Dispatchers.RenderLoop)
-    val parameters = YamlParameters(path = "../assets/parameters.yml", scope = appScope)
+    val parameters = YamlParameters(path = "parameters.yml", scope = appScope)
     val config =
-        Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("../assets/particles.yml"))
+        Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("particles.yml"))
     val state = FieldsState(parameters, appScope)
     val uniforms = UniformParameters(parameters, config)
 

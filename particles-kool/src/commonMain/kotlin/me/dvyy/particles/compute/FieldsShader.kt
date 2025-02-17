@@ -110,9 +110,10 @@ class FieldsShader(
 
                 // Load current particle properties
                 // Extract the 2D position from the stored vec4
-                val position = float3Var(currPositions[id].xyz)
-                val velocity = float3Var(currVelocities[id].xyz)
+                val position = float3Var(currPositions[id].xyz) //p(t)
+                val velocity = float3Var(currVelocities[id].xyz) //v(t)
                 val particleType = int1Var(particleTypes[id])
+//                val force = TODO() //a(t)
 
                 // Compute grid indices based on the particle position
                 val xGrid = int1Var((position.x / gridSize).toInt1())
@@ -120,6 +121,7 @@ class FieldsShader(
                 // Compute the base cell id (convert to int for bounds checking)
                 val cellId = int1Var(cellId(xGrid, yGrid, gridCols))
 
+                // a(t) TODO change to a(t + dT)
                 val netForce = float3Var(Vec3f.ZERO.const)
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
@@ -187,8 +189,11 @@ class FieldsShader(
 
                 // Compute next position with Verlet integration:
                 // nextPosition = position + velocity * dT + (netForce * dT^2) / 2
-                val nextPosition = float3Var(position + velocity * dT + ((netForce * dT * dT) / 2f.const))
-                val nextVelocity = float3Var(velocity + ((prevForces[id].xyz + netForce) * dT) / 2f.const)
+//                val prevForce = float3Var(prevForces[id].xyz)
+                // p(t + dT)
+                val nextPosition = float3Var(position + (velocity * dT) + ((netForce * dT * dT) / 2f.const))
+                // v(t + dT)
+                val nextVelocity = float3Var(velocity + (netForce * dT / 2f.const))
 
 //                nextPosition.x set nextPosition.x % gridCols.toFloat1() * gridSize
 //                nextPosition.y set nextPosition.y % gridRows.toFloat1() * gridSize

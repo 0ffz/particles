@@ -19,7 +19,7 @@ object Meshes {
     fun particleMesh(
         buffers: FieldsBuffers,
         instances: MeshInstanceList,
-    ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, instances = instances).apply {
+    ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
 //            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
 //                pipeline { cullMethod = CullMethod.NO_CULLING }
 ////                lightingCfg.ambientLight = AmbientLight.Uniform(MdColor.LIGHT_BLUE tone 400)
@@ -60,7 +60,7 @@ object Meshes {
                     val type = int1Var(typesBuffer[offset])
                     val positionOffset = positionsBuffer[offset].xyz
                     val radius = float1Var(radii[type])
-
+//                    texCoordsBlock = texCoordAttributeBlock()
                     // Extract the camera’s right and up vectors from the view matrix.
                     // (Assuming viewMat is an orthonormal matrix, its transpose is its inverse.)
                     val viewMat = camData.viewMat
@@ -79,6 +79,16 @@ object Meshes {
             }
             fragmentStage {
                 main {
+//                    val uv = float2Var(fragPos.output.xy / fragPos.output.w * 0.5.const + 0.5.const)
+//                    val texCoordBlock = vertexStage?.findBlock<TexCoordAttributeBlock>()!!
+//                    val splatCoords = float2Var( * SPLAT_MAP_SCALE.const)
+//                    val centerOffset = float2Var((uv - 0.5f.const) * 2f.const)
+//                    val sqrDst = dot(centerOffset, centerOffset)
+//                    `if`(sqrDst gt 1f.const) { discard() }
+//                    `if`(texCoordsBlock.getTextureCoords().x gt 0.1f.const) {
+//                        discard()
+//                    }
+//                    float4Value(texCoordBlock.getTextureCoords(), 1f, 1f))//
                     colorOutput(interColor.output)//Color("ff0000").toVec4f().const)
                 }
             }

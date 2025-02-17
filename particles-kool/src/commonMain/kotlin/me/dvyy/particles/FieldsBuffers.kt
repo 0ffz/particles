@@ -19,9 +19,7 @@ class FieldsBuffers(
         Buffers.velocities(count, depth != 0, 20.0),
         Buffers.velocities(count, depth != 0, 20.0),
     )
-    val particleGridCellKeys = Buffers.integers(count)/*.apply {
-        for (i in 0 until count) this[i] = count - i - 1//Random.nextInt(count)
-    }*/
+    val particleGridCellKeys = Buffers.integers(count)
     val sortIndices = Buffers.integers(count)
     val offsetsBuffer = Buffers.integers(count)
     val colorsBuffer = Buffers.float4(count)
@@ -43,6 +41,10 @@ class FieldsBuffers(
     }
     val particleColors = Buffers.float4(particleTypes.size).apply {
         for (i in 0 until particleTypes.size) this[i] = Color(particleTypes[i].color).toVec4f()
+    }
+
+    val particleRadii = Buffers.floats(particleTypes.size).apply {
+        for (i in 0 until particleTypes.size) this[i] = particleTypes[i].radius.toFloat()
     }
 //
 //    init {

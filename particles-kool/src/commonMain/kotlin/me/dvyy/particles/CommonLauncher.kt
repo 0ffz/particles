@@ -72,12 +72,6 @@ fun launchApp(ctx: KoolContext) {
         // COMPUTE
         val sorting = ComputePass("Particles Compute")
 
-        // Swapping grid information at each step
-        fun currPositions() = buffers.positionBuffers[swapIndex % 2]
-        fun prevPositions() = buffers.positionBuffers[(swapIndex + 1) % 2]
-        fun currVelocities() = buffers.velocitiesBuffers[swapIndex % 2]
-        fun prevVelocities() = buffers.velocitiesBuffers[(swapIndex + 1) % 2]
-
         // Reset keys and indices based on grid cell particle is in
         val reset = GPUSort.resetBuffersShader.apply {
             uniform1f("gridSize", gridSize)
@@ -87,7 +81,7 @@ fun launchApp(ctx: KoolContext) {
         }
         sorting.addTask(reset, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
             onBeforeDispatch {
-                reset.storage1d("positions", currPositions())
+                reset.storage1d("positions", buffers.positionBuffers[0])
             }
         }
 
@@ -187,41 +181,11 @@ fun launchApp(ctx: KoolContext) {
                 zoom = width.toDouble() / 2
                 setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
             }
-//            val orthoCam = OrthographicCamera().apply {
-//                left = 0f
-//                top = 0f
-//                right = width.toFloat()
-//                bottom = -height.toFloat()
-//            }
-//            camera = orthoCam
-//            onUpdate { ev ->
-//                orthoCam.left += 0.1f
-//            }
-//            InputStack.defaultInputHandler.pointerListeners += object: InputStack.PointerListener {
-//                override fun handlePointer(
-//                    pointerState: PointerState,
-//                    ctx: KoolContext,
-//                ) {
-//
-//                }
-//
-//            }
-//            onUpdate += { ev ->
-//                // Setup camera to cover viewport size with origin in upper left corner.
-//                // Camera clip space uses OpenGL coordinates -> y-axis points downwards, i.e. bottom coordinate has to be
-//                // set to negative viewport height. UI surface internally mirrors y-axis to get a regular UI coordinate
-//                // system (however, this means triangle index order or face orientation has to be inverted).
-//                (camera as? OrthographicCamera)?.let { cam ->
-//                }
-//            }
         }
         val instances = Meshes.particleMeshInstances(count)
         addNode(
             Meshes.particleMesh(
-                buffers.positionBuffers.first(),
-                buffers.particleTypesBuffer,
-                buffers.particleColors,
-                buffers.colorsBuffer,
+                buffers,
                 instances
             )
         )
@@ -238,7 +202,6 @@ fun launchApp(ctx: KoolContext) {
             iterations++
             if (iterations % 90 * 5 == 0) launchOnMainThread {
                 return@launchOnMainThread
-//            removeComputePass(sorting)
                 buffers.positionBuffers[0].readbackBuffer()
                 buffers.velocitiesBuffers[0].readbackBuffer()
                 buffers.particleGridCellKeys.readbackBuffer()
@@ -251,7 +214,6 @@ fun launchApp(ctx: KoolContext) {
                 println("Offsets: " + (0 until count).map { buffers.offsetsBuffer.getI1(it) }.toString())
             }
         }
-
     }
 
     ctx.scenes += FieldOptions(

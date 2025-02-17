@@ -5,10 +5,10 @@ import de.fabmax.kool.modules.ksl.KslShader
 import de.fabmax.kool.modules.ksl.blocks.cameraData
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.Attribute
-import de.fabmax.kool.pipeline.StorageBuffer1d
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
+import me.dvyy.particles.FieldsBuffers
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -17,10 +17,7 @@ object Meshes {
     fun particleMeshInstances(count: Int) = MeshInstanceList(count).apply { numInstances = count }
 
     fun particleMesh(
-        positions: StorageBuffer1d,
-        types: StorageBuffer1d,
-        particleTypeColors: StorageBuffer1d,
-        colors: StorageBuffer1d,
+        buffers: FieldsBuffers,
         instances: MeshInstanceList,
     ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, instances = instances).apply {
 //            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
@@ -57,26 +54,27 @@ object Meshes {
                     val colorsBuffer = storage1d<KslFloat4>("colorsBuffer")
                     val typeColorsBuffer = storage1d<KslFloat4>("typeColorsBuffer")
                     val typesBuffer = storage1d<KslInt1>("typesBuffer")
+                    val radii = storage1d<KslFloat1>("radii")
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
+                    val type = int1Var(typesBuffer[offset])
                     val positionOffset = positionsBuffer[offset].xyz
+                    val radius = float1Var(radii[type])
 
                     // Extract the camera’s right and up vectors from the view matrix.
                     // (Assuming viewMat is an orthonormal matrix, its transpose is its inverse.)
                     val viewMat = camData.viewMat
                     val cameraRight = float3Value(viewMat[0].x, viewMat[1].x, viewMat[2].x)
-                    val cameraUp    = float3Value(viewMat[0].y, viewMat[1].y, viewMat[2].y)
+                    val cameraUp = float3Value(viewMat[0].y, viewMat[1].y, viewMat[2].y)
                     //val cameraIn   = float3Value(viewMat[0].z, viewMat[1].z, viewMat[2].z)
 
                     // Compute the billboard vertex position:
                     // The vertex’s x and y (from the quad geometry) are used to offset along the camera’s right and up directions.
-                    val worldPos = positionOffset.times(Vec3f(1f, -1f, 1f).const) + (cameraRight * position.x) + (cameraUp * position.y)// + (cameraIn * position.z)
-//                    outPosition set camData.viewProjMat * modelProj * float4Value(
-//                        position + positionOffset.times(Vec3f(1f, -1f, 1f).const),
-//                        1f.const
-//                    )
+                    val worldPos = positionOffset.times(
+                        Vec3f(1f, -1f, 1f).const
+                    ) + (cameraRight * position.x * radius) + (cameraUp * position.y * radius)
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
-                    interColor.input set typeColorsBuffer[typesBuffer[offset]]//colorsBuffer[offset]
+                    interColor.input set typeColorsBuffer[type]//colorsBuffer[offset]
                 }
             }
             fragmentStage {
@@ -85,10 +83,11 @@ object Meshes {
                 }
             }
         }.apply {
-            storage1d("positionsBuffer", positions)
-            storage1d("colorsBuffer", colors)
-            storage1d("typeColorsBuffer", particleTypeColors)
-            storage1d("typesBuffer", types)
+            storage1d("positionsBuffer", buffers.positionBuffers[0])
+            storage1d("colorsBuffer", buffers.colorsBuffer)
+            storage1d("typeColorsBuffer", buffers.particleColors)
+            storage1d("radii", buffers.particleRadii)
+            storage1d("typesBuffer", buffers.particleTypesBuffer)
         }
         generate {
             fillPolygon(generateCirclePoints(10, radius = 1f))

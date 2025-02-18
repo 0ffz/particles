@@ -8,16 +8,15 @@ import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.math.spatial.BoundingBoxF
 import de.fabmax.kool.pipeline.ClearColorFill
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.pipeline.StorageBuffer1d
 import de.fabmax.kool.scene.OrbitInputTransform
 import de.fabmax.kool.scene.addLineMesh
 import de.fabmax.kool.scene.orbitCamera
 import de.fabmax.kool.scene.scene
-import de.fabmax.kool.util.Color
-import de.fabmax.kool.util.RenderLoop
-import de.fabmax.kool.util.debugOverlay
-import de.fabmax.kool.util.launchOnMainThread
+import de.fabmax.kool.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.GPUSort.gpuSorting
@@ -168,6 +167,28 @@ fun launchApp(ctx: KoolContext) {
             addComputePass(sorting)
         }
 
+        val convertShader = ConvertParticlesShader()
+        sorting.addTask(convertShader.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
+
+            val conversionBuffer = Buffers.integers(config.particles.size)
+            val conversionChances = Buffers.floats(config.particles.size)
+            config.particles.forEachIndexed { id, from ->
+                val to = from.convertTo
+                if(to != null) {
+                    conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
+                    conversionChances[id] = to.chance.toFloat()
+                }
+            }
+            convertShader.convertTo = conversionBuffer
+            convertShader.convertChances = conversionChances
+            convertShader.particleTypes = buffers.particleTypesBuffer
+            onBeforeDispatch {
+                val shouldRun = Time.frameCount % 1000 == 0
+                setNumGroupsByInvocations(if(shouldRun) count else 0, 1, 1)
+                convertShader.randomSeed = 1000f + (Time.gameTime % 1000.0).toFloat()
+            }
+        }
+
 //         RENDERING
         val bb = BoundingBoxF(
             Vec3f(0f),
@@ -209,16 +230,6 @@ fun launchApp(ctx: KoolContext) {
 //            positionsBuffer.release()
 //        }
         var iterations = 0
-//        launchOnMainThread {
-//            while(true) {
-//                config.particles.forEach { from ->
-//                    from.convertTo.forEach { (to, options) ->
-//                        options.every
-//                        delay()
-//                    }
-//                }
-//            }
-//        }
         onUpdate {
             iterations++
             if (iterations % 90 * 5 == 0) launchOnMainThread {

@@ -8,10 +8,13 @@ particles:
     color: ff0000
     radius: 1.5
     distribution: 1
-  hidden:
-    color: 000000
-    radius: 0
-    distribution : 1
+    convertTo:
+      type: hydrogen
+      chance: 0.001
+#  hidden:
+#    color: 000000
+#    radius: 0
+#    distribution : 1
 interactions:
   hydrogen-oxygen:
     lennardJones:

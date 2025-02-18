@@ -3,12 +3,13 @@ package me.dvyy.particles
 import OffsetsShader
 import com.charleskorn.kaml.Yaml
 import de.fabmax.kool.KoolContext
+import de.fabmax.kool.math.Vec3d
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.math.spatial.BoundingBoxF
+import de.fabmax.kool.math.spatial.toBoundingBoxD
 import de.fabmax.kool.pipeline.ClearColorFill
 import de.fabmax.kool.pipeline.ComputePass
-import de.fabmax.kool.pipeline.StorageBuffer1d
 import de.fabmax.kool.scene.OrbitInputTransform
 import de.fabmax.kool.scene.addLineMesh
 import de.fabmax.kool.scene.orbitCamera
@@ -23,7 +24,9 @@ import me.dvyy.particles.compute.GPUSort.gpuSorting
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.render.Meshes
-import me.dvyy.particles.ui.*
+import me.dvyy.particles.ui.AppState
+import me.dvyy.particles.ui.AppUI
+import me.dvyy.particles.ui.UniformParameters
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import me.dvyy.particles.ui.windows.FieldParamsWindow
 import org.koin.core.context.startKoin
@@ -52,8 +55,9 @@ fun launchApp(ctx: KoolContext) {
         val smallestSize = state.minGridSize.value
         val cols = (width / smallestSize).toInt()
         val rows = (height / smallestSize).toInt()
-        if (rows * cols > count) {
-            sqrt((width.toFloat() * height.toFloat()) / count) + 1.0
+        val depths = if (depth == 0) 1 else (depth / smallestSize).toInt()
+        if (rows * cols * depths > count) {
+            sqrt((width.toFloat() * height.toFloat() * (depth.coerceAtLeast(1)).toFloat()) / count) + 1.0
         } else smallestSize
     }.toFloat()
 
@@ -86,10 +90,11 @@ fun launchApp(ctx: KoolContext) {
         // Reset keys and indices based on grid cell particle is in
         val reset = GPUSort.resetBuffersShader.apply {
             uniform1f("gridSize", gridSize)
+            uniform1i("gridRows", gridRows)
             uniform1i("gridCols", gridCols)
             storage1d("keys", buffers.particleGridCellKeys)
             storage1d("indices", buffers.sortIndices)
-            storage1d("positions", buffers.positionBuffers[0])
+            storage1d("positions", buffers.positionBuffer)
         }
         sorting.addTask(reset, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1))
 
@@ -131,30 +136,35 @@ fun launchApp(ctx: KoolContext) {
 //                offsets.storage1d("offsets", offsetsBuffer)
 //            }
         }
-
+        val boxMax = Vec3f(gridSize * gridCols, gridSize * gridRows, gridSize * gridDepth)
         val fields = FieldsShader(config).also {
             it.gridSize = gridSize
             it.gridRows = gridRows
-            it.gridDepth = gridDepth
             it.gridCols = gridCols
             it.count = count
             it.colors = buffers.colorsBuffer
             it.particleTypes = buffers.particleTypesBuffer
             it.cellOffsets = buffers.offsetsBuffer
             it.particle2CellKey = buffers.particleGridCellKeys
-            it.prevForces = buffers.prevForcesBuffer
-        }
-        repeat(passesPerFrame.value) { passIndex ->
-            sorting.addTask(fields.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
-                pipeline.swapPipelineData("fieldsPass$passIndex")
-                fields.prevPositions = buffers.positionBuffers[passIndex % 2]
-                fields.currPositions = buffers.positionBuffers[(passIndex + 1) % 2]
-                fields.prevVelocities = buffers.velocitiesBuffers[passIndex % 2]
-                fields.currVelocities = buffers.velocitiesBuffers[(passIndex + 1) % 2]
-                fields.currVelocities = buffers.velocitiesBuffers[(passIndex + 1) % 2]
+            it.positions = buffers.positionBuffer
+            it.velocities = buffers.velocitiesBuffer
+            it.forces = buffers.forcesBuffer
+            it.boxMax = boxMax
 
+            it.halfStep_positions = buffers.positionBuffer
+            it.halfStep_velocities = buffers.velocitiesBuffer
+            it.halfStep_forces = buffers.forcesBuffer
+            it.halfStep_boxMax = boxMax
+        }
+
+        repeat(passesPerFrame.value) { passIndex ->
+            sorting.addTask(fields.halfStep, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
                 onBeforeDispatch {
-                    pipeline.swapPipelineData("fieldsPass$passIndex")
+                    fields.halfStep_dT = state.dT.value
+                }
+            }
+            sorting.addTask(fields.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
+                onBeforeDispatch {
                     fields.dT = state.dT.value
                     fields.maxVelocity = state.maxVelocity.value
                     fields.maxForce = state.maxForce.value
@@ -190,16 +200,14 @@ fun launchApp(ctx: KoolContext) {
         }
 
 //         RENDERING
-        val bb = BoundingBoxF(
-            Vec3f(0f),
-            Vec3f(gridSize * gridCols, -gridSize * gridRows, gridSize * gridDepth),
-        )
+        val bb = BoundingBoxF(Vec3f.ZERO, boxMax.times(Vec3f(1f, -1f, 1f)))
 
         if (state.threeDimensions.value) orbitCamera {
             maxZoom = width.toDouble()
             minZoom = 1.0
             zoom = width.toDouble() / 2
             zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
+            translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0))
             setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
         }
         else {
@@ -211,6 +219,7 @@ fun launchApp(ctx: KoolContext) {
                 middleDragMethod = OrbitInputTransform.DragMethod.ROTATE
                 zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
                 zoom = width.toDouble() / 2
+                translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0, 500.0, 0.0))
                 setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
             }
         }
@@ -233,15 +242,15 @@ fun launchApp(ctx: KoolContext) {
         onUpdate {
             iterations++
             if (iterations % 90 * 5 == 0) launchOnMainThread {
-                buffers.particleTypesBuffer.readbackBuffer()
                 return@launchOnMainThread
-                buffers.positionBuffers[0].readbackBuffer()
-                buffers.velocitiesBuffers[0].readbackBuffer()
+                buffers.particleTypesBuffer.readbackBuffer()
+                buffers.positionBuffer.readbackBuffer()
+                buffers.velocitiesBuffer.readbackBuffer()
                 buffers.particleGridCellKeys.readbackBuffer()
                 buffers.sortIndices.readbackBuffer()
                 buffers.offsetsBuffer.readbackBuffer()
-                println("Positions: " + (0 until count).map { buffers.positionBuffers[0].getF4(it) }.toString())
-                println("Velocities: " + (0 until count).map { buffers.velocitiesBuffers[0].getF4(it) }.toString())
+                println("Positions: " + (0 until count).map { buffers.positionBuffer.getF4(it) }.toString())
+                println("Velocities: " + (0 until count).map { buffers.velocitiesBuffer.getF4(it) }.toString())
                 println("Keys: " + (0 until count).map { buffers.particleGridCellKeys.getI1(it) }.toString())
                 println("Indices: " + (0 until count).map { buffers.sortIndices.getI1(it) }.toString())
                 println("Offsets: " + (0 until count).map { buffers.offsetsBuffer.getI1(it) }.toString())

@@ -4,10 +4,7 @@ import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
-import de.fabmax.kool.pipeline.StorageBuffer1d
 import de.fabmax.kool.scene.Scene
-import de.fabmax.kool.util.logI
-import de.fabmax.kool.util.releaseWith
 import me.dvyy.particles.FieldsBuffers
 
 const val WORK_GROUP_SIZE = 64
@@ -27,16 +24,20 @@ object GPUSort {
     val resetBuffersShader = KslComputeShader("ResetBuffers") {
         computeStage(WORK_GROUP_SIZE) {
             val gridSize = uniformFloat1("gridSize")
+            val gridRows = uniformInt1("gridRows")
             val gridCols = uniformInt1("gridCols")
             val keys = storage1d<KslInt1>("keys")
             val indices = storage1d<KslInt1>("indices")
             val positions = storage1d<KslFloat4>("positions")
 
+            // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
             val cellId = functionInt1("cellId") {
                 val xGrid = paramInt1("xGrid")
                 val yGrid = paramInt1("yGrid")
+                val zGrid = paramInt1("zGrid")
+//                val gridCols = paramInt1("gridCols")
                 body {
-                    xGrid + (yGrid * gridCols)
+                    xGrid + (yGrid * gridCols) + (zGrid * gridRows * gridCols)
                 }
             }
             main {
@@ -45,7 +46,8 @@ object GPUSort {
                 val position = positions[idx]
                 val xGrid = int1Var((position.x / gridSize).toInt1());
                 val yGrid = int1Var((position.y / gridSize).toInt1());
-                val cellId = int1Var(cellId(xGrid, yGrid))
+                val zGrid = int1Var((position.z / gridSize).toInt1());
+                val cellId = int1Var(cellId(xGrid, yGrid, zGrid))
                 keys[idx] = cellId
                 indices[idx] = idx
             }
@@ -63,8 +65,8 @@ object GPUSort {
             val indices = storage1d<KslInt1>("indices")
             val currPositions = storage1d<KslFloat4>("currPositions")
             val currVelocities = storage1d<KslFloat4>("currVelocities")
-            val prevPositions = storage1d<KslFloat4>("prevPositions")
-            val prevVelocities = storage1d<KslFloat4>("prevVelocities")
+//            val prevPositions = storage1d<KslFloat4>("prevPositions")
+//            val prevVelocities = storage1d<KslFloat4>("prevVelocities")
             val prevForces = storage1d<KslFloat4>("prevForces")
             val types = storage1d<KslInt1>("types")
 
@@ -98,8 +100,8 @@ object GPUSort {
                         }
                         swapFloats(currPositions)
                         swapFloats(currVelocities)
-                        swapFloats(prevPositions)
-                        swapFloats(prevVelocities)
+//                        swapFloats(prevPositions)
+//                        swapFloats(prevVelocities)
                         swapFloats(prevForces)
                         swapInts(types)
                         swapInts(keys)
@@ -123,20 +125,16 @@ object GPUSort {
         var groupHeightU by sorter.uniform1i("groupHeight")
         var stepIndexU by sorter.uniform1i("stepIndex")
         var positions1 by sorter.storage1d("currPositions")
-        var positions2 by sorter.storage1d("prevPositions")
         var velocities1 by sorter.storage1d("currVelocities")
-        var velocities2 by sorter.storage1d("prevVelocities")
         var prevForces by sorter.storage1d("prevForces")
         var types by sorter.storage1d("types")
 
         numValues = count
         keys = buffers.particleGridCellKeys
         indices = buffers.sortIndices
-        positions1 = buffers.positionBuffers[0]
-        positions2 = buffers.positionBuffers[1]
-        velocities1 = buffers.velocitiesBuffers[0]
-        velocities2 = buffers.velocitiesBuffers[1]
-        prevForces = buffers.prevForcesBuffer
+        positions1 = buffers.positionBuffer
+        velocities1 = buffers.velocitiesBuffer
+        prevForces = buffers.forcesBuffer
         types = buffers.particleTypesBuffer
 
         computePass.apply {

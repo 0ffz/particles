@@ -13,16 +13,15 @@ class ParticlesViewModel(
     private val parameters: YamlParameters,
 ) {
     fun resetPositions() = launchOnMainThread {
-        buffers.positionBuffers.forEach {
-            for (i in 0 until state.count) {
-                it[i] = Vec4f(
-                    Random.Default.nextInt(state.width.value).toFloat(),
-                    Random.Default.nextInt(state.height.value).toFloat(),
-                    if (state.threeDimensions.value != true || state.depth.value == 0) 0f
-                    else Random.Default.nextInt(state.depth.value).toFloat(),
-                    0f,
-                )
-            }
+        val positions = buffers.positionBuffer
+        for (i in 0 until state.count) {
+            positions[i] = Vec4f(
+                Random.Default.nextInt(state.width.value).toFloat(),
+                Random.Default.nextInt(state.height.value).toFloat(),
+                if (!state.threeDimensions.value || state.depth.value == 0) 0f
+                else Random.Default.nextInt(state.depth.value).toFloat(),
+                0f,
+            )
         }
     }
 

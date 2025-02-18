@@ -10,7 +10,7 @@ particles:
     distribution: 1
     convertTo:
       type: hydrogen
-      chance: 0.001
+      chance: 0.01
 #  hidden:
 #    color: 000000
 #    radius: 0

@@ -93,7 +93,7 @@ object Meshes {
                 }
             }
         }.apply {
-            storage1d("positionsBuffer", buffers.positionBuffers[0])
+            storage1d("positionsBuffer", buffers.positionBuffer)
             storage1d("colorsBuffer", buffers.colorsBuffer)
             storage1d("typeColorsBuffer", buffers.particleColors)
             storage1d("radii", buffers.particleRadii)

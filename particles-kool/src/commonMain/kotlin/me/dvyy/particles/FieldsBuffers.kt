@@ -12,15 +12,10 @@ class FieldsBuffers(
     val depth: Int,
     val count: Int,
 ) {
-    val positionBuffers = arrayOf(
-        Buffers.positions(count, width, height, depth),
-        Buffers.positions(count, width, height, depth)
-    )
-    val velocitiesBuffers = arrayOf(
-        Buffers.velocities(count, depth != 0, 20.0),
-        Buffers.velocities(count, depth != 0, 20.0),
-    )
-    val prevForcesBuffer = Buffers.float4(count, default = Vec4f.ZERO)
+    val positionBuffer = Buffers.positions(count, width, height, depth)
+    val velocitiesBuffer = Buffers.velocities(count, depth != 0, 20.0)
+
+    val forcesBuffer = Buffers.float4(count, default = Vec4f.ZERO)
     val particleGridCellKeys = Buffers.integers(count)
     val sortIndices = Buffers.integers(count)
     val offsetsBuffer = Buffers.integers(count)

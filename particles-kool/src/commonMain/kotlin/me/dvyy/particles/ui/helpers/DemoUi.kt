@@ -4,6 +4,7 @@ import de.fabmax.kool.input.KeyboardInput
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 object UiSizes {
     val hGap: Dp get() = Dp(2f)
@@ -54,7 +55,10 @@ fun UiScope.MenuSlider2(
     txtFormat: (Float) -> String = { it.toString(precision) },
     onChange: (Float) -> Unit
 ) {
-    fun boundedChange(value: Float) { onChange(value.coerceAtLeast(min)) }
+    val round = 10.0.pow(precision)
+    fun boundedChange(value: Float) {
+        onChange(((value.coerceAtLeast(min) * round).roundToInt() / round).toFloat())
+    }
     MenuRow {
         Text(label) { labelStyle(Grow.Std) }
         TextField(txtFormat(value)) {
@@ -72,7 +76,7 @@ fun UiScope.MenuSlider2(
             modifier
                 .width(Grow.Std)
                 .alignY(AlignmentY.Center)
-                .onChange(onChange)
+                .onChange { boundedChange(it) }
         }
     }
 }

@@ -2,7 +2,7 @@ simulation:
   count: 5144
   minGridSize: 5.0
   dT: 0.001
-  maxVelocity: 4.0
+  maxVelocity: 6.0
   maxForce: 50000.0
   threeDimensions: false
   passesPerFrame: 100
@@ -13,13 +13,13 @@ simulation:
 interactions:
   hydrogen-oxygen:
     lennardJones:
-      sigma: 5.0
+      sigma: 3.0
       epsilon: 5.0
   hydrogen-hydrogen:
     lennardJones:
-      sigma: 5.0
+      sigma: 3.0
       epsilon: 5.0
   oxygen-oxygen:
     lennardJones:
-      sigma: 10.0
+      sigma: 2.0
       epsilon: 5.0

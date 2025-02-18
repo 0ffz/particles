@@ -3,58 +3,8 @@ package me.dvyy.particles.compute
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.dsl.Parameter
 import me.dvyy.particles.dsl.ParticlesConfig
-import me.dvyy.particles.dsl.pairwise.UniformParameter
-
-class FunctionParameters(
-    val map: Map<String, Parameter<*>>,
-)
-
-abstract class PairwiseFunction {
-    fun <T> param(name: String, serializer: KSerializer<T>) {
-//        TODO()
-    }
-
-    abstract fun KslComputeStage.createFunction(): KslFunction<KslFloat1>
-    val dist = param("dist", Float.serializer())
-}
-
-class LennardJones : PairwiseFunction() {
-    val sigma = param("sigma", Float.serializer())
-    override fun KslComputeStage.createFunction(): KslFunction<KslFloat1> = functionFloat1("lennardJones") {
-        val dist = paramFloat1("dist")
-        val maxForce = paramFloat1("maxForce")
-        val sigma = paramFloat1("sigma")
-        val epsilon = paramFloat1("epsilon")
-
-        body {
-            val invR = float1Var(sigma / dist)
-            val invR6 = float1Var(invR * invR * invR * invR * invR * invR)
-            val invR12 = float1Var(invR6 * invR6)
-            min(24f.const * epsilon * (2f.const * invR12 - invR6) / dist, maxForce)
-        }
-    }
-
-//    fun KslFunction<>.callFunction(program: KslScopeBuilder) = program.run {
-//        parameters
-//        (this@callFunction as KslFunctionInt4).invoke(1u.const)
-//    }
-
-    fun KslProgram.setupUniforms() {
-        uniformFloat1("sigma")
-        uniformFloat1("epsilon")
-    }
-}
-
-fun UniformParameter<*>.toKsl(program: KslProgram): KslUniformScalar<*> = program.run {
-    when (type) {
-        "float" -> uniformFloat1(uniformName)
-        else -> error("Unknown parameter")
-    }
-}
 
 class FieldsShader(
     val config: ParticlesConfig,
@@ -186,6 +136,28 @@ class FieldsShader(
                 `if`(length(netForce) gt maxForce) {
                     netForce set normalize(netForce) * maxForce
                 }
+                // --- Begin wall repulsion snippet ---
+                // Define simulation box boundaries
+                val boxMin = float3Var(Vec3f.ZERO.const)
+                val boxMax = float3Var(
+                    float3Value(
+                        gridSize * gridCols.toFloat1(),
+                        gridSize * gridRows.toFloat1(),
+                        gridSize * gridDepth.toFloat1()
+                    )
+                )
+
+                // Wall repulsion
+                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
+                    .invoke(dist, maxForce, 2f.const, 10f.const)
+                netForce.x += lJ(position.x - boxMin.x)
+                netForce.x -= lJ(boxMax.x - position.x)
+                netForce.y += lJ(position.y - boxMin.y)
+                netForce.y -= lJ(boxMax.y - position.y)
+                `if`(gridDepth ne 0.const) {
+                    netForce.z += lJ(position.z - boxMin.z)
+                    netForce.z -= lJ(boxMax.z - position.z)
+                }
 
                 // Compute next position with Verlet integration:
                 // nextPosition = position + velocity * dT + (netForce * dT^2) / 2
@@ -195,17 +167,14 @@ class FieldsShader(
                 // v(t + dT)
                 val nextVelocity = float3Var(velocity + (netForce * dT / 2f.const))
 
-//                nextPosition.x set nextPosition.x % gridCols.toFloat1() * gridSize
-//                nextPosition.y set nextPosition.y % gridRows.toFloat1() * gridSize
-                // Write back to the previous-particles buffer
-                // Here we use mod() to wrap positions inside the grid dimensions
-                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set gridSize * gridCols.toFloat1() - 1f.const }
-                `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set gridSize * gridRows.toFloat1() - 1f.const }
-                `if`(nextPosition.x.gt(gridSize * gridCols.toFloat1())) { nextPosition.x set 1f.const }
-                `if`(nextPosition.y.gt(gridSize * gridRows.toFloat1())) { nextPosition.y set 1f.const }
+                // Ensure particles are in bounds
+                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set 1f.const }
+                `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set 1f.const }
+                `if`(nextPosition.x.gt(boxMax.x)) { nextPosition.x set boxMax.x - 1f.const }
+                `if`(nextPosition.y.gt(boxMax.y)) { nextPosition.y set boxMax.y - 1f.const }
                 `if`(gridDepth ne 0.const) {
-                    `if`(nextPosition.z.lt(0f.const)) { nextPosition.z set gridSize * gridDepth.toFloat1() - 1f.const }
-                    `if`(nextPosition.z.gt(gridSize * gridDepth.toFloat1())) { nextPosition.z set 1f.const }
+                    `if`(nextPosition.z.lt(0f.const)) { nextPosition.z set 1f.const }
+                    `if`(nextPosition.z.gt(boxMax.z)) { nextPosition.z set boxMax.z - 1f.const }
                 }
 
                 prevPositions[id] = float4Value(nextPosition, 0f)

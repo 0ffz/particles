@@ -43,7 +43,7 @@ fun launchApp(ctx: KoolContext) {
     val state = AppState(parameters, appScope)
     val uniforms = UniformParameters(parameters, config)
 
-    val count = state.targetCount.value
+    val count = state.count//state.targetCount.value
     val width = state.width.value
     val height = state.height.value
     val depth = if (state.threeDimensions.value) state.depth.value else 0

@@ -18,13 +18,13 @@ particles:
 interactions:
   hydrogen-oxygen:
     lennardJones:
-      sigma: !param 5.0
-      epsilon: !param 5.0
+      sigma: !param;max=10 5.0
+      epsilon: !param;max=500 5.0
   hydrogen-hydrogen:
     lennardJones:
-      sigma: !param 5.0
-      epsilon: !param 5.0
+      sigma: !param;max=10 5.0
+      epsilon: !param;max=500 5.0
   oxygen-oxygen:
     lennardJones:
-      sigma: !param 10.0
-      epsilon: !param 5.0
+      sigma: !param;max=10 10.0
+      epsilon: !param;max=500 5.0

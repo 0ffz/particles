@@ -44,7 +44,7 @@ class FieldParamsWindow(
                 .forEach { (name, params) ->
                     Text(name) { sectionTitleStyle() }
                     params.forEach { (param, state) ->
-                        liveSlider(param.name, state, max = 200f)
+                        liveSlider(param.name, state, min = param.range.start.toFloat(), max = param.range.endInclusive.toFloat())
                     }
                 }
             SimulationButtons()

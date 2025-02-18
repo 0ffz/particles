@@ -14,7 +14,7 @@ class ParticlesViewModel(
 ) {
     fun resetPositions() = launchOnMainThread {
         buffers.positionBuffers.forEach {
-            for (i in 0 until state.targetCount.value) {
+            for (i in 0 until state.count) {
                 it[i] = Vec4f(
                     Random.Default.nextInt(state.width.value).toFloat(),
                     Random.Default.nextInt(state.height.value).toFloat(),

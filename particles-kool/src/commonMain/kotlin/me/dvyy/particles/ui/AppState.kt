@@ -2,6 +2,7 @@ package me.dvyy.particles.ui
 
 import kotlinx.coroutines.CoroutineScope
 import me.dvyy.particles.YamlParameters
+import me.dvyy.particles.compute.WORK_GROUP_SIZE
 
 class AppState(
     val params: YamlParameters,
@@ -19,4 +20,6 @@ class AppState(
     val height = params.get<Int>("simulation.size.height", default = 1400)
     val depth = params.get<Int>("simulation.size.depth", default = 2000)
 //    val fileText = mutableStateOf("")
+
+    val count get() = (targetCount.value / WORK_GROUP_SIZE) * WORK_GROUP_SIZE
 }

@@ -1,6 +1,5 @@
 package me.dvyy.particles.dsl.pairwise
 
-import kotlinx.serialization.KSerializer
 import me.dvyy.particles.dsl.Parameter
 
 data class UniformParameter<T>(
@@ -12,27 +11,6 @@ data class UniformParameter<T>(
     val range: ClosedFloatingPointRange<Double> = 0.0..100.0,
 ) {
     val uniformName = if (hash != null) "${name}_$hash" else name
-
-    companion object {
-        fun <T> from(
-            serializer: KSerializer<T>,
-            type: String,
-            name: String,
-            path: String,
-            default: T,
-            precision : Int = 1,
-            range: ClosedFloatingPointRange<Double> = 0.0..100.0,
-        ): UniformParameter<T> {
-            return UniformParameter(
-                name,
-                type,
-                null,
-                Parameter.FromParams<T>(path, serializer, default),
-                precision,
-                range
-            )
-        }
-    }
 }
 
 class PairwiseInteractions(
@@ -46,7 +24,8 @@ class PairwiseInteractions(
                 glsl.name,
                 glsl.type,
                 type.hash.toString(),
-                param
+                param,
+                range = param.min..param.max
             )
         }
     }

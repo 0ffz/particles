@@ -9,12 +9,14 @@ import de.fabmax.kool.modules.ui2.docking.Dock
 import de.fabmax.kool.util.MdColor
 import de.fabmax.kool.util.launchDelayed
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import me.dvyy.particles.ui.windows.FieldParamsWindow
 
 class AppUI(
     val state: AppState,
     val ctx: KoolContext,
     val uniforms: UniformParameters,
+    val viewModel: ParticlesViewModel,
 ) {
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE)
     val dock = Dock("Dock")
@@ -38,7 +40,7 @@ class AppUI(
     private val windowSpawnLocation = MutableVec2f(32f, 32f)
 
     init {
-        spawnWindow(FieldParamsWindow(this@AppUI, state, uniforms))
+        spawnWindow(FieldParamsWindow(this@AppUI, viewModel, uniforms))
     }
 
     fun spawnWindow(window: FieldsWindow, dockPath: String? = null) {

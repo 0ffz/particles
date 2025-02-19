@@ -14,7 +14,7 @@ class UniformParameters(
         config.pairwiseInteraction.flatMap { interaction ->
             //TODO generic parameter types
             interaction.uniforms.filterIsInstance<UniformParameter<Float>>().map { uniform ->
-                uniform to params.get(
+                uniform to params.get<Float>(
                     uniform.parameter.path,
                     default = uniform.parameter.default,
                     serializer = Float.serializer() //TODO uniform.parameter.serializer

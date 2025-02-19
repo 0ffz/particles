@@ -1,12 +1,10 @@
 package me.dvyy.particles.ui
 
-import kotlinx.coroutines.CoroutineScope
 import me.dvyy.particles.YamlParameters
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 
 class AppState(
     val params: YamlParameters,
-    val scope: CoroutineScope,
 ) {
     val targetCount = params.get<Int>("simulation.count", default = 10_000)
     val minGridSize = params.get<Float>("simulation.minGridSize", default = 5f)

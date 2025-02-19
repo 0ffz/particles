@@ -49,7 +49,7 @@ fun UiScope.MenuSlider(
 fun UiScope.MenuSlider2(
     label: String,
     value: Float,
-    min: Float,
+    min: Float = 0.0f,
     max: Float,
     precision: Int = 2,
     txtFormat: (Float) -> String = { it.toString(precision) },

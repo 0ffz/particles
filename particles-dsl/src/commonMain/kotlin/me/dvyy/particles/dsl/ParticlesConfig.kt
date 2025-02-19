@@ -6,11 +6,27 @@ import kotlinx.serialization.Transient
 import me.dvyy.particles.dsl.pairwise.*
 
 @Serializable
+data class Simulation(
+    val count: Int = 10_000,
+    val minGridSize: Double = 5.0,
+    val dT: Double = 0.001,
+    val maxVelocity: Double = 20.0,
+    val maxForce: Double = 100000.0,
+    val threeDimensions: Boolean = false,
+    val passesPerFrame: Int = 100,
+    val size: Size = Size(),
+)
+
+@Serializable
+data class Size(val width: Int = 1000, val height: Int = 1000, val depth: Int = 1000)
+
+@Serializable
 data class ParticlesConfig(
+    val simulation: Simulation = Simulation(),
     val application: ApplicationConfiguration = ApplicationConfiguration(),
     @SerialName("particles")
     val nameToParticle: Map<String, Particle> = mapOf(),
-    val interactions: Map<String, Map<String, Map<String, Parameter<String>>>> = mapOf(),
+    val interactions: Map<String, Map<String, Map<String, Parameter<Float>>>> = mapOf(),
 ) {
     @Transient
     val particles = nameToParticle.values.toList()

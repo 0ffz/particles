@@ -43,7 +43,7 @@ fun launchApp(ctx: KoolContext) {
     val appScope = CoroutineScope(Dispatchers.RenderLoop)
     val parameters = YamlParameters(path = "parameters.yml", scope = appScope)
     val config = Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("particles.yml"))
-    val state = AppState(parameters, appScope)
+    val state = AppState(parameters)
     val uniforms = UniformParameters(parameters, config)
 
     val count = state.count//state.targetCount.value

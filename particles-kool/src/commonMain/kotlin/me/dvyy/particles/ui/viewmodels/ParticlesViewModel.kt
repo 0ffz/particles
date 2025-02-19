@@ -1,9 +1,12 @@
 package me.dvyy.particles.ui.viewmodels
 
 import de.fabmax.kool.math.Vec4f
+import de.fabmax.kool.modules.ui2.mutableStateOf
 import de.fabmax.kool.util.launchOnMainThread
 import me.dvyy.particles.FieldsBuffers
 import me.dvyy.particles.YamlParameters
+import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.ui.AppState
 import kotlin.random.Random
 
@@ -11,7 +14,14 @@ class ParticlesViewModel(
     private val state: AppState,
     private val buffers: FieldsBuffers,
     private val parameters: YamlParameters,
+    private val config: ParticlesConfig,
 ) {
+    val simulation = mutableStateOf(config.simulation)
+
+    fun updateState(simulation: Simulation) {
+        this.simulation.set(simulation)
+    }
+
     fun resetPositions() = launchOnMainThread {
         val positions = buffers.positionBuffer
         for (i in 0 until state.count) {

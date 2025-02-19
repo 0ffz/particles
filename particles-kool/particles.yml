@@ -1,4 +1,16 @@
 ## yaml-language-server: $schema=http://raw.githubusercontent.com/MineInAbyss/plugin-schemas/refs/heads/master/generated/mythicmobs.json
+simulation:
+  count: 10000
+  minGridSize: 5.0
+  dT: 0.001
+  maxVelocity: 1.21
+  maxForce: 100000.0
+  threeDimensions: false
+  passesPerFrame: 100
+  size:
+    width: 1000
+    height: 1080
+    depth: 1000
 particles:
   hydrogen:
     color: ffffff

@@ -67,7 +67,7 @@ fun launchApp(ctx: KoolContext) {
     val gridRows = (height / gridSize).toInt().also { println("$it rows") }
     val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
 
-    val buffers = FieldsBuffers(config.particles, width, height, depth, count)
+    val buffers = FieldsBuffers(config.particles, width, height, if (state.threeDimensions.value) depth else 0, count)
 
     val application = startKoin {
         modules(module {
@@ -137,7 +137,7 @@ fun launchApp(ctx: KoolContext) {
 //            }
         }
         val boxMax = Vec3f(gridSize * gridCols, gridSize * gridRows, gridSize * gridDepth)
-        val fields = FieldsShader(config).also {
+        val fields = FieldsShader(config, state).also {
             it.gridSize = gridSize
             it.gridRows = gridRows
             it.gridCols = gridCols
@@ -184,7 +184,7 @@ fun launchApp(ctx: KoolContext) {
             val conversionChances = Buffers.floats(config.particles.size)
             config.particles.forEachIndexed { id, from ->
                 val to = from.convertTo
-                if(to != null) {
+                if (to != null) {
                     conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
                     conversionChances[id] = to.chance.toFloat()
                 }
@@ -194,7 +194,7 @@ fun launchApp(ctx: KoolContext) {
             convertShader.particleTypes = buffers.particleTypesBuffer
             onBeforeDispatch {
                 val shouldRun = Time.frameCount % 1000 == 0
-                setNumGroupsByInvocations(if(shouldRun) count else 0, 1, 1)
+                setNumGroupsByInvocations(if (shouldRun) count else 0, 1, 1)
                 convertShader.randomSeed = 1000f + (Time.gameTime % 1000.0).toFloat()
             }
         }

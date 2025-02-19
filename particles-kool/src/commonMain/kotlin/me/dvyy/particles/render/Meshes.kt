@@ -44,8 +44,12 @@ object Meshes {
 //            }).apply {
 //                storage1d("positionsBuffer", positionsBuffer)
 //            }
+        val do3dShading = true
+        val tintFarAway = buffers.depth > 400f
         shader = KslShader("test") {
             val interColor = interStageFloat4()
+            val fragPos = interStageFloat4("fragPos")
+            val interCenter = interStageFloat3("interCenter")
 
             vertexStage {
                 main {
@@ -74,22 +78,40 @@ object Meshes {
                         Vec3f(1f, -1f, 1f).const
                     ) + (cameraRight * position.x * radius) + (cameraUp * position.y * radius)
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
-                    interColor.input set typeColorsBuffer[type]//colorsBuffer[offset]
+                    interColor.input set float4Var(typeColorsBuffer[type])
+                    fragPos.input set outPosition
+                    interCenter.input set position
                 }
             }
             fragmentStage {
                 main {
-//                    val uv = float2Var(fragPos.output.xy / fragPos.output.w * 0.5.const + 0.5.const)
+                    val uv = float2Var(interCenter.output.xy + 0.5.const)
+//                    val screenPosition = float3Var(fragPos.output.xyz / fragPos.output.w * 0.5.const + 0.5.const)
 //                    val texCoordBlock = vertexStage?.findBlock<TexCoordAttributeBlock>()!!
+
 //                    val splatCoords = float2Var( * SPLAT_MAP_SCALE.const)
-//                    val centerOffset = float2Var((uv - 0.5f.const) * 2f.const)
-//                    val sqrDst = dot(centerOffset, centerOffset)
+                    val centerOffset = float2Var((uv - 0.5f.const) * 2f.const)
+                    val sqrDst = dot(centerOffset, centerOffset)
 //                    `if`(sqrDst gt 1f.const) { discard() }
 //                    `if`(texCoordsBlock.getTextureCoords().x gt 0.1f.const) {
 //                        discard()
 //                    }
 //                    float4Value(texCoordBlock.getTextureCoords(), 1f, 1f))//
-                    colorOutput(interColor.output)//Color("ff0000").toVec4f().const)
+                    val color = interColor.output.run {
+                        if (tintFarAway) {
+                            val depth = float1Var(
+                                clamp(fragPos.output.z / fragPos.output.w * 2000f.const, 0.6f.const, 1f.const)
+                            )
+                            times(float4Value(depth, depth, depth, 1f.const))
+                        } else this
+                    }.run {
+                        if (do3dShading) {
+                            val leftShiftedCenter = float2Var((uv - float2Value(0f.const, 1f.const)))
+                            val dist = float1Var(1f.const - 0.1f.const * dot(leftShiftedCenter, leftShiftedCenter))
+                            times(float4Value(dist, dist, dist, 1f.const))
+                        } else this
+                    }
+                    colorOutput(color)
                 }
             }
         }.apply {
@@ -100,13 +122,13 @@ object Meshes {
             storage1d("typesBuffer", buffers.particleTypesBuffer)
         }
         generate {
+//            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))
             fillPolygon(generateCirclePoints(20, radius = 1f))
         }
     }
 
     fun generateCirclePoints(steps: Int, radius: Float = 1f): List<Vec3f> {
         val points = mutableListOf<Vec3f>()
-//    points.add(Vec3f(0f, 0f, 0f)) // Center point
 
         for (i in 0 until steps) {
             val angle = (i.toFloat() / steps) * (2 * PI).toFloat()

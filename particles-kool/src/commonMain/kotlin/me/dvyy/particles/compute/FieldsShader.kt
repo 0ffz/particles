@@ -5,9 +5,11 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.dsl.Parameter
 import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.ui.AppState
 
 class FieldsShader(
     val config: ParticlesConfig,
+    val state: AppState
 ) {
     val halfStep = KslComputeShader("Fields Half-Step") {
         computeStage(WORK_GROUP_SIZE) {
@@ -28,13 +30,13 @@ class FieldsShader(
                 val nextPosition = float3Var(position + (velocity * dT) + ((force * dT * dT) / 2f.const))
 
                 // Ensure particles are in bounds
-                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set boxMax.x - 1f.const }
-                `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set boxMax.y - 1f.const }
-                `if`(nextPosition.x.gt(boxMax.x)) { nextPosition.x set 1f.const }
-                `if`(nextPosition.y.gt(boxMax.y)) { nextPosition.y set 1f.const }
+                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set  1f.const }
+                `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set  1f.const }
+                `if`(nextPosition.x.gt(boxMax.x)) { nextPosition.x set boxMax.x -1f.const }
+                `if`(nextPosition.y.gt(boxMax.y)) { nextPosition.y set boxMax.y -1f.const }
                 `if`(boxMax.z ne 0f.const) {
-                    `if`(nextPosition.z.lt(0f.const)) { nextPosition.z set boxMax.z - 1f.const }
-                    `if`(nextPosition.z.gt(boxMax.z)) { nextPosition.z set 1f.const }
+                    `if`(nextPosition.z.lt(0f.const)) { nextPosition.z set 1f.const }
+                    `if`(nextPosition.z.gt(boxMax.z)) { nextPosition.z set boxMax.z - 1f.const }
                 }
 
                 positions[id] = float4Value(nextPosition, 0f.const)
@@ -86,7 +88,7 @@ class FieldsShader(
                 val yGrid = paramInt1("yGrid")
                 val zGrid = paramInt1("zGrid")
                 body {
-                    xGrid + (yGrid * gridCols) + (zGrid * gridRows * gridCols)
+                    xGrid + (yGrid  * gridCols) + (zGrid * gridRows * gridCols)
                 }
             }
 
@@ -113,7 +115,12 @@ class FieldsShader(
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
                 fori((-1).const, 2.const) { x ->
                     fori((-1).const, 2.const) { y ->
-                        fori((-1).const, 2.const) { z ->
+                        fun forZIf3d(block: KslScopeBuilder.(KslScalarExpression<KslInt1>) -> Unit) {
+                            if(state.threeDimensions.value) fori((-1).const, 2.const) { z ->
+                                block(z)
+                            } else block(0.const)
+                        }
+                        forZIf3d { z ->
                             // Calculate the neighboring cell id as an integer
                             val localCellId = int1Var(cellId(xGrid + x, yGrid + y, zGrid + z))
 //                            `if`(
@@ -177,16 +184,16 @@ class FieldsShader(
                 // --- Begin wall repulsion snippet ---
                 // Define simulation box boundaries
                 // Wall repulsion
-//                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-//                    .invoke(dist, maxForce, 2f.const, 1f.const)
-//                nextForce.x += lJ(position.x - 0f.const - 1f.const)
-//                nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
-//                nextForce.y += lJ(position.y - 0f.const - 1f.const)
-//                nextForce.y -= lJ(boxMax.y - position.y + 1f.const)
-//                `if`(gridDepth ne 0.const) {
-//                    nextForce.z += lJ(position.z - 0f.const - 1f.const)
-//                    nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
-//                }
+                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
+                    .invoke(dist, maxForce, 2f.const, 1f.const)
+                nextForce.x += lJ(position.x - 0f.const + 1f.const)
+                nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
+                nextForce.y += lJ(position.y - 0f.const + 1f.const)
+                nextForce.y -= lJ(boxMax.y - position.y + 1f.const)
+                `if`(boxMax.z ne 0f.const) {
+                    nextForce.z += lJ(position.z - 0f.const + 1f.const)
+                    nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
+                }
                 // Cap force
                 `if`(length(nextForce) gt maxForce) {
                     nextForce set normalize(nextForce) * maxForce
@@ -194,7 +201,7 @@ class FieldsShader(
 
                 // Compute next velocity with Verlet integration
                 val currForce = float3Var(forces[id].xyz)
-                val nextVelocity = float3Var(velocity + (currForce + nextForce) * dT / 2f.const)
+                val nextVelocity = float3Var(velocity + ((currForce + nextForce) * dT / 2f.const))
                 // Cap velocity and net force to their maximum values
                 `if`(length(nextVelocity) gt maxVelocity) {
                     nextVelocity set normalize(nextVelocity) * maxVelocity
@@ -204,10 +211,10 @@ class FieldsShader(
                 velocities[id] = float4Value(nextVelocity, 0f)
 
                 // Update the color buffer based on the magnitude of the net force
-//                colors[id] = float4Value(
-//                    log(length(nextForce)) / (2f.const * log(1000f.const)),
-//                    0f.const, 0f.const, 1f.const
-//                )
+                colors[id] = float4Value(
+                    log(length(nextForce)) / (2f.const * log(1000f.const)),
+                    0f.const, 0f.const, 1f.const
+                )
             }
         }
 

@@ -28,7 +28,7 @@ abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = f
         var isMinimizedToTitle by remember(false)
         val isDocked = windowDockable.isDocked.use()
 
-        Column(Grow.Companion.Std, Grow.Companion.Std) {
+        Column(Grow.Std, Grow.Std) {
             TitleBar(
                 windowDockable,
                 isMinimizedToTitle = isMinimizedToTitle,
@@ -53,11 +53,7 @@ abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = f
         }
     }
 
-    open fun Scene.setup(ctx: KoolContext) { }
-
-    protected open fun UiScope.modifyWindow() {
-        windowSurface.inputHandler
-    }
+    protected open fun UiScope.modifyWindow() = Unit
 
     protected abstract fun UiScope.windowContent(): Any
 

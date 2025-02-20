@@ -2,9 +2,7 @@ package me.dvyy.particles.ui
 
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.math.MutableVec2f
-import de.fabmax.kool.modules.ui2.Colors
-import de.fabmax.kool.modules.ui2.Dp
-import de.fabmax.kool.modules.ui2.UiScene
+import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.modules.ui2.docking.Dock
 import de.fabmax.kool.modules.ui2.docking.UiDockable
 import de.fabmax.kool.util.MdColor
@@ -14,7 +12,7 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
-import me.dvyy.particles.ui.windows.SimulationParamsWindow
+import me.dvyy.particles.ui.windows.SimulationStatisticsWindow
 import me.dvyy.particles.ui.windows.TextEditorWindow
 import me.dvyy.particles.ui.windows.UniformsWindow
 
@@ -36,19 +34,24 @@ class AppUI(
             listOf(
                 "0:row",
                 "0:row/0:leaf",
-                "0:row/1:leaf"
+//                "0:row/0:col/0:leaf",
+//                "0:row/0:col/1:leaf",
+                "0:row/1:leaf",
+                "0:row/2:leaf"
             )
         )
+//        dock.getNodeAtPath("0:row/0:col")!!.width.set(Dp(250f))
         val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
-        dock.getLeafAtPath("0:row/0:leaf")?.dock(centerSpacer)
+        dock.getLeafAtPath("0:row/1:leaf")?.dock(centerSpacer)
     }
 
     private val windowSpawnLocation = MutableVec2f(32f, 32f)
 
     init {
-        spawnWindow(UniformsWindow(this@AppUI, viewModel, uniforms))
-        spawnWindow(SimulationParamsWindow(this@AppUI, viewModel, configRepository))
-        spawnWindow(TextEditorWindow(this@AppUI, configRepository, scope), "0:row/1:leaf")
+        spawnWindow(UniformsWindow(this@AppUI, viewModel, configRepository, uniforms))
+//        spawnWindow(SimulationStatisticsWindow(this@AppUI, viewModel, configRepository), "0:row/0:col/1:leaf")
+        spawnWindow(TextEditorWindow(this@AppUI, configRepository, viewModel, scope), "0:row/2:leaf")
+//        dock.getLeafAtPath("0:row/0:col/1:leaf")!!.height.set(Grow(0.2f))
     }
 
     fun spawnWindow(window: FieldsWindow, dockPath: String? = null) {
@@ -72,8 +75,6 @@ class AppUI(
         }
 
         ui.apply {
-            window.apply { setup(ctx) }
-
             launchDelayed(1) {
                 window.windowSurface.isFocused.set(true)
             }

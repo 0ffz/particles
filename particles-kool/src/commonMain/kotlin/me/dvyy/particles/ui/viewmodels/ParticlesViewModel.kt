@@ -25,13 +25,13 @@ class ParticlesViewModel(
         .distinctUntilChanged()
         .map { state ->
             listOf(
-                UiConfigurable.Slider("Count", state.targetCount, 0f, 100_000f, precision = 0) {
-                    updateState { copy(targetCount = it.roundToInt()) }
-                },
-                UiConfigurable.Slider("Min Grid Size", state.minGridSize, 0f, 100f) {
-                    updateState { copy(minGridSize = it.toDouble()) }
-                },
-                UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 3) {
+//                UiConfigurable.Slider("Count", state.targetCount, 0f, 100_000f, precision = 0) {
+//                    updateState { copy(targetCount = it.roundToInt()) }
+//                },
+//                UiConfigurable.Slider("Min Grid Size", state.minGridSize, 0f, 100f) {
+//                    updateState { copy(minGridSize = it.toDouble()) }
+//                },
+                UiConfigurable.Slider("dT", state.dT, 0f, 0.05f, precision = 3) {
                     updateState { copy(dT = it.toDouble()) }
                 },
                 UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {
@@ -40,9 +40,9 @@ class ParticlesViewModel(
                 UiConfigurable.Slider("Max Force", state.maxForce, 0f, 100_000f) {
                     updateState { copy(maxForce = it.toDouble()) }
                 },
-                UiConfigurable.Toggle("3d", state.threeDimensions) {
-                    updateState { copy(threeDimensions = it) }
-                },
+//                UiConfigurable.Toggle("3d", state.threeDimensions) {
+//                    updateState { copy(threeDimensions = it) }
+//                },
             )
         }
         .asMutableState(mutableStateScope, default = listOf())

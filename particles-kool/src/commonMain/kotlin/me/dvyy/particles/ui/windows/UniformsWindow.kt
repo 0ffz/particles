@@ -1,6 +1,8 @@
 package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
+import de.fabmax.kool.toString
+import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.config.UniformParameters
@@ -12,14 +14,26 @@ import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 class UniformsWindow(
     ui: AppUI,
     val viewModel: ParticlesViewModel,
+    val configRepo: ConfigRepository,
     val uniforms: UniformParameters,
 ) : FieldsWindow("Live Parameters", ui) {
+    val simsPs = mutableStateOf(0.0)
+
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
         containerModifier = { it.background(null) }
     ) {
-        modifier.size(Grow.Std, Grow.Std)
+        modifier.width(Grow.Std)
+        surface.onEachFrame {
+            simsPs.set(it.fps * configRepo.config.value.simulation.passesPerFrame)
+        }
         Column(Grow.Std, Grow.Std) {
+            Text("Simulation") { sectionTitleStyle() }
+            Text("${simsPs.use().toString(2)} sims/s") {}
+            val state = viewModel.uiState.use()
+            state.forEach {
+                with(it) { draw() }
+            }
             uniforms.uniformParams
                 .groupBy { it.first.parameter.path.substringBeforeLast(".").substringAfter(".") }
                 .forEach { (name, params) ->

@@ -30,8 +30,8 @@ fun launchApp(ctx: KoolContext) {
 
     val manager = SceneManager(ctx, baseModule)
 
-    manager.load()
     ctx.scenes += debugOverlay()
+    manager.load()
 }
 
 class SceneManager(
@@ -59,11 +59,12 @@ class SceneManager(
             )
         }
         application.koin.get<ConfigRepository>().isDirty = true
-        val scene = application.koin.get<ParticlesScene>().scene
         val ui = application.koin.get<AppUI>().ui
+        val scene = application.koin.get<ParticlesScene>().scene
+
         scene.onRelease { sceneScope.cancel() }
-        ctx.scenes += scene
-        ctx.scenes += ui
+        ctx.scenes.stageAdd(scene, index = 0)
+        ctx.scenes +=ui
         loadedScenes = listOf(scene, ui)
     }
 

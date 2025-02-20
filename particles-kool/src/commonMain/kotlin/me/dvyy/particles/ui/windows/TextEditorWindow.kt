@@ -14,6 +14,7 @@ import me.dvyy.particles.config.asMutableState
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.time.Duration.Companion.seconds
 
 fun <T, R> MutableStateValue<T>.map(mapping: (T) -> R): MutableStateValue<R> {
@@ -25,8 +26,9 @@ fun <T, R> MutableStateValue<T>.map(mapping: (T) -> R): MutableStateValue<R> {
 class TextEditorWindow(
     ui: AppUI,
     val configRepository: ConfigRepository,
+    val viewModel: ParticlesViewModel,
     val scope: CoroutineScope,
-) : FieldsWindow("File editor", ui) {
+) : FieldsWindow("Config file", ui) {
     val consoleFont = MutableStateFlow(MsdfFont.DEFAULT_FONT)
     val consoleFontAsState = consoleFont.asMutableState(scope, MsdfFont.DEFAULT_FONT)
     val yamlKey = consoleFontAsState.map { TextAttributes(it, Color.ORANGE) }
@@ -54,9 +56,11 @@ class TextEditorWindow(
                     else buildList {
                         add(line.take(splitAt) to yamlKey.value)
                         val value = line.drop(splitAt)
-                        value.split(" ").forEach {
-                            if (it.startsWith("!")) add("$it " to yamlTag.value)
-                            else add("$it " to yamlValue.value)
+                        val sections = value.split(" ")
+                        sections.forEachIndexed { index, it ->
+                            val text = if (index == sections.lastIndex) it else "$it "
+                            if (it.startsWith("!")) add(text to yamlTag.value)
+                            else add(text to yamlValue.value)
                         }
                     }
                 )
@@ -83,11 +87,6 @@ class TextEditorWindow(
             consoleFont.update { MsdfFont("assets/fonts/hack/font-hack-regular").getOrThrow().copy(sizePts = 20f) }
         }
     }
-//val configText = FileSystemUtils.read(configRepository.configPath) ?: "{}"
-//    configText.lines().forEach {
-//        add(
-//        )
-//    }
 
     init {
         windowDockable.setFloatingBounds(width = Dp(500f), height = Dp(800f))
@@ -109,7 +108,9 @@ class TextEditorWindow(
                             val decoded = decodeConfigFromText(lines.value)
                             decodedConfig.set(decoded)
                             decoded.onSuccess {
+                                configRepository.saveConfigLines(lines.value.joinToString("\n"))
                                 configRepository.updateConfig(it)
+                                viewModel.restartSimulation()
                             }
                         }
                     }
@@ -120,12 +121,8 @@ class TextEditorWindow(
                     }
                 }
             }
-            TextArea(
-                formattedLines.use(),
-//            hScrollbarModifier = { it.margin(start = sizes.gap, end = sizes.gap * 2f, bottom = sizes.gap) },
-//            vScrollbarModifier = { it.margin(sizes.gap) }
-            ) {
-//            modifier.padding(horizontal = sizes.gap)
+            TextArea(formattedLines.use()) {
+            modifier.padding(sizes.smallGap)
                 // make text area selectable
                 installDefaultSelectionHandler()
                 // make text area editable

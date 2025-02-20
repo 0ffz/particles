@@ -39,6 +39,8 @@ class ParticleBuffers(
         val distTotal = particleTypes.sumOf { it.distribution }
         val counts = particleTypes.map { ((it.distribution / distTotal) * count).toInt() }
 
+        if (particleTypes.isEmpty()) return
+
         // Add particles based on distribution, ensuring we always get exactly `count` particles
         var type = 0
         var offset = 0

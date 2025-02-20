@@ -6,13 +6,16 @@ import de.fabmax.kool.modules.ui2.Colors
 import de.fabmax.kool.modules.ui2.Dp
 import de.fabmax.kool.modules.ui2.UiScene
 import de.fabmax.kool.modules.ui2.docking.Dock
+import de.fabmax.kool.modules.ui2.docking.UiDockable
 import de.fabmax.kool.util.MdColor
 import de.fabmax.kool.util.launchDelayed
+import kotlinx.coroutines.CoroutineScope
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import me.dvyy.particles.ui.windows.SimulationParamsWindow
+import me.dvyy.particles.ui.windows.TextEditorWindow
 import me.dvyy.particles.ui.windows.UniformsWindow
 
 class AppUI(
@@ -20,6 +23,7 @@ class AppUI(
     val uniforms: UniformParameters,
     val viewModel: ParticlesViewModel,
     val configRepository: ConfigRepository,
+    val scope: CoroutineScope,
 ) {
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE)
     val dock = Dock("Dock")
@@ -28,16 +32,15 @@ class AppUI(
         dock.dockingSurfaceOverlay.colors = colors
         addNode(dock)
 
-//        dock.createNodeLayout(
-//            listOf(
-//                "0:row",
-//                "0:row/0:leaf",
-//                "0:row/1:leaf",
-//                "0:row/2:leaf"
-//            )
-//        )
-//        val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
-//        dock.getLeafAtPath("0:row/1:leaf")?.dock(centerSpacer)
+        dock.createNodeLayout(
+            listOf(
+                "0:row",
+                "0:row/0:leaf",
+                "0:row/1:leaf"
+            )
+        )
+        val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
+        dock.getLeafAtPath("0:row/0:leaf")?.dock(centerSpacer)
     }
 
     private val windowSpawnLocation = MutableVec2f(32f, 32f)
@@ -45,6 +48,7 @@ class AppUI(
     init {
         spawnWindow(UniformsWindow(this@AppUI, viewModel, uniforms))
         spawnWindow(SimulationParamsWindow(this@AppUI, viewModel, configRepository))
+        spawnWindow(TextEditorWindow(this@AppUI, configRepository, scope), "0:row/1:leaf")
     }
 
     fun spawnWindow(window: FieldsWindow, dockPath: String? = null) {

@@ -8,18 +8,33 @@ import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
+import de.fabmax.kool.scene.Scene
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.config.ConfigRepository
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-object Meshes {
-    fun particleMeshInstances(count: Int) = MeshInstanceList(count).apply { numInstances = count }
+class ParticlesMesh(
+    val buffers: ParticleBuffers,
+    val configRepository: ConfigRepository,
+    val scope: CoroutineScope,
+) {
+    val instances = MeshInstanceList(configRepository.count).apply { numInstances = configRepository.count }
 
-    fun particleMesh(
-        buffers: ParticleBuffers,
-        instances: MeshInstanceList,
-    ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
+    init {
+        scope.launch {
+            configRepository.config.map { it.simulation.targetCount }.distinctUntilChanged().collectLatest {
+                instances.numInstances = configRepository.count
+            }
+        }
+    }
+    val mesh = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
 //            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
 //                pipeline { cullMethod = CullMethod.NO_CULLING }
 ////                lightingCfg.ambientLight = AmbientLight.Uniform(MdColor.LIGHT_BLUE tone 400)
@@ -138,5 +153,4 @@ object Meshes {
         }
         return points
     }
-
 }

@@ -19,7 +19,7 @@ sealed interface UiConfigurable {
                 min = min,
                 max = max,
                 precision = precision,
-                onChange = onChange
+                onChange = onChange,
             )
         }
     }

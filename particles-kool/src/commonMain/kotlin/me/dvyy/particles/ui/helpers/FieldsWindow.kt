@@ -55,7 +55,9 @@ abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = f
 
     open fun Scene.setup(ctx: KoolContext) { }
 
-    protected open fun UiScope.modifyWindow() { }
+    protected open fun UiScope.modifyWindow() {
+        windowSurface.inputHandler
+    }
 
     protected abstract fun UiScope.windowContent(): Any
 

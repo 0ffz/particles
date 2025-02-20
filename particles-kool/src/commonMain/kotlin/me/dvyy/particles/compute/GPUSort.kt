@@ -5,7 +5,7 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.scene.Scene
-import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.config.ConfigRepository
 
 const val WORK_GROUP_SIZE = 64
 
@@ -15,7 +15,10 @@ const val WORK_GROUP_SIZE = 64
 //
 //    }
 //}
-object GPUSort {
+class GPUSort(
+    val configRepo: ConfigRepository,
+    val buffers: ParticleBuffers,
+) {
     /**
      * Given particles positions and grid info, resents keys and indices buffers such that:
      * - Keys point to the grid cell of particle at index
@@ -54,7 +57,21 @@ object GPUSort {
         }
     }
 
-    val shader = KslComputeShader("GPUSort") {
+    fun addResetShader(
+        computePass: ComputePass
+    ) {
+        val reset = resetBuffersShader.apply {
+            uniform1f("gridSize", configRepo.gridSize)
+            uniform1i("gridCols", configRepo.gridCells.x)
+            uniform1i("gridRows", configRepo.gridCells.y)
+            storage1d("keys", buffers.particleGridCellKeys)
+            storage1d("indices", buffers.sortIndices)
+            storage1d("positions", buffers.positionBuffer)
+        }
+        computePass.addTask(reset, numGroups = Vec3i(configRepo.count / WORK_GROUP_SIZE, 1, 1))
+    }
+
+    val sorter = KslComputeShader("GPUSort") {
         computeStage(WORK_GROUP_SIZE) {
             val numValues = uniformInt1("numValues")
             val groupWidth = uniformInt1("groupWidth")
@@ -112,12 +129,11 @@ object GPUSort {
         }
     }
 
-    fun Scene.gpuSorting(
+    fun addSortingShader(
         count: Int,
         buffers: ParticleBuffers,
         computePass: ComputePass,
     ) {
-        val sorter = shader
         var keys by sorter.storage1d("keys")
         var indices by sorter.storage1d("indices")
         var numValues by sorter.uniform1i("numValues")
@@ -156,7 +172,5 @@ object GPUSort {
                 }
             }
         }
-//        keysBuffer.releaseWith(this)
-//        indicesBuffer.releaseWith(this)
     }
 }

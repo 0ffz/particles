@@ -12,12 +12,11 @@ import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import me.dvyy.particles.compute.*
-import me.dvyy.particles.compute.GPUSort.gpuSorting
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.render.CameraManager
-import me.dvyy.particles.render.Meshes
+import me.dvyy.particles.render.ParticlesMesh
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import org.koin.core.context.startKoin
@@ -44,6 +43,9 @@ fun launchApp(ctx: KoolContext) {
             singleOf(::ParticlesViewModel)
 //            singleOf(::UniformsWindow)
             singleOf(::AppUI)
+            singleOf(::ParticlesMesh)
+        }, module {
+            singleOf(::GPUSort)
         })
     }
     val configRepo = application.koin.get<ConfigRepository>()
@@ -53,21 +55,14 @@ fun launchApp(ctx: KoolContext) {
 
     val appScene = scene {
         // COMPUTE
-        val sorting = ComputePass("Particles Compute")
+        val computePass = ComputePass("Particles Compute")
 
         // Reset keys and indices based on grid cell particle is in
-        val reset = GPUSort.resetBuffersShader.apply {
-            uniform1f("gridSize", configRepo.gridSize)
-            uniform1i("gridCols", configRepo.gridCells.x)
-            uniform1i("gridRows", configRepo.gridCells.y)
-            storage1d("keys", buffers.particleGridCellKeys)
-            storage1d("indices", buffers.sortIndices)
-            storage1d("positions", buffers.positionBuffer)
-        }
-        sorting.addTask(reset, numGroups = Vec3i(configRepo.count / WORK_GROUP_SIZE, 1, 1))
+        val gpuSort = application.koin.get<GPUSort>()
 
         // Sort by grid cells
-        gpuSorting(configRepo.count, buffers = buffers, computePass = sorting)
+        gpuSort.addResetShader(computePass)
+        gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass)
 
 //        val reorderBuffers = ReorderBuffersShader().also {
 //            it.indices = sortIndices
@@ -86,7 +81,7 @@ fun launchApp(ctx: KoolContext) {
 
         val numGroups = Vec3i(configRepo.count / WORK_GROUP_SIZE, 1, 1)
 
-        sorting.addTask(OffsetsShader.apply {
+        computePass.addTask(OffsetsShader.apply {
             uniform1i("numValues", configRepo.count)
             storage1d("keys", buffers.particleGridCellKeys)
             storage1d("offsets", buffers.offsetsBuffer)
@@ -113,19 +108,24 @@ fun launchApp(ctx: KoolContext) {
         }
 
         repeat(config.simulation.passesPerFrame) { passIndex ->
-            sorting.addTask(fields.halfStep, numGroups = numGroups).apply {
+            computePass.addTask(fields.halfStep, numGroups = numGroups).apply {
                 onBeforeDispatch {
                     configRepo.whenDirty {
                         fields.halfStep_dT = simulation.dT.toFloat()
+                        val count = simulation.targetCount
+                        setNumGroupsByInvocations(count)
                     }
                 }
             }
-            sorting.addTask(fields.shader, numGroups = numGroups).apply {
+            computePass.addTask(fields.shader, numGroups = numGroups).apply {
                 onBeforeDispatch {
                     configRepo.whenDirty {
                         fields.dT = simulation.dT.toFloat()
                         fields.maxVelocity = simulation.maxVelocity.toFloat()
                         fields.maxForce = simulation.maxForce.toFloat()
+                        val count = simulation.targetCount
+                        setNumGroupsByInvocations(count)
+                        fields.count = count
                     }
                     //TODO move up to whenDirty
                     uniforms.uniformParams.forEach { (param, value) ->
@@ -133,11 +133,11 @@ fun launchApp(ctx: KoolContext) {
                     }
                 }
             }
-            addComputePass(sorting)
+            addComputePass(computePass)
         }
 
         val convertShader = ConvertParticlesShader()
-        sorting.addTask(convertShader.shader, numGroups = numGroups).apply {
+        computePass.addTask(convertShader.shader, numGroups = numGroups).apply {
 
             val conversionBuffer = Buffers.integers(config.particles.size)
             val conversionChances = Buffers.floats(config.particles.size)
@@ -161,16 +161,8 @@ fun launchApp(ctx: KoolContext) {
 //         RENDERING
 
         application.koin.get<CameraManager>().manageCameraFor(this)
-        val instances = Meshes.particleMeshInstances(configRepo.count)
-        addNode(
-            Meshes.particleMesh(
-                buffers,
-                instances
-            )
-        )
-//        onRelease {
-//            positionsBuffer.release()
-//        }
+        addNode(application.koin.get<ParticlesMesh>().mesh)
+
         var iterations = 0
         onUpdate {
             iterations++

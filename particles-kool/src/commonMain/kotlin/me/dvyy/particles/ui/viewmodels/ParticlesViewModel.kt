@@ -23,7 +23,7 @@ class ParticlesViewModel(
         .distinctUntilChanged()
         .map { state ->
             listOf(
-                UiConfigurable.Slider("Count", state.targetCount, 0f, 100_000f, precision = 1) {
+                UiConfigurable.Slider("Count", state.targetCount, 0f, 100_000f, precision = 0) {
                     updateState { copy(targetCount = it.roundToInt()) }
                 },
                 UiConfigurable.Slider("Min Grid Size", state.minGridSize, 0f, 100f) {

@@ -11,19 +11,21 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.helpers.FileSystemUtils
 import kotlin.math.sqrt
 
 class ConfigRepository {
-    private val paramsPath = "parameters.yml"
-    private val configPath = "particles.yml"
+    val paramsPath = "parameters.yml"
+    val configPath = "particles.yml"
     private val appScope = CoroutineScope(Dispatchers.RenderLoop)
     val parameters = YamlParameters(path = paramsPath, scope = appScope)
 
     private val _config = MutableStateFlow(ParticlesConfig())
     val config = _config.asStateFlow()
+    private val _configLines = MutableStateFlow("")
+    val configLines = _configLines.asStateFlow()
 
     var isDirty: Boolean = true
         private set
@@ -50,18 +52,26 @@ class ConfigRepository {
     val boxSize get() = gridCells.toVec3f().times(gridSize)
 
     fun loadConfig() {
-        updateConfig(YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read(configPath) ?: "{}"))
+        val configLines = FileSystemUtils.read(configPath) ?: "{}"
+        _configLines.update { configLines }
+        runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configLines) }
+            .onSuccess { updateConfig(it) }
         parameters.load()
     }
 
     fun updateConfig(config: ParticlesConfig) {
-        this._config.update { config }
+        _config.update { config }
     }
 
     fun saveConfig() {
-        val config = YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value)
-        FileSystemUtils.write(configPath, config)
+//        val config = YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value)
+//        FileSystemUtils.write(configPath, config)
         parameters.save()
+    }
+
+    fun saveConfigLines(newLines: String) {
+        FileSystemUtils.write(configPath, newLines)
+        _configLines.update { newLines }
     }
 
     inline fun whenDirty(run: ParticlesConfig.() -> Unit) {

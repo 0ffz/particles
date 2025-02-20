@@ -33,7 +33,7 @@ class UniformsWindow(
                         )
                     }
                 }
-            SimulationButtons()
+            SimulationButtons(viewModel)
         }
     }
 }

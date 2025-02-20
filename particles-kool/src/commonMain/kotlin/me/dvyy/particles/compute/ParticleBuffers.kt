@@ -3,6 +3,7 @@ package me.dvyy.particles.compute
 import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.util.Color
+import de.fabmax.kool.util.Releasable
 import de.fabmax.kool.util.releaseWith
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.dsl.Particle
@@ -10,7 +11,7 @@ import me.dvyy.particles.helpers.Buffers
 
 class ParticleBuffers(
     val configRepo: ConfigRepository,
-) {
+): Releasable {
     val count = configRepo.count
     val particleTypes: List<Particle> = configRepo.config.value.particles
     val positionBuffer = Buffers.positions(count, configRepo.boxSize)
@@ -53,17 +54,19 @@ class ParticleBuffers(
         }
     }
 
-    //
-    fun releaseWith(scene: Scene) {
-        positionBuffer.releaseWith(scene)
-        velocitiesBuffer.releaseWith(scene)
-        forcesBuffer.releaseWith(scene)
-        particleGridCellKeys.releaseWith(scene)
-        sortIndices.releaseWith(scene)
-        offsetsBuffer.releaseWith(scene)
-        colorsBuffer.releaseWith(scene)
-        particleTypesBuffer.releaseWith(scene)
-        particleColors.releaseWith(scene)
-        particleRadii.releaseWith(scene)
+    override var isReleased: Boolean = false
+
+    override fun release() {
+        isReleased = true
+        positionBuffer.release()
+        velocitiesBuffer.release()
+        forcesBuffer.release()
+        particleGridCellKeys.release()
+        sortIndices.release()
+        offsetsBuffer.release()
+        colorsBuffer.release()
+        particleTypesBuffer.release()
+        particleColors.release()
+        particleRadii.release()
     }
 }

@@ -1,5 +1,5 @@
 simulation:
-  count: 10000
+  count: 64
   minGridSize: 5.0
   dT: 0.001
   maxVelocity: 1.21
@@ -19,9 +19,9 @@ particles:
     color: ff0000
     radius: 1.5
     distribution: 1
-    convertTo:
-      type: hydrogen
-      chance: 0.01
+    #convertTo:
+    #  type: hydrogen
+    #  chance: 0.01
 #  hidden:
 #    color: 000000
 #    radius: 0

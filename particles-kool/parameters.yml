@@ -1,13 +1,13 @@
 interactions:
   hydrogen-oxygen:
     lennardJones:
-      sigma: 5.0
-      epsilon: 5.0
+      sigma: 2.54
+      epsilon: 123.68
   hydrogen-hydrogen:
     lennardJones:
-      sigma: 5.0
+      sigma: 2.64
       epsilon: 5.0
   oxygen-oxygen:
     lennardJones:
-      sigma: 10.0
-      epsilon: 5.0
+      sigma: 3.35
+      epsilon: 50.86

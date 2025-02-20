@@ -28,7 +28,6 @@ class ConfigRepository {
     val configLines = _configLines.asStateFlow()
 
     var isDirty: Boolean = true
-        private set
 
     val count get() = (_config.value.simulation.targetCount / WORK_GROUP_SIZE) * WORK_GROUP_SIZE
     private val desiredSize: Vec3i

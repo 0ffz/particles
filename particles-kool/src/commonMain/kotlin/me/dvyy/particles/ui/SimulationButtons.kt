@@ -1,11 +1,9 @@
 package me.dvyy.particles.ui
 
 import de.fabmax.kool.modules.ui2.*
-import me.dvyy.particles.ui.helpers.inject
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
-fun UiScope.SimulationButtons() {
-    val viewModel = inject<ParticlesViewModel>()
+fun UiScope.SimulationButtons(viewModel: ParticlesViewModel) {
     Column(Grow.Std, Grow.Std) {
         modifier.padding(sizes.smallGap)
         Button("Reset positions") {

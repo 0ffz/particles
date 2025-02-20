@@ -9,12 +9,6 @@ import me.dvyy.particles.config.ConfigRepository
 
 const val WORK_GROUP_SIZE = 64
 
-//val ReindexShader = KslComputeShader("Reindex Elements") {
-//    computeStage(WORK_GROUP_SIZE) {
-//        val indices = storage1d<KslInt1>("indices")
-//
-//    }
-//}
 class GPUSort(
     val configRepo: ConfigRepository,
     val buffers: ParticleBuffers,

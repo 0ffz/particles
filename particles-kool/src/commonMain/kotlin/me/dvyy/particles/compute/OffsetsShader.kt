@@ -5,7 +5,7 @@ import me.dvyy.particles.compute.WORK_GROUP_SIZE
 /**
  * Calculates
  */
-val OffsetsShader = KslComputeShader("Offset Compute") {
+fun offsetsShader() = KslComputeShader("Offset Compute") {
     computeStage(WORK_GROUP_SIZE) {
         val numValues = uniformInt1("numValues")
         val keysBuffer = storage1d<KslInt1>("keys")

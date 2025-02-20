@@ -6,6 +6,7 @@ import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.asMutableState
@@ -18,6 +19,7 @@ class ParticlesViewModel(
     private val buffers: ParticleBuffers,
     private val configRepo: ConfigRepository,
     private val mutableStateScope: CoroutineScope,
+    private val sceneManager: SceneManager,
 ) {
     val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
         .distinctUntilChanged()
@@ -67,7 +69,7 @@ class ParticlesViewModel(
     }
 
     fun restartSimulation() = launchOnMainThread {
-
+        sceneManager.reload()
     }
 
     fun save() = launchOnMainThread {

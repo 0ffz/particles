@@ -1,18 +1,19 @@
-package me.dvyy.particles
+package me.dvyy.particles.helpers
 
+import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer1d
 import kotlin.random.Random
 
 object Buffers {
-    fun positions(count: Int, width: Int, height: Int, depth: Int) = StorageBuffer1d(count, GpuType.FLOAT4).apply {
+    fun positions(count: Int, size: Vec3f) = StorageBuffer1d(count, GpuType.FLOAT4).apply {
         for (i in 0 until count) {
             this[i] =
                 Vec4f(
-                    Random.Default.nextInt(width).toFloat(),
-                    Random.Default.nextInt(height).toFloat(),
-                    if (depth == 0) 0f else Random.Default.nextInt(depth).toFloat(),
+                    Random.Default.nextDouble(size.x.toDouble()).toFloat(),
+                    Random.Default.nextDouble(size.y.toDouble()).toFloat(),
+                    if (size.z == 0f) 0f else Random.Default.nextDouble(size.z.toDouble()).toFloat(),
                     0f
                 )
         }

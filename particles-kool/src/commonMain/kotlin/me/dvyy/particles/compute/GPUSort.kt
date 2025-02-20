@@ -5,7 +5,7 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.scene.Scene
-import me.dvyy.particles.FieldsBuffers
+import me.dvyy.particles.compute.ParticleBuffers
 
 const val WORK_GROUP_SIZE = 64
 
@@ -114,7 +114,7 @@ object GPUSort {
 
     fun Scene.gpuSorting(
         count: Int,
-        buffers: FieldsBuffers,
+        buffers: ParticleBuffers,
         computePass: ComputePass,
     ) {
         val sorter = shader

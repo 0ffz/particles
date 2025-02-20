@@ -1,4 +1,4 @@
-package me.dvyy.particles
+package me.dvyy.particles.config
 
 import com.charleskorn.kaml.*
 import de.fabmax.kool.modules.ui2.MutableStateValue
@@ -13,17 +13,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
-import me.dvyy.particles.YamlHelpers.convertMapToNestedMap
-import me.dvyy.particles.YamlHelpers.convertMapToYaml
+import me.dvyy.particles.helpers.FileSystemUtils
+import me.dvyy.particles.config.YamlHelpers.convertMapToNestedMap
+import me.dvyy.particles.config.YamlHelpers.convertMapToYaml
 
 class YamlParameters(
     val path: String,
     val scope: CoroutineScope,
-//    val uniforms: List<UniformParameter<*>>,
 ) {
-    val yaml = Yaml.default
-
-    //    val content = mutableStateOf<YamlMap?>(null)
     @PublishedApi
     internal var _content = YamlMap(emptyMap(), YamlPath.root)
     val content = MutableSharedFlow<YamlMap>(
@@ -32,18 +29,14 @@ class YamlParameters(
     )
 
     data class StateWithSerializer<T>(val state: MutableStateValue<T>, val serializer: KSerializer<T>) {
-        fun encodeToString() = Yaml.default.encodeToString<T>(serializer, state.value)
+        fun encodeToString() = YamlHelpers.yaml.encodeToString<T>(serializer, state.value)
     }
 
     val mutableStates = mutableMapOf<String, StateWithSerializer<*>>()
     private val params = mutableListOf<MutableStateValue<*>>()
 
-    init {
-        load(path)
-    }
-
     fun <T> decode(content: YamlNode, path: String, serializer: KSerializer<T>): T {
-        return yaml.decodeFromYamlNode(serializer, content.getPath(path))
+        return YamlHelpers.yaml.decodeFromYamlNode(serializer, content.getPath(path))
     }
 
     inline fun <reified T> get(
@@ -97,7 +90,7 @@ class YamlParameters(
     }
 
     fun load(path: String = this.path) {
-        val node: YamlMap = yaml.parseToYamlNode(FileSystemUtils.read(path)).yamlMap
+        val node: YamlMap = YamlHelpers.yaml.parseToYamlNode(FileSystemUtils.read(path) ?: "{}").yamlMap
         _content = node
         content.tryEmit(node)
 //        params
@@ -118,6 +111,12 @@ class YamlParameters(
 }
 
 object YamlHelpers {
+    val yaml = Yaml(
+        configuration = YamlConfiguration(
+            singleLineStringStyle = SingleLineStringStyle.Plain,
+            encodeDefaults = false,
+        )
+    )
     // Map to yaml conversion helpers
     fun convertMapToNestedMap(flatMap: Map<String, Any>): Map<String, Any> {
         val nestedMap = mutableMapOf<String, Any>()

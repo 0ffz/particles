@@ -101,21 +101,19 @@ fun UiScope.LabeledRadioButton(label: String, toggleState: Boolean, indent: Dp =
     }
 }
 
-fun UiScope.LabeledSwitch(label: String, toggleState: MutableStateValue<Boolean>, onToggle: ((Boolean) -> Unit)? = null) {
+fun UiScope.LabeledSwitch(label: String, state: Boolean, onToggle: ((Boolean) -> Unit)) {
     MenuRow {
         Text(label) {
             labelStyle(Grow.Std)
             modifier.onClick {
-                toggleState.toggle()
-                onToggle?.invoke(toggleState.value)
+                onToggle(!state)
             }
         }
-        Switch(toggleState.use()) {
+        Switch(state) {
             modifier
                 .alignY(AlignmentY.Center)
                 .onToggle {
-                    toggleState.set(it)
-                    onToggle?.invoke(toggleState.value)
+                    onToggle(!state)
                 }
         }
     }

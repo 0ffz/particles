@@ -1,4 +1,3 @@
-## yaml-language-server: $schema=http://raw.githubusercontent.com/MineInAbyss/plugin-schemas/refs/heads/master/generated/mythicmobs.json
 simulation:
   count: 10000
   minGridSize: 5.0

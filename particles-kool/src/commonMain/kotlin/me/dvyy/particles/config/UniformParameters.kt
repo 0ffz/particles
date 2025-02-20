@@ -1,20 +1,17 @@
-package me.dvyy.particles.ui
+package me.dvyy.particles.config
 
 import de.fabmax.kool.modules.ui2.MutableStateValue
 import kotlinx.serialization.builtins.serializer
-import me.dvyy.particles.YamlParameters
-import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.pairwise.UniformParameter
 
 class UniformParameters(
-    val params: YamlParameters,
-    val config: ParticlesConfig,
+    val repo: ConfigRepository,
 ) {
     val uniformParams: List<Pair<UniformParameter<Float>, MutableStateValue<Float>>> =
-        config.pairwiseInteraction.flatMap { interaction ->
+        repo.config.value.pairwiseInteraction.flatMap { interaction ->
             //TODO generic parameter types
             interaction.uniforms.filterIsInstance<UniformParameter<Float>>().map { uniform ->
-                uniform to params.get<Float>(
+                uniform to repo.parameters.get<Float>(
                     uniform.parameter.path,
                     default = uniform.parameter.default,
                     serializer = Float.serializer() //TODO uniform.parameter.serializer

@@ -8,7 +8,7 @@ import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
-import me.dvyy.particles.FieldsBuffers
+import me.dvyy.particles.compute.ParticleBuffers
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -17,7 +17,7 @@ object Meshes {
     fun particleMeshInstances(count: Int) = MeshInstanceList(count).apply { numInstances = count }
 
     fun particleMesh(
-        buffers: FieldsBuffers,
+        buffers: ParticleBuffers,
         instances: MeshInstanceList,
     ) = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
 //            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
@@ -45,7 +45,7 @@ object Meshes {
 //                storage1d("positionsBuffer", positionsBuffer)
 //            }
         val do3dShading = true
-        val tintFarAway = buffers.depth > 400f
+        val tintFarAway = buffers.configRepo.boxSize.z > 400f
         shader = KslShader("test") {
             val interColor = interStageFloat4()
             val fragPos = interStageFloat4("fragPos")

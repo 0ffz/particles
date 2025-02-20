@@ -1,7 +1,7 @@
-package me.dvyy.particles
+package me.dvyy.particles.helpers
 
 actual object FileSystemUtils {
-    actual fun read(path: String): String = """
+    actual fun read(path: String): String? = """
         simulation:
           threeDimensions: true
           size:

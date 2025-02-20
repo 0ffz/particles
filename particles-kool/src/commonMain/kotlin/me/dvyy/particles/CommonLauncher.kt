@@ -1,38 +1,28 @@
 package me.dvyy.particles
 
 import OffsetsShader
-import com.charleskorn.kaml.Yaml
 import de.fabmax.kool.KoolContext
-import de.fabmax.kool.math.Vec3d
-import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec3i
-import de.fabmax.kool.math.spatial.BoundingBoxF
-import de.fabmax.kool.math.spatial.toBoundingBoxD
-import de.fabmax.kool.pipeline.ClearColorFill
 import de.fabmax.kool.pipeline.ComputePass
-import de.fabmax.kool.scene.OrbitInputTransform
-import de.fabmax.kool.scene.addLineMesh
-import de.fabmax.kool.scene.orbitCamera
 import de.fabmax.kool.scene.scene
-import de.fabmax.kool.util.*
+import de.fabmax.kool.util.RenderLoop
+import de.fabmax.kool.util.Time
+import de.fabmax.kool.util.debugOverlay
+import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import me.dvyy.particles.compute.ConvertParticlesShader
-import me.dvyy.particles.compute.FieldsShader
-import me.dvyy.particles.compute.GPUSort
+import me.dvyy.particles.compute.*
 import me.dvyy.particles.compute.GPUSort.gpuSorting
-import me.dvyy.particles.compute.WORK_GROUP_SIZE
-import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.config.UniformParameters
+import me.dvyy.particles.helpers.Buffers
+import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.Meshes
-import me.dvyy.particles.ui.AppState
 import me.dvyy.particles.ui.AppUI
-import me.dvyy.particles.ui.UniformParameters
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
-import me.dvyy.particles.ui.windows.FieldParamsWindow
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
-import kotlin.math.sqrt
 
 /**
  * Main application entry. This demo creates a small example scene, which you probably want to replace by your actual
@@ -41,65 +31,43 @@ import kotlin.math.sqrt
 fun launchApp(ctx: KoolContext) {
 //    val count: Int = (64 / 64) * 64
     val appScope = CoroutineScope(Dispatchers.RenderLoop)
-    val parameters = YamlParameters(path = "parameters.yml", scope = appScope)
-    val config = Yaml.default.decodeFromString(ParticlesConfig.serializer(), FileSystemUtils.read("particles.yml"))
-    val state = AppState(parameters)
-    val uniforms = UniformParameters(parameters, config)
-
-    val count = state.count//state.targetCount.value
-    val width = state.width.value
-    val height = state.height.value
-    val depth = if (state.threeDimensions.value) state.depth.value else 0
-
-    val gridSize = run {
-        val smallestSize = state.minGridSize.value
-        val cols = (width / smallestSize).toInt()
-        val rows = (height / smallestSize).toInt()
-        val depths = if (depth == 0) 1 else (depth / smallestSize).toInt()
-        if (rows * cols * depths > count) {
-            sqrt((width.toFloat() * height.toFloat() * (depth.coerceAtLeast(1)).toFloat()) / count) + 1.0
-        } else smallestSize
-    }.toFloat()
-
-    val passesPerFrame = state.passesPerFrame
-
-    val gridCols = (width / gridSize).toInt().also { println("$it cols") }
-    val gridRows = (height / gridSize).toInt().also { println("$it rows") }
-    val gridDepth = (depth / gridSize).toInt().also { println("$it rows") }
-
-    val buffers = FieldsBuffers(config.particles, width, height, if (state.threeDimensions.value) depth else 0, count)
 
     val application = startKoin {
         modules(module {
-            single { parameters }
-            single { state }
-            single { uniforms }
-            single { buffers }
+            single<CoroutineScope> { appScope }
             single<KoolContext> { ctx }
+            singleOf(::ConfigRepository)
+            singleOf(::UniformParameters)
+            singleOf(::ParticleBuffers)
         }, module {
+            singleOf(::CameraManager)
             singleOf(::ParticlesViewModel)
-            singleOf(::FieldParamsWindow)
+//            singleOf(::UniformsWindow)
             singleOf(::AppUI)
         })
     }
+    val configRepo = application.koin.get<ConfigRepository>()
+    val buffers = application.koin.get<ParticleBuffers>()
+    val uniforms = application.koin.get<UniformParameters>()
+    val config = configRepo.config.value
+
     val appScene = scene {
-        var swapIndex = 0
         // COMPUTE
         val sorting = ComputePass("Particles Compute")
 
         // Reset keys and indices based on grid cell particle is in
         val reset = GPUSort.resetBuffersShader.apply {
-            uniform1f("gridSize", gridSize)
-            uniform1i("gridRows", gridRows)
-            uniform1i("gridCols", gridCols)
+            uniform1f("gridSize", configRepo.gridSize)
+            uniform1i("gridCols", configRepo.gridCells.x)
+            uniform1i("gridRows", configRepo.gridCells.y)
             storage1d("keys", buffers.particleGridCellKeys)
             storage1d("indices", buffers.sortIndices)
             storage1d("positions", buffers.positionBuffer)
         }
-        sorting.addTask(reset, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1))
+        sorting.addTask(reset, numGroups = Vec3i(configRepo.count / WORK_GROUP_SIZE, 1, 1))
 
         // Sort by grid cells
-        gpuSorting(count, buffers = buffers, computePass = sorting)
+        gpuSorting(configRepo.count, buffers = buffers, computePass = sorting)
 
 //        val reorderBuffers = ReorderBuffersShader().also {
 //            it.indices = sortIndices
@@ -115,33 +83,20 @@ fun launchApp(ctx: KoolContext) {
 //                reorderBuffers.velocities = currVelocities()
 //            }
 //        }
-//        sorting.addTask(reorderBuffers.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
-////            pipeline.swapPipelineData("Prev")
-////            reorderBuffers.positions = prevPositions()
-////            reorderBuffers.velocities = prevVelocities()
-//            onBeforeDispatch {
-////                pipeline.swapPipelineData("Prev")
-//                reorderBuffers.positions = prevPositions()
-//                reorderBuffers.velocities = prevVelocities()
-//            }
-//        }
-        val offsets = OffsetsShader.apply {
-            uniform1i("numValues", count)
+
+        val numGroups = Vec3i(configRepo.count / WORK_GROUP_SIZE, 1, 1)
+
+        sorting.addTask(OffsetsShader.apply {
+            uniform1i("numValues", configRepo.count)
             storage1d("keys", buffers.particleGridCellKeys)
             storage1d("offsets", buffers.offsetsBuffer)
-        }
-        sorting.addTask(offsets, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
-//            onBeforeDispatch {
-//                offsets.storage1d("keys", particleGridCellKeys)
-//                offsets.storage1d("offsets", offsetsBuffer)
-//            }
-        }
-        val boxMax = Vec3f(gridSize * gridCols, gridSize * gridRows, gridSize * gridDepth)
-        val fields = FieldsShader(config, state).also {
-            it.gridSize = gridSize
-            it.gridRows = gridRows
-            it.gridCols = gridCols
-            it.count = count
+        }, numGroups = numGroups)
+
+        val boxMax = configRepo.boxSize
+        val fields = FieldsShader(configRepo.config.value).also {
+            it.gridSize = configRepo.gridSize
+            it.gridCells = configRepo.gridCells
+            it.count = configRepo.count
             it.colors = buffers.colorsBuffer
             it.particleTypes = buffers.particleTypesBuffer
             it.cellOffsets = buffers.offsetsBuffer
@@ -157,28 +112,32 @@ fun launchApp(ctx: KoolContext) {
             it.halfStep_boxMax = boxMax
         }
 
-        repeat(passesPerFrame.value) { passIndex ->
-            sorting.addTask(fields.halfStep, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
+        repeat(config.simulation.passesPerFrame) { passIndex ->
+            sorting.addTask(fields.halfStep, numGroups = numGroups).apply {
                 onBeforeDispatch {
-                    fields.halfStep_dT = state.dT.value
+                    configRepo.whenDirty {
+                        fields.halfStep_dT = simulation.dT.toFloat()
+                    }
                 }
             }
-            sorting.addTask(fields.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
+            sorting.addTask(fields.shader, numGroups = numGroups).apply {
                 onBeforeDispatch {
-                    fields.dT = state.dT.value
-                    fields.maxVelocity = state.maxVelocity.value
-                    fields.maxForce = state.maxForce.value
+                    configRepo.whenDirty {
+                        fields.dT = simulation.dT.toFloat()
+                        fields.maxVelocity = simulation.maxVelocity.toFloat()
+                        fields.maxForce = simulation.maxForce.toFloat()
+                    }
+                    //TODO move up to whenDirty
                     uniforms.uniformParams.forEach { (param, value) ->
                         fields.shader.uniform1f(param.uniformName).set(value.value)
                     }
-                    swapIndex++
                 }
             }
             addComputePass(sorting)
         }
 
         val convertShader = ConvertParticlesShader()
-        sorting.addTask(convertShader.shader, numGroups = Vec3i(count / WORK_GROUP_SIZE, 1, 1)).apply {
+        sorting.addTask(convertShader.shader, numGroups = numGroups).apply {
 
             val conversionBuffer = Buffers.integers(config.particles.size)
             val conversionChances = Buffers.floats(config.particles.size)
@@ -194,47 +153,21 @@ fun launchApp(ctx: KoolContext) {
             convertShader.particleTypes = buffers.particleTypesBuffer
             onBeforeDispatch {
                 val shouldRun = Time.frameCount % 1000 == 0
-                setNumGroupsByInvocations(if (shouldRun) count else 0, 1, 1)
+                setNumGroupsByInvocations(if (shouldRun) configRepo.count else 0, 1, 1)
                 convertShader.randomSeed = 1000f + (Time.gameTime % 1000.0).toFloat()
             }
         }
 
 //         RENDERING
-        val bb = BoundingBoxF(Vec3f.ZERO, boxMax.times(Vec3f(1f, -1f, 1f)))
 
-        if (state.threeDimensions.value) orbitCamera {
-            maxZoom = width.toDouble()
-            minZoom = 1.0
-            zoom = width.toDouble() / 2
-            zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
-            translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0))
-            setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
-        }
-        else {
-            this.clearColor = ClearColorFill(Color("444444"))
-            orbitCamera {
-                maxZoom = width.toDouble()
-                minZoom = 1.0
-                leftDragMethod = OrbitInputTransform.DragMethod.PAN
-                middleDragMethod = OrbitInputTransform.DragMethod.ROTATE
-                zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
-                zoom = width.toDouble() / 2
-                translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0, 500.0, 0.0))
-                setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
-            }
-        }
-        val instances = Meshes.particleMeshInstances(count)
+        application.koin.get<CameraManager>().manageCameraFor(this)
+        val instances = Meshes.particleMeshInstances(configRepo.count)
         addNode(
             Meshes.particleMesh(
                 buffers,
                 instances
             )
         )
-
-
-        addLineMesh {
-            addBoundingBox(bb, Color.WHITE)
-        }
 //        onRelease {
 //            positionsBuffer.release()
 //        }
@@ -249,6 +182,7 @@ fun launchApp(ctx: KoolContext) {
                 buffers.particleGridCellKeys.readbackBuffer()
                 buffers.sortIndices.readbackBuffer()
                 buffers.offsetsBuffer.readbackBuffer()
+                val count = configRepo.count
                 println("Positions: " + (0 until count).map { buffers.positionBuffer.getF4(it) }.toString())
                 println("Velocities: " + (0 until count).map { buffers.velocitiesBuffer.getF4(it) }.toString())
                 println("Keys: " + (0 until count).map { buffers.particleGridCellKeys.getI1(it) }.toString())

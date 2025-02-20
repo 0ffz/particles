@@ -5,11 +5,9 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.dsl.Parameter
 import me.dvyy.particles.dsl.ParticlesConfig
-import me.dvyy.particles.ui.AppState
 
 class FieldsShader(
     val config: ParticlesConfig,
-    val state: AppState
 ) {
     val halfStep = KslComputeShader("Fields Half-Step") {
         computeStage(WORK_GROUP_SIZE) {
@@ -30,10 +28,10 @@ class FieldsShader(
                 val nextPosition = float3Var(position + (velocity * dT) + ((force * dT * dT) / 2f.const))
 
                 // Ensure particles are in bounds
-                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set  1f.const }
-                `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set  1f.const }
-                `if`(nextPosition.x.gt(boxMax.x)) { nextPosition.x set boxMax.x -1f.const }
-                `if`(nextPosition.y.gt(boxMax.y)) { nextPosition.y set boxMax.y -1f.const }
+                `if`(nextPosition.x.lt(0f.const)) { nextPosition.x set 1f.const }
+                `if`(nextPosition.y.lt(0f.const)) { nextPosition.y set 1f.const }
+                `if`(nextPosition.x.gt(boxMax.x)) { nextPosition.x set boxMax.x - 1f.const }
+                `if`(nextPosition.y.gt(boxMax.y)) { nextPosition.y set boxMax.y - 1f.const }
                 `if`(boxMax.z ne 0f.const) {
                     `if`(nextPosition.z.lt(0f.const)) { nextPosition.z set 1f.const }
                     `if`(nextPosition.z.gt(boxMax.z)) { nextPosition.z set boxMax.z - 1f.const }
@@ -53,8 +51,7 @@ class FieldsShader(
         computeStage(WORK_GROUP_SIZE) {
             // Uniforms
             val gridSize = uniformFloat1("gridSize")
-            val gridRows = uniformInt1("gridRows")
-            val gridCols = uniformInt1("gridCols")
+            val gridCells = uniformInt3("gridCells")
             val dT = uniformFloat1("dT")
             val count = uniformInt1("count")
             val maxForce = uniformFloat1("maxForce")
@@ -88,7 +85,7 @@ class FieldsShader(
                 val yGrid = paramInt1("yGrid")
                 val zGrid = paramInt1("zGrid")
                 body {
-                    xGrid + (yGrid  * gridCols) + (zGrid * gridRows * gridCols)
+                    xGrid + (yGrid * gridCells.x) + (zGrid * gridCells.x * gridCells.y)
                 }
             }
 
@@ -116,20 +113,21 @@ class FieldsShader(
                 fori((-1).const, 2.const) { x ->
                     fori((-1).const, 2.const) { y ->
                         fun forZIf3d(block: KslScopeBuilder.(KslScalarExpression<KslInt1>) -> Unit) {
-                            if(state.threeDimensions.value) fori((-1).const, 2.const) { z ->
+                            if (config.simulation.threeDimensions) fori((-1).const, 2.const) { z ->
                                 block(z)
                             } else block(0.const)
                         }
                         forZIf3d { z ->
                             // Calculate the neighboring cell id as an integer
+                            `if`(
+                                (xGrid lt 0.const) or (xGrid gt gridCells.x)
+                                        or (yGrid lt 0.const) or (yGrid gt gridCells.y)
+                                        or (zGrid lt 0.const) or (zGrid gt gridCells.z)
+                            ) {
+                                `continue`()
+                            }
                             val localCellId = int1Var(cellId(xGrid + x, yGrid + y, zGrid + z))
-//                            `if`(
-//                                (localCellId lt 0.const)
-//                                        or (localCellId ge (gridCols * gridRows))
-//                                        or (cellId + y * gridCols gt gridCols * gridRows)
-//                            ) {
-//                                `continue`()
-//                            }
+
                             val startIndex = int1Var(cellOffsets[localCellId])
                             fori(startIndex, count) { i ->
                                 `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
@@ -222,8 +220,7 @@ class FieldsShader(
 
     // Uniforms
     var gridSize by shader.uniform1f("gridSize")
-    var gridRows by shader.uniform1i("gridRows")
-    var gridCols by shader.uniform1i("gridCols")
+    var gridCells by shader.uniform3i("gridCells")
     var dT by shader.uniform1f("dT")
     var count by shader.uniform1i("count")
     var maxForce by shader.uniform1f("maxForce")

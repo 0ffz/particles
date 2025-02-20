@@ -1,15 +1,11 @@
 package me.dvyy.particles.dsl
 
-import com.charleskorn.kaml.Yaml
-import com.charleskorn.kaml.YamlNode
-import com.charleskorn.kaml.YamlTaggedNode
+import com.charleskorn.kaml.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
@@ -46,7 +42,16 @@ sealed interface Parameter<T> {
         }
 
         override fun serialize(encoder: Encoder, value: Parameter<T>) {
-            TODO("Not yet implemented")
+            encoder.encodeSerializableValue(
+                YamlNode.serializer(), when (value) {
+                    is FromParams -> YamlTaggedNode(
+                        "!param;max=${value.max}",
+                        YamlScalar(Yaml.default.encodeToString(dataSerializer, value.default), YamlPath.root)
+                    )
+
+                    is Value -> YamlScalar(Yaml.default.encodeToString(dataSerializer, value.value), YamlPath.root)
+                }
+            )
         }
     }
 }

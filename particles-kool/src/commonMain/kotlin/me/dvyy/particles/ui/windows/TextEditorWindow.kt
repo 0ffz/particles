@@ -69,9 +69,6 @@ class TextEditorWindow(
         )
     }.asMutableState(scope, default = ListTextLineProvider(mutableListOf()))
 
-    //    private val lines = mutableStateListOf<TextLine>().apply {
-//        add(TextLine(listOf("hello world" to null)))
-//    }
     init {
         scope.launch {
             configRepository.configLines.collect { lines ->
@@ -86,9 +83,6 @@ class TextEditorWindow(
         scope.launch {
             consoleFont.update { MsdfFont("assets/fonts/hack/font-hack-regular").getOrThrow().copy(sizePts = 20f) }
         }
-    }
-
-    init {
         windowDockable.setFloatingBounds(width = Dp(500f), height = Dp(800f))
     }
 
@@ -122,7 +116,7 @@ class TextEditorWindow(
                 }
             }
             TextArea(formattedLines.use()) {
-            modifier.padding(sizes.smallGap)
+                modifier.padding(sizes.smallGap)
                 // make text area selectable
                 installDefaultSelectionHandler()
                 // make text area editable
@@ -175,7 +169,6 @@ class TextEditorWindow(
                         }
                     }
                 })
-//            modifier.width(Grow.Companion.Std).height(Grow.Companion.Std)
             }
         }
     }

@@ -18,6 +18,7 @@ class UniformsWindow(
     val uniforms: UniformParameters,
 ) : FieldsWindow("Live Parameters", ui) {
     val simsPs = mutableStateOf(0.0)
+    val sizeList = listOf(Sizes.small, Sizes.medium, Sizes.large)
 
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
@@ -30,6 +31,11 @@ class UniformsWindow(
         Column(Grow.Std, Grow.Std) {
             Text("Simulation") { sectionTitleStyle() }
             Text("${simsPs.use().toString(2)} sims/s") {}
+            ComboBox {
+                modifier.items(listOf("Small", "Medium", "Large"))
+                    .selectedIndex(sizeList.indexOf(ui.uiSizes.use()))
+                    .onItemSelected { ui.uiSizes.set(sizeList[it]) }
+            }
             val state = viewModel.uiState.use()
             state.forEach {
                 with(it) { draw() }

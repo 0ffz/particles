@@ -1,26 +1,14 @@
 package me.dvyy.particles.ui.helpers
 
-import de.fabmax.kool.KoolContext
-import de.fabmax.kool.modules.ui2.Column
-import de.fabmax.kool.modules.ui2.Composable
-import de.fabmax.kool.modules.ui2.FitContent
-import de.fabmax.kool.modules.ui2.Grow
-import de.fabmax.kool.modules.ui2.ScrollArea
-import de.fabmax.kool.modules.ui2.TitleBar
-import de.fabmax.kool.modules.ui2.UiScope
-import de.fabmax.kool.modules.ui2.WindowSurface
-import de.fabmax.kool.modules.ui2.background
+import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.modules.ui2.docking.UiDockable
-import de.fabmax.kool.modules.ui2.remember
-import de.fabmax.kool.modules.ui2.width
-import de.fabmax.kool.scene.Scene
 import me.dvyy.particles.ui.AppUI
 
 abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = false) {
     val windowDockable = UiDockable(name, ui.dock)
 
     val windowSurface = WindowSurface(windowDockable) {
-//        surface.sizes = uiDemo.selectedUiSize.use()
+        surface.sizes = ui.uiSizes.use()
         surface.colors = this@FieldsWindow.ui.colors
 
         modifyWindow()
@@ -57,5 +45,5 @@ abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = f
 
     protected abstract fun UiScope.windowContent(): Any
 
-    open fun onClose() { }
+    open fun onClose() {}
 }

@@ -59,16 +59,18 @@ fun UiScope.MenuSlider2(
     fun boundedChange(value: Float) {
         onChange(((value.coerceAtLeast(min) * round).roundToInt() / round).toFloat())
     }
+    fun UiModifier.scrollable() = onWheelY {
+        val multiplier = if(KeyboardInput.isShiftDown) 1f else 10f
+        boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.deltaScrollY.toFloat())
+    }
+
     MenuRow {
         Text(label) { labelStyle(Grow.Std) }
         TextField(txtFormat(value)) {
             modifier.onChange { it.toFloatOrNull()?.let { boundedChange(it) } }
-                .onWheelY {
-                    val multiplier = if(KeyboardInput.isShiftDown) 1f else 10f
-                    boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.deltaScrollY.toFloat())
-                }
                 .align(yAlignment = AlignmentY.Center)
                 .padding(vertical = sizes.smallGap * 0.5f)
+                .scrollable()
         }
     }
     MenuRow {
@@ -78,6 +80,7 @@ fun UiScope.MenuSlider2(
                 .alignY(AlignmentY.Center)
                 .onChange { boundedChange(it) }
         }
+        modifier.scrollable()
     }
 }
 

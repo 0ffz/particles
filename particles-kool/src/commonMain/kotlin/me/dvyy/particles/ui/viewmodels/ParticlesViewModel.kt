@@ -31,7 +31,10 @@ class ParticlesViewModel(
 //                UiConfigurable.Slider("Min Grid Size", state.minGridSize, 0f, 100f) {
 //                    updateState { copy(minGridSize = it.toDouble()) }
 //                },
-                UiConfigurable.Slider("dT", state.dT, 0f, 0.05f, precision = 3) {
+                UiConfigurable.Slider("UI Size", state.dT, 0f, 3f, precision = 0) {
+                    updateState { copy(dT = it.toDouble()) }
+                },
+                UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
                     updateState { copy(dT = it.toDouble()) }
                 },
                 UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {

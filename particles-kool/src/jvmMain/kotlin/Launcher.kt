@@ -10,7 +10,7 @@ import me.dvyy.particles.launchApp
  */
 fun main() = KoolApplication(
     config = KoolConfigJvm(
-        windowTitle = "kool Template App",
+        windowTitle = "Particles",
         isVsync = false,
         maxFrameRate = 500,
         renderBackend = Backend.OPEN_GL,

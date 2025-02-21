@@ -7,12 +7,12 @@ import de.fabmax.kool.modules.ui2.docking.Dock
 import de.fabmax.kool.modules.ui2.docking.UiDockable
 import de.fabmax.kool.util.MdColor
 import de.fabmax.kool.util.launchDelayed
+import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
-import me.dvyy.particles.ui.windows.SimulationStatisticsWindow
 import me.dvyy.particles.ui.windows.TextEditorWindow
 import me.dvyy.particles.ui.windows.UniformsWindow
 
@@ -23,6 +23,7 @@ class AppUI(
     val configRepository: ConfigRepository,
     val scope: CoroutineScope,
 ) {
+    val uiSizes = mutableStateOf(Sizes.large)
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE)
     val dock = Dock("Dock")
     val ui = UiScene {
@@ -51,7 +52,10 @@ class AppUI(
         spawnWindow(UniformsWindow(this@AppUI, viewModel, configRepository, uniforms))
 //        spawnWindow(SimulationStatisticsWindow(this@AppUI, viewModel, configRepository), "0:row/0:col/1:leaf")
         spawnWindow(TextEditorWindow(this@AppUI, configRepository, viewModel, scope), "0:row/2:leaf")
-//        dock.getLeafAtPath("0:row/0:col/1:leaf")!!.height.set(Grow(0.2f))
+//        dock.getLeafAtPath("0:row/2:leaf")!!.width.set(Dp(0f))
+//        dock.dockingPaneComposable = Composable {
+//            Button("Test") { modifier.align(AlignmentX.End, AlignmentY.Bottom) }
+//        }
     }
 
     fun spawnWindow(window: FieldsWindow, dockPath: String? = null) {
@@ -62,7 +66,9 @@ class AppUI(
             dock.getLeafAtPath(it)?.dock(window.windowDockable)
         }
 
-        window.windowDockable.setFloatingBounds(Dp(windowSpawnLocation.x), Dp(windowSpawnLocation.y))
+        window.windowDockable.setFloatingBounds(
+            Dp(windowSpawnLocation.x), Dp(windowSpawnLocation.y),
+        )
         windowSpawnLocation.x += 32f
         windowSpawnLocation.y += 32f
         if (windowSpawnLocation.y > 480f) {

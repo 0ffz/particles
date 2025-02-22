@@ -124,9 +124,10 @@ class ParticlesScene(
             convertShader.convertChances = conversionChances
             convertShader.particleTypes = buffers.particleTypesBuffer
             onBeforeDispatch {
-                val shouldRun = Time.frameCount % 1000 == 0
+                val count = configRepo.count
+                val shouldRun = Time.frameCount % configRepo.config.value.simulation.conversionRate == 0 //TODO make configurable, real world seconds
                 setNumGroupsByInvocations(if (shouldRun) configRepo.count else 0, 1, 1)
-                convertShader.randomSeed = 1000f + (Time.gameTime % 1000.0).toFloat()
+                convertShader.randomSeed = count + (Time.gameTime % count).toFloat()
             }
         }
 //         RENDERING

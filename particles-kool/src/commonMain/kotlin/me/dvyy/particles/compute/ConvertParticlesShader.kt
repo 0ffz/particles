@@ -25,7 +25,7 @@ class ConvertParticlesShader {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 val type = int1Var(particleTypes[id])
                 val chance = float1Var(convertChances[type])
-                `if`((randomF(id.toFloat1() + (id.toFloat1() * randomSeed))) lt chance) {
+                `if`((randomF(id.toFloat1() + randomSeed)) lt chance) {
                     particleTypes[id] = convertTo[type]
                 }
             }

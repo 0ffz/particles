@@ -9,6 +9,7 @@ import me.dvyy.particles.dsl.pairwise.*
 data class Simulation(
     @SerialName("count")
     val targetCount: Int = 10_000,
+    val conversionRate: Int = 100,
     val minGridSize: Double = 5.0,
     val dT: Double = 0.001,
     val maxVelocity: Double = 20.0,

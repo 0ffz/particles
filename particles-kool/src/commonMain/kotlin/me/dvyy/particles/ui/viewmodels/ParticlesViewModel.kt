@@ -1,18 +1,23 @@
 package me.dvyy.particles.ui.viewmodels
 
+import com.charleskorn.kaml.YamlNode
 import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.config.asMutableState
+import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
+import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.helpers.UiConfigurable
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.seconds
 
 class ParticlesViewModel(
     private val buffers: ParticleBuffers,
@@ -46,10 +51,27 @@ class ParticlesViewModel(
         }
         .asMutableState(mutableStateScope, default = listOf())
 
+    init {
+        launchOnMainThread {
+            configRepo.parameters.overrides.debounce(1.seconds).collect {
+                saveParameters()
+            }
+        }
+    }
+
     fun updateState(simulation: Simulation.() -> Simulation) = launchOnMainThread {
         val config = configRepo.config.value
         val newSimulation = simulation(config.simulation)
         configRepo.updateConfig(config.copy(simulation = newSimulation))
+    }
+
+    fun <T> updateOverrides(key: String, newValue: T, serializer: KSerializer<T>) = launchOnMainThread {
+        configRepo.parameters.update(
+            key, YamlHelpers.yaml.decodeFromString(
+                YamlNode.serializer(),
+                YamlHelpers.yaml.encodeToString(serializer, newValue)
+            )
+        )
     }
 
     fun resetPositions() = launchOnMainThread {
@@ -71,11 +93,11 @@ class ParticlesViewModel(
         sceneManager.reload()
     }
 
-    fun save() = launchOnMainThread {
-        configRepo.saveConfig()
+    fun saveParameters() = launchOnMainThread {
+        configRepo.saveParameters()
     }
 
-    fun load() = launchOnMainThread {
-        configRepo.loadConfig()
+    fun resetParameters() = launchOnMainThread {
+        configRepo.resetParameters()
     }
 }

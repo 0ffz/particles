@@ -1,122 +1,80 @@
 package me.dvyy.particles.config
 
 import com.charleskorn.kaml.*
-import de.fabmax.kool.modules.ui2.MutableStateValue
-import de.fabmax.kool.modules.ui2.mutableStateOf
-import de.fabmax.kool.util.logW
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.serialization.KSerializer
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.serializer
-import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.config.YamlHelpers.convertMapToNestedMap
 import me.dvyy.particles.config.YamlHelpers.convertMapToYaml
+import me.dvyy.particles.helpers.FileSystemUtils
 
 class YamlParameters(
     val path: String,
     val scope: CoroutineScope,
 ) {
-    @PublishedApi
-    internal var _content = YamlMap(emptyMap(), YamlPath.root)
-    val content = MutableSharedFlow<YamlMap>(
+    private val _overrides = mutableMapOf<String, YamlNode>()
+    val overrides = MutableSharedFlow<Map<String, YamlNode>>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
 
-    data class StateWithSerializer<T>(val state: MutableStateValue<T>, val serializer: KSerializer<T>) {
-        fun encodeToString() = YamlHelpers.yaml.encodeToString<T>(serializer, state.value)
+    fun update(key: String, value: YamlNode) {
+        _overrides[key] = value
+        overrides.tryEmit(_overrides)
     }
-
-    val mutableStates = mutableMapOf<String, StateWithSerializer<*>>()
-    private val params = mutableListOf<MutableStateValue<*>>()
-
-    fun <T> decode(content: YamlNode, path: String, serializer: KSerializer<T>): T {
-        return YamlHelpers.yaml.decodeFromYamlNode(serializer, content.getPath(path))
-    }
-
-    inline fun <reified T> get(
-        yamlPath: String,
-        default: T,
-        serializer: KSerializer<T> = serializer<T>(),
-    ): MutableStateValue<T> {
-        val state = mutableStates.getOrPut(yamlPath) {
-            StateWithSerializer(
-                mutableStateOf<T>(
-                    runCatching { decode(_content, yamlPath, serializer) }.getOrDefault(
-                        default
-                    )
-                ), serializer
-            )
-        } as StateWithSerializer<T>
-        require(serializer == state.serializer) { "Tried reading $yamlPath with serializer $serializer, but was already registered with ${state.serializer}" }
-
-        scope.launch {
-            content.map { decode(it, yamlPath, serializer) }
-                .catch { logW { "Error reading config at $yamlPath: ${it.message}" } }
-                .collect { state.state.set(it) }
-        }
-        return state.state
-    }
-
-//    inline fun <reified T> uniform(
-//        yamlPath: String,
-//        default: T,
-//        serializer: KSerializer<T> = serializer<T>(),
-//    ): MutableStateValue<T> {
-//        val state = get(yamlPath, default, serializer)
-//    }
-    //    fun propertyOrNull(key: String): String? = runCatching { property(key) }.getOrNull()
-//    fun property(key: String): String = get(key).yamlScalar.content
 
     fun save(path: String = this.path) {
-        println(mutableStates)
-        val pairs = mutableStates.map { (key, state) ->
-            val encoded = state.encodeToString()
-            key to encoded
-        }.toMap()
-        val output = convertMapToYaml(convertMapToNestedMap(pairs))
-//        val pairs = mutableUniforms.map {
-//            val encoded = Yaml.default.encodeToString(it.uniform.parameter.serializer, it.value)
-//            it.uniform.parameter.path to encoded
-//        }.toMap() //.sortedBy { it.first }.joinToString()
-
-        FileSystemUtils.write(path, output)
-//        path.createParentDirectories().also { if (it.notExists()) it.createFile() }
+        val encoded = YamlHelpers.yaml.encodeToString(_overrides)
+        FileSystemUtils.write(path, encoded)
     }
 
     fun load(path: String = this.path) {
-        val node: YamlMap = YamlHelpers.yaml.parseToYamlNode(FileSystemUtils.read(path) ?: "{}").yamlMap
-        _content = node
-        content.tryEmit(node)
-//        params
-//            val readOrDefault = runCatching {
-//                Yaml.default.decodeFromYamlNode(
-//                    it.uniform.parameter.serializer,
-//                    get(it.uniform.parameter.path)
-//                )
-//            }.getOrNull() ?: it.uniform.parameter.default!!
-//            it.set(readOrDefault)
+        val decoded = runCatching {
+            YamlHelpers.yaml.decodeFromString<Map<String, YamlNode>>(FileSystemUtils.read(path) ?: "{}")
+        }.getOrDefault(emptyMap())
+
+        _overrides.clear()
+        _overrides.putAll(decoded)
+        overrides.tryEmit(_overrides)
     }
 
-    companion object {
-        fun YamlNode.getPath(key: String): YamlNode = key.split(".").fold(this) { acc: YamlNode, stringPart ->
-            acc.yamlMap.get<YamlNode>(stringPart) ?: error("Key $key not found in config")
-        }
+    fun reset() {
+        _overrides.clear()
+        overrides.tryEmit(_overrides)
     }
 }
 
 object YamlHelpers {
+    fun YamlNode.getPath(key: String): YamlNode = key.split(".").fold(this) { acc: YamlNode, stringPart ->
+        acc.yamlMap.get<YamlNode>(stringPart) ?: error("Key $key not found in config")
+    }
+
+    inline fun <reified T> YamlNode?.decode(default: T): T {
+        if (this == null) return default
+        return runCatching { yaml.decodeFromYamlNode<T>(serializer<T>(), this) }.getOrDefault(default)
+    }
+
+    inline fun <reified T> YamlMap.get(yamlPath: String, default: T): T {
+        return runCatching { YamlHelpers.yaml.decodeFromYamlNode<T>(serializer<T>(), getPath(yamlPath)) }
+            .getOrDefault(default)
+    }
+
+//    inline fun <reified T> YamlMap.with(yamlPath: String, value: T): YamlMap {
+//        this.copy
+//    }
+
     val yaml = Yaml(
         configuration = YamlConfiguration(
             singleLineStringStyle = SingleLineStringStyle.Plain,
             encodeDefaults = false,
         )
     )
+
     // Map to yaml conversion helpers
     fun convertMapToNestedMap(flatMap: Map<String, Any>): Map<String, Any> {
         val nestedMap = mutableMapOf<String, Any>()
@@ -165,24 +123,3 @@ object YamlHelpers {
     }
 }
 
-//data class MutableUniform<T>(
-//    val uniform: UniformParameter<T>,
-//    var value: T,
-//    var dirty: Boolean = true,
-//) {
-//    val valueChanged = Event<T>("uniform-value-changed")
-//    fun get() = value
-//
-//    fun set(value: T) {
-//        this.value = value
-//        dirty = true
-//        valueChanged.trigger(value)
-//    }
-//}
-fun <T> Flow<T>.asMutableState(scope: CoroutineScope, default: T): MutableStateValue<T> {
-    val state = mutableStateOf(default)
-    scope.launch {
-        collect { state.set(it) }
-    }
-    return state
-}

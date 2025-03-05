@@ -10,10 +10,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.YamlHelpers
-import me.dvyy.particles.config.asMutableState
+import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.time.Duration.Companion.seconds
 
@@ -36,6 +37,7 @@ class TextEditorWindow(
     val yamlTag = consoleFontAsState.map { TextAttributes(it, Color.LIGHT_YELLOW) }
     val yamlComment = consoleFontAsState.map { TextAttributes(it, Color.DARK_GRAY) }
     private val lines = MutableStateFlow(listOf<String>())
+    val textChanged = mutableStateOf(false)
     val decodedConfig = lines.debounce(0.75.seconds).map {
         decodeConfigFromText(it)
     }.asMutableState(scope, default = Result.success(ParticlesConfig()))
@@ -76,7 +78,7 @@ class TextEditorWindow(
             }
         }
         scope.launch {
-            lines.debounce(3.seconds).collectLatest {
+            lines.debounce(2.seconds).collectLatest {
                 configRepository.saveConfigLines(lines.value.joinToString("\n"))
             }
         }
@@ -97,15 +99,21 @@ class TextEditorWindow(
                 )
                 config.onSuccess {
                     Button("Reload from file") {
-                        modifier.align(AlignmentX.End, AlignmentY.Bottom).margin(sizes.gap)
+                        modifier.margin(sizes.gap)
                         modifier.onClick {
                             val decoded = decodeConfigFromText(lines.value)
                             decodedConfig.set(decoded)
                             decoded.onSuccess {
                                 configRepository.saveConfigLines(lines.value.joinToString("\n"))
                                 configRepository.updateConfig(it)
+                                textChanged.set(false)
                                 viewModel.restartSimulation()
                             }
+                        }
+                    }
+                    if(textChanged.use()) {
+                        Text("(Reload required)") {
+                            modifier.alignY(AlignmentY.Center)
                         }
                     }
                 }
@@ -165,6 +173,7 @@ class TextEditorWindow(
                                 }
                             }
                             lines.update { edited }
+                            textChanged.set(true)
                             return caretPos
                         }
                     }

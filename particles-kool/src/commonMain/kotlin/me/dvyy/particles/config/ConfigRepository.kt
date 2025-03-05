@@ -23,6 +23,8 @@ class ConfigRepository {
     val parameters = YamlParameters(path = paramsPath, scope = appScope)
 
     private val _config = MutableStateFlow(ParticlesConfig())
+    /** Config as it was loaded */
+    var initialConfig: ParticlesConfig? = _config.value
     val config = _config.asStateFlow()
     private val _configLines = MutableStateFlow("")
     val configLines = _configLines.asStateFlow()
@@ -53,18 +55,27 @@ class ConfigRepository {
     val boxSize get() = gridCells.toVec3f().times(gridSize)
 
     fun loadConfig() {
-        val configLines = FileSystemUtils.read(configPath) ?: "{}"
+        val configLines = FileSystemUtils.read(configPath)
+            // Use default config if none exists
+            ?: YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), ParticlesConfig())
+
         _configLines.update { configLines }
         runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configLines) }
             .onSuccess { updateConfig(it) }
+        initialConfig = _config.value
         parameters.load()
+    }
+
+    fun resetParameters() {
+        parameters.reset()
+        _config.update { initialConfig ?: it }
     }
 
     fun updateConfig(config: ParticlesConfig) {
         _config.update { config }
     }
 
-    fun saveConfig() {
+    fun saveParameters() {
 //        val config = YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value)
 //        FileSystemUtils.write(configPath, config)
         parameters.save()

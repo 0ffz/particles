@@ -51,7 +51,7 @@ class AppUI(
     private val windowSpawnLocation = MutableVec2f(32f, 32f)
 
     init {
-        spawnWindow(UniformsWindow(this@AppUI, viewModel, configRepository, uniforms))
+        spawnWindow(UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope))
 //        spawnWindow(SimulationStatisticsWindow(this@AppUI, viewModel, configRepository), "0:row/0:col/1:leaf")
         spawnWindow(TextEditorWindow(this@AppUI, configRepository, viewModel, scope), "0:row/2:leaf")
 //        dock.getLeafAtPath("0:row/2:leaf")!!.width.set(Dp(0f))

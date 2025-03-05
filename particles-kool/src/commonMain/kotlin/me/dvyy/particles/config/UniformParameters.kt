@@ -1,21 +1,25 @@
 package me.dvyy.particles.config
 
-import de.fabmax.kool.modules.ui2.MutableStateValue
-import kotlinx.serialization.builtins.serializer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import me.dvyy.particles.config.YamlHelpers.decode
 import me.dvyy.particles.dsl.pairwise.UniformParameter
 
 class UniformParameters(
     val repo: ConfigRepository,
+    val scope: CoroutineScope,
 ) {
-    val uniformParams: List<Pair<UniformParameter<Float>, MutableStateValue<Float>>> =
-        repo.config.value.pairwiseInteraction.flatMap { interaction ->
-            //TODO generic parameter types
-            interaction.uniforms.filterIsInstance<UniformParameter<Float>>().map { uniform ->
-                uniform to repo.parameters.get<Float>(
-                    uniform.parameter.path,
-                    default = uniform.parameter.default,
-                    serializer = Float.serializer() //TODO uniform.parameter.serializer
-                )
+    val uniformParams/*: Flow<List<Pair<UniformParameter<Float>, MutableStateValue<Float>>>> */ =
+        combine(repo.config, repo.parameters.overrides) { config, params ->
+            config.pairwiseInteraction.flatMap { interaction ->
+                //TODO generic parameter types
+                interaction.uniforms.filterIsInstance<UniformParameter<Float>>().map { uniform ->
+                    uniform to params[uniform.parameter.path].decode<Float>(default = uniform.parameter.default)
+                }
             }
-        }
+        }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
+//        repo.config.map {
+//    }
 }

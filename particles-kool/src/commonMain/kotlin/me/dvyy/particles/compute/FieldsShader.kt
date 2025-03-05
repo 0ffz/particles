@@ -279,8 +279,8 @@ class FieldsShader(
                         setNumGroupsByInvocations(count)
                     }
                     //TODO move up to whenDirty
-                    uniforms.uniformParams.forEach { (param, value) ->
-                        shader.uniform1f(param.uniformName).set(value.value)
+                    uniforms.uniformParams.value.forEach { (param, value) ->
+                        shader.uniform1f(param.uniformName).set(value)
                     }
                 }
             }

@@ -13,13 +13,13 @@ fun UiScope.SimulationButtons(viewModel: ParticlesViewModel) {
 //            modifier.onClick { viewModel.restartSimulation() }.margin(bottom = sizes.smallGap)
 //        }
         Row(Grow.Std) {
-            Button("Save") {
-                modifier.onClick { viewModel.save() }.margin(end = sizes.smallGap)
-                    .width(Grow.Std)
-            }
-            Button("Load") {
-                modifier.onClick { viewModel.load() }
-                    .width(Grow.Std)
+            //TODO autosave parameters
+//            Button("Save") {
+//                modifier.onClick { viewModel.saveParameters() }.margin(end = sizes.smallGap)
+//                    .width(Grow.Std)
+//            }
+            Button("Reset Parameters") {
+                modifier.onClick { viewModel.resetParameters() }.width(Grow.Std)
             }
         }
     }

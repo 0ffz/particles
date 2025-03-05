@@ -2,12 +2,17 @@ package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.config.UniformParameters
+import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuRow
+import me.dvyy.particles.ui.helpers.MenuSlider
+import me.dvyy.particles.ui.helpers.MenuSlider2
 import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.helpers.liveSlider
 import me.dvyy.particles.ui.helpers.sectionTitleStyle
@@ -18,9 +23,11 @@ class UniformsWindow(
     val viewModel: ParticlesViewModel,
     val configRepo: ConfigRepository,
     val uniforms: UniformParameters,
+    val scope: CoroutineScope,
 ) : FieldsWindow("Live Parameters", ui) {
     val simsPs = mutableStateOf(0.0)
     val sizeList = listOf(Sizes.small, Sizes.medium, Sizes.large)
+    val paramsState = uniforms.uniformParams.asMutableState(scope, default = emptyList())
 
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
@@ -48,16 +55,18 @@ class UniformsWindow(
             state.forEach {
                 with(it) { draw() }
             }
-            uniforms.uniformParams
+            paramsState
+                .use()
                 .groupBy { it.first.parameter.path.substringBeforeLast(".").substringAfter(".") }
                 .forEach { (name, params) ->
                     Text(name) { sectionTitleStyle() }
-                    params.forEach { (param, state) ->
-                        liveSlider(
+                    params.forEach { (param, value) ->
+                        MenuSlider2(
                             param.name,
-                            state,
+                            value,
                             min = param.range.start.toFloat(),
-                            max = param.range.endInclusive.toFloat()
+                            max = param.range.endInclusive.toFloat(),
+                            onChange = { viewModel.updateOverrides(param.parameter.path, it, Float.serializer()) },
                         )
                     }
                 }

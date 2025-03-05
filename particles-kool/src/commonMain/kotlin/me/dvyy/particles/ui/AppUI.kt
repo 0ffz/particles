@@ -24,7 +24,9 @@ class AppUI(
     val scope: CoroutineScope,
 ) {
     val uiSizes = mutableStateOf(Sizes.large)
-    val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE)
+    val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
+        copy(background = background.withAlpha(0.9f))
+    }
     val dock = Dock("Dock")
     val ui = UiScene {
         dock.dockingSurface.colors = colors

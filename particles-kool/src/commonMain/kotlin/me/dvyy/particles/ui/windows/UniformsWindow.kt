@@ -7,6 +7,8 @@ import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.helpers.MenuRow
+import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.helpers.liveSlider
 import me.dvyy.particles.ui.helpers.sectionTitleStyle
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
@@ -31,10 +33,16 @@ class UniformsWindow(
         Column(Grow.Std, Grow.Std) {
             Text("Simulation") { sectionTitleStyle() }
             Text("${simsPs.use().toString(2)} sims/s") {}
-            ComboBox {
-                modifier.items(listOf("Small", "Medium", "Large"))
-                    .selectedIndex(sizeList.indexOf(ui.uiSizes.use()))
-                    .onItemSelected { ui.uiSizes.set(sizeList[it]) }
+            MenuRow {
+                Text("UI size") {
+                    labelStyle()
+                    modifier.width(Grow.Std)
+                }
+                ComboBox {
+                    modifier.items(listOf("Small", "Medium", "Large"))
+                        .selectedIndex(sizeList.indexOf(ui.uiSizes.use()))
+                        .onItemSelected { ui.uiSizes.set(sizeList[it]) }
+                }
             }
             val state = viewModel.uiState.use()
             state.forEach {

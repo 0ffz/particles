@@ -12,7 +12,6 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.asMutableState
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.ui.helpers.UiConfigurable
-import kotlin.math.roundToInt
 import kotlin.random.Random
 
 class ParticlesViewModel(
@@ -31,9 +30,6 @@ class ParticlesViewModel(
 //                UiConfigurable.Slider("Min Grid Size", state.minGridSize, 0f, 100f) {
 //                    updateState { copy(minGridSize = it.toDouble()) }
 //                },
-                UiConfigurable.Slider("UI Size", state.dT, 0f, 3f, precision = 0) {
-                    updateState { copy(dT = it.toDouble()) }
-                },
                 UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
                     updateState { copy(dT = it.toDouble()) }
                 },

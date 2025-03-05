@@ -6,6 +6,8 @@ The goal is to provide a simple API for writing arbitrary particle interactions 
 These can run efficiently on most consumer hardware, including in browser using WebGPU.
 We provide a compiled version which uses Lennard Jones potential with parameters that can be configured live in the application.
 
+![Application screenshot](assets/application.webp)
+
 ## Features
 
 - Pairwise interactions that can be configured differently for any pair of particle types

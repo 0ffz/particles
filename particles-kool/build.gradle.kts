@@ -3,18 +3,11 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
-    application
     kotlin("multiplatform")
 }
 
-application {
-    mainClass = "LauncherKt"
-}
-
 kotlin {
-    jvm {
-        withJava()
-    }
+    jvm()
     jvmToolchain(21)
 
     js {
@@ -109,6 +102,19 @@ task("runnableJar", Jar::class) {
             into("$rootDir/dist/jvm")
         }
     }
+}
+
+task("run", JavaExec::class) {
+    group = "app"
+    dependsOn("jvmMainClasses")
+
+    classpath = layout.buildDirectory.files("classes/kotlin/jvm/main")
+    configurations
+        .filter { it.name.startsWith("common") || it.name.startsWith("jvm") }
+        .map { it.copyRecursive().filter { true } }
+        .forEach { classpath += it }
+
+    mainClass.set("LauncherKt")
 }
 
 tasks {

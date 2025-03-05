@@ -3,12 +3,18 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
+    application
     kotlin("multiplatform")
 }
 
+application {
+    mainClass = "LauncherKt"
+}
+
 kotlin {
-    // kotlin multiplatform (jvm + js) setup:
-    jvm()
+    jvm {
+        withJava()
+    }
     jvmToolchain(21)
 
     js {
@@ -78,9 +84,10 @@ kotlin {
 task("runnableJar", Jar::class) {
     dependsOn("jvmJar")
 
-    group = "app"
+    group = "me.dvyy"
+    archiveBaseName = "particles"
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-    archiveAppendix.set("runnable")
+//    archiveAppendix.set("runnable")
     manifest {
         attributes["Main-Class"] = "LauncherKt"
     }
@@ -98,31 +105,16 @@ task("runnableJar", Jar::class) {
 
     doLast {
         copy {
-            from(layout.buildDirectory.file("libs/${archiveBaseName.get()}-runnable.jar"))
-            into("${rootDir}/dist/jvm")
+            from(archiveFile)
+            into("$rootDir/dist/jvm")
         }
     }
 }
 
-task("runApp", JavaExec::class) {
-    group = "app"
-    dependsOn("jvmMainClasses")
-
-    classpath = layout.buildDirectory.files("classes/kotlin/jvm/main")
-    configurations
-        .filter { it.name.startsWith("common") || it.name.startsWith("jvm") }
-        .map { it.copyRecursive().filter { true } }
-        .forEach { classpath += it }
-
-    mainClass.set("LauncherKt")
-}
-
-val build by tasks.getting(Task::class) {
-    dependsOn("runnableJar")
-}
-
-val clean by tasks.getting(Task::class) {
-    doLast {
-        delete("${rootDir}/dist")
+tasks {
+    clean {
+        doLast {
+            delete("$rootDir/dist")
+        }
     }
 }

@@ -4,3 +4,5 @@ build
 application.log
 gui-parameters
 .kotlin
+dist
+kotlin-js-store

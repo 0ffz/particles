@@ -1,9 +1,18 @@
 package me.dvyy.particles.compute
 
+import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.util.Time
+import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.helpers.Buffers
 
-class ConvertParticlesShader {
+class ConvertParticlesShader(
+    val configRepo: ConfigRepository,
+    val buffers: ParticleBuffers,
+) {
     val shader = KslComputeShader("Fields") {
         computeStage(WORK_GROUP_SIZE) {
             val convertChances = storage1d<KslFloat1>("convertChances")
@@ -36,4 +45,29 @@ class ConvertParticlesShader {
     var convertTo by shader.storage1d("convertTo")
     var particleTypes by shader.storage1d("particleTypes")
     var randomSeed by shader.uniform1f("randomSeed")
+
+    fun addTo(computePass: ComputePass) {
+        val config = configRepo.config.value
+        computePass.addTask(shader, numGroups = configRepo.numGroups).apply {
+
+            val conversionBuffer = Buffers.integers(config.particles.size)
+            val conversionChances = Buffers.floats(config.particles.size)
+            config.particles.forEachIndexed { id, from ->
+                val to = from.convertTo
+                if (to != null) {
+                    conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
+                    conversionChances[id] = to.chance.toFloat()
+                }
+            }
+            convertTo = conversionBuffer
+            convertChances = conversionChances
+            particleTypes = buffers.particleTypesBuffer
+            onBeforeDispatch {
+                val count = configRepo.count
+                val shouldRun = Time.frameCount % configRepo.config.value.simulation.conversionRate == 0 //TODO make configurable, real world seconds
+                setNumGroupsByInvocations(if (shouldRun) configRepo.count else 0, 1, 1)
+                randomSeed = count + (Time.gameTime % count).toFloat()
+            }
+        }
+    }
 }

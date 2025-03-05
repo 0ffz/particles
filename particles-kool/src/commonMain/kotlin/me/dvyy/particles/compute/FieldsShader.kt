@@ -3,11 +3,15 @@ package me.dvyy.particles.compute
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import de.fabmax.kool.pipeline.ComputePass
+import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.dsl.Parameter
-import me.dvyy.particles.dsl.ParticlesConfig
 
 class FieldsShader(
-    val config: ParticlesConfig,
+    val configRepo: ConfigRepository,
+    val buffers: ParticleBuffers,
+    val uniforms: UniformParameters,
 ) {
     val halfStep = KslComputeShader("Fields Half-Step") {
         computeStage(WORK_GROUP_SIZE) {
@@ -48,6 +52,7 @@ class FieldsShader(
     var halfStep_boxMax by halfStep.uniform3f("boxMax")
 
     val shader = KslComputeShader("Fields") {
+        val config = configRepo.config.value
         computeStage(WORK_GROUP_SIZE) {
             // Uniforms
             val gridSize = uniformFloat1("gridSize")
@@ -64,7 +69,6 @@ class FieldsShader(
 
             // Storage buffers
             val particle2CellKey = storage1d<KslInt1>("particle2CellKey")
-            // (binding = 1 is omitted, as in the GLSL code)
             val cellOffsets = storage1d<KslInt1>("cellOffsets")
             val positions = storage1d<KslFloat4>("positions")
             val velocities = storage1d<KslFloat4>("velocities")
@@ -80,14 +84,7 @@ class FieldsShader(
             }
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
-            val cellId = functionInt1("cellId") {
-                val xGrid = paramInt1("xGrid")
-                val yGrid = paramInt1("yGrid")
-                val zGrid = paramInt1("zGrid")
-                body {
-                    xGrid + (yGrid * gridCells.x) + (zGrid * gridCells.x * gridCells.y)
-                }
-            }
+            val cellId = cellId(gridCells)
 
             main {
                 // Get the particle id from the global invocation (using only x as in GLSL)
@@ -225,7 +222,6 @@ class FieldsShader(
     var count by shader.uniform1i("count")
     var maxForce by shader.uniform1f("maxForce")
     var maxVelocity by shader.uniform1f("maxVelocity")
-    //{{ uniforms }}
 
     // Storage buffers
     var particle2CellKey by shader.storage1d("particle2CellKey")
@@ -234,10 +230,60 @@ class FieldsShader(
     var velocities by shader.storage1d("velocities")
     var forces by shader.storage1d("forces")
     var boxMax by shader.uniform3f("boxMax")
-
-    //    var prevPositions by shader.storage1d("prevPositions")
-//    var prevVelocities by shader.storage1d("prevVelocities")
     var colors by shader.storage1d("colors")
 
     var particleTypes by shader.storage1d("particleTypes")
+
+    private fun initBuffers() {
+        gridSize = configRepo.gridSize
+        gridCells = configRepo.gridCells
+        count = configRepo.count
+        colors = buffers.colorsBuffer
+        particleTypes = buffers.particleTypesBuffer
+        cellOffsets = buffers.offsetsBuffer
+        particle2CellKey = buffers.particleGridCellKeys
+        positions = buffers.positionBuffer
+        velocities = buffers.velocitiesBuffer
+        forces = buffers.forcesBuffer
+        boxMax = configRepo.boxSize
+
+        halfStep_positions = buffers.positionBuffer
+        halfStep_velocities = buffers.velocitiesBuffer
+        halfStep_forces = buffers.forcesBuffer
+        halfStep_boxMax = configRepo.boxSize
+    }
+
+    fun addTo(computePass: ComputePass) {
+        val config = configRepo.config.value
+
+        initBuffers()
+
+        repeat(config.simulation.passesPerFrame) { passIndex ->
+            computePass.addTask(halfStep, numGroups = configRepo.numGroups).apply {
+                onBeforeDispatch {
+                    configRepo.whenDirty {
+                        halfStep_dT = simulation.dT.toFloat()
+                        val count = simulation.targetCount
+                        setNumGroupsByInvocations(count)
+                    }
+                }
+            }
+            computePass.addTask(shader, numGroups = configRepo.numGroups).apply {
+                onBeforeDispatch {
+                    configRepo.whenDirty {
+                        dT = simulation.dT.toFloat()
+                        maxVelocity = simulation.maxVelocity.toFloat()
+                        maxForce = simulation.maxForce.toFloat()
+                        val count = simulation.targetCount
+                        this@FieldsShader.count = count
+                        setNumGroupsByInvocations(count)
+                    }
+                    //TODO move up to whenDirty
+                    uniforms.uniformParams.forEach { (param, value) ->
+                        shader.uniform1f(param.uniformName).set(value.value)
+                    }
+                }
+            }
+        }
+    }
 }

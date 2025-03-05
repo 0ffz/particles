@@ -21,22 +21,15 @@ class GPUSort(
     val resetBuffersShader = KslComputeShader("ResetBuffers") {
         computeStage(WORK_GROUP_SIZE) {
             val gridSize = uniformFloat1("gridSize")
-            val gridRows = uniformInt1("gridRows")
-            val gridCols = uniformInt1("gridCols")
+            val gridCells = uniformInt3("gridCells")
             val keys = storage1d<KslInt1>("keys")
             val indices = storage1d<KslInt1>("indices")
             val positions = storage1d<KslFloat4>("positions")
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
-            val cellId = functionInt1("cellId") {
-                val xGrid = paramInt1("xGrid")
-                val yGrid = paramInt1("yGrid")
-                val zGrid = paramInt1("zGrid")
-//                val gridCols = paramInt1("gridCols")
-                body {
-                    xGrid + (yGrid * gridCols) + (zGrid * gridRows * gridCols)
-                }
-            }
+
+            val cellId = cellId(gridCells)
+
             main {
                 // get global invocation id
                 val idx = int1Var(inGlobalInvocationId.x.toInt1())
@@ -56,8 +49,7 @@ class GPUSort(
     ) {
         val reset = resetBuffersShader.apply {
             uniform1f("gridSize", configRepo.gridSize)
-            uniform1i("gridCols", configRepo.gridCells.x)
-            uniform1i("gridRows", configRepo.gridCells.y)
+            uniform3i("gridCells", configRepo.gridCells)
             storage1d("keys", buffers.particleGridCellKeys)
             storage1d("indices", buffers.sortIndices)
             storage1d("positions", buffers.positionBuffer)

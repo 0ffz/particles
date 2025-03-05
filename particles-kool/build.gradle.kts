@@ -7,6 +7,9 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
     jvm()
     jvmToolchain(21)
 
@@ -76,8 +79,7 @@ kotlin {
 
 task("runnableJar", Jar::class) {
     dependsOn("jvmJar")
-
-    group = "me.dvyy"
+    group = "app"
     archiveBaseName = "particles"
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 //    archiveAppendix.set("runnable")

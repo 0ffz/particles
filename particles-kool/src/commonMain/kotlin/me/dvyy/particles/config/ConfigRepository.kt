@@ -30,6 +30,8 @@ class ConfigRepository {
     var isDirty: Boolean = true
 
     val count get() = (_config.value.simulation.targetCount / WORK_GROUP_SIZE) * WORK_GROUP_SIZE
+    val numGroups get() = Vec3i(count / WORK_GROUP_SIZE, 1, 1)
+
     private val desiredSize: Vec3i
         get() = run {
             val size = _config.value.simulation.size

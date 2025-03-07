@@ -1,3 +1,3 @@
 rootProject.name = "particles"
 
-include("particles-dsl", "particles-kool")
+include("particles-config", "particles-kool", "particles-demo")

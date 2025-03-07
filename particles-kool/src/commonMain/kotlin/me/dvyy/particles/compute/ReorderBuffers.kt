@@ -1,6 +1,5 @@
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
-import de.fabmax.kool.pipeline.StorageBuffer1d
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 
 /**

@@ -3,14 +3,16 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
-    kotlin("multiplatform")
+    alias(libs.plugins.kotlin.multiplatform)
 }
 
 kotlin {
     compilerOptions {
         freeCompilerArgs.add("-Xexpect-actual-classes")
     }
-    jvm()
+    jvm {
+        withJava()
+    }
     jvmToolchain(21)
 
     js {
@@ -42,14 +44,14 @@ kotlin {
             dependencies {
                 // add additional kotlin multi-platform dependencies here...
 
-                implementation("de.fabmax.kool:kool-core:$koolVersion")
+                api("de.fabmax.kool:kool-core:$koolVersion")
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 
-                implementation(project(":particles-dsl"))
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.koin.core)
-                implementation("com.charleskorn.kaml:kaml:0.67.0")
+                api(project(":particles-config"))
+                api(libs.kotlinx.coroutines.core)
+                api(libs.koin.core)
+                api("com.charleskorn.kaml:kaml:0.67.0")
 //                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
         }
@@ -73,56 +75,6 @@ kotlin {
             dependencies {
                 // add additional js-specific dependencies here...
             }
-        }
-    }
-}
-
-task("runnableJar", Jar::class) {
-    dependsOn("jvmJar")
-    group = "app"
-    archiveBaseName = "particles"
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-//    archiveAppendix.set("runnable")
-    manifest {
-        attributes["Main-Class"] = "LauncherKt"
-    }
-
-    configurations
-        .asSequence()
-        .filter { it.name.startsWith("common") || it.name.startsWith("jvm") }
-        .map { it.copyRecursive().fileCollection { true } }
-        .flatten()
-        .distinct()
-        .filter { it.exists() }
-        .map { if (it.isDirectory) it else zipTree(it) }
-        .forEach { from(it) }
-    from(layout.buildDirectory.files("classes/kotlin/jvm/main"))
-
-    doLast {
-        copy {
-            from(archiveFile)
-            into("$rootDir/dist/jvm")
-        }
-    }
-}
-
-task("run", JavaExec::class) {
-    group = "app"
-    dependsOn("jvmMainClasses")
-
-    classpath = layout.buildDirectory.files("classes/kotlin/jvm/main")
-    configurations
-        .filter { it.name.startsWith("common") || it.name.startsWith("jvm") }
-        .map { it.copyRecursive().filter { true } }
-        .forEach { classpath += it }
-
-    mainClass.set("LauncherKt")
-}
-
-tasks {
-    clean {
-        doLast {
-            delete("$rootDir/dist")
         }
     }
 }

@@ -19,6 +19,6 @@ jobs:
           fetch-depth: 0
       - uses: MineInAbyss/publish-action@develop
         with:
-          build-tasks: 'runnableJar'
+          build-tasks: 'shadowJar'
           release-files: |
             dist/jvm/*.jar

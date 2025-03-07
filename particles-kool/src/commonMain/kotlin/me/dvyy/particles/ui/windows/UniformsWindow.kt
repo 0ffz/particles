@@ -57,16 +57,16 @@ class UniformsWindow(
             }
             paramsState
                 .use()
-                .groupBy { it.first.parameter.path.substringBeforeLast(".").substringAfter(".") }
+                .groupBy { it.configPath.substringBeforeLast(".").substringAfter(".") }
                 .forEach { (name, params) ->
                     Text(name) { sectionTitleStyle() }
-                    params.forEach { (param, value) ->
+                    params.forEach { param ->
                         MenuSlider2(
                             param.name,
-                            value,
+                            param.value,
                             min = param.range.start.toFloat(),
                             max = param.range.endInclusive.toFloat(),
-                            onChange = { viewModel.updateOverrides(param.parameter.path, it, Float.serializer()) },
+                            onChange = { viewModel.updateOverrides(param.configPath, it, Float.serializer()) },
                         )
                     }
                 }

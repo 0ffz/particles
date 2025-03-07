@@ -4,22 +4,29 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.serialization.builtins.serializer
+import me.dvyy.particles.compute.ForcesDefinition
 import me.dvyy.particles.config.YamlHelpers.decode
-import me.dvyy.particles.dsl.pairwise.UniformParameter
+import me.dvyy.particles.config.UniformParameter
 
 class UniformParameters(
     val repo: ConfigRepository,
     val scope: CoroutineScope,
+    val forces: ForcesDefinition,
 ) {
-    val uniformParams/*: Flow<List<Pair<UniformParameter<Float>, MutableStateValue<Float>>>> */ =
-        combine(repo.config, repo.parameters.overrides) { config, params ->
-            config.pairwiseInteraction.flatMap { interaction ->
-                //TODO generic parameter types
-                interaction.uniforms.filterIsInstance<UniformParameter<Float>>().map { uniform ->
-                    uniform to params[uniform.parameter.path].decode<Float>(default = uniform.parameter.default)
+    val uniformParams = combine(repo.config, repo.parameters.overrides) { config, params ->
+        forces.pairwiseInteractions.flatMap { (pair, interactions) ->
+            interactions.flatMap { interaction ->
+                interaction.uniforms.map { (param, config) ->
+                    UniformParameter<Float>(
+                        param.name,
+                        config.path,
+                        param.uniformNameFor(pair),
+                        (params[config.path] ?: config.default).decode(Float.serializer()),
+                        range = config.min..config.max,
+                    )
                 }
             }
-        }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
-//        repo.config.map {
-//    }
+        }
+    }.stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
 }

@@ -1,14 +1,12 @@
+package me.dvyy.particles
+
 import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJvm
 import de.fabmax.kool.KoolConfigJvm.Backend
 import de.fabmax.kool.math.Vec2i
-import me.dvyy.particles.launchApp
+import me.dvyy.particles.compute.forces.PairwiseForce
 
-/**
- * JVM main function / app entry point: Creates a new KoolContext (with optional platform-specific configuration) and
- * forwards it to the common-code launcher.
- */
-fun main() = KoolApplication(
+actual fun launchParticles(forces: List<PairwiseForce>) = KoolApplication(
     config = KoolConfigJvm(
         windowTitle = "Particles",
         isVsync = false,
@@ -17,5 +15,5 @@ fun main() = KoolApplication(
         windowSize = Vec2i(1920, 1080)
     )
 ) {
-    launchApp(ctx)
+    launchApp(ctx, forces)
 }

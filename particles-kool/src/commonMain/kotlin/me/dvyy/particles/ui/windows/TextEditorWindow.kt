@@ -10,11 +10,10 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.YamlHelpers
-import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.helpers.FieldsWindow
-import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.time.Duration.Companion.seconds
 
@@ -93,9 +92,7 @@ class TextEditorWindow(
             Row(Grow.Std) {
                 val config = decodedConfig.use()
                 modifier.backgroundColor(
-                    if (config.isSuccess) colors.backgroundVariant else (MdColor.RED tone 500).withAlpha(
-                        0.1f
-                    )
+                    if (config.isSuccess) colors.backgroundVariant else (MdColor.RED tone 500).withAlpha(0.1f)
                 )
                 config.onSuccess {
                     Button("Reload from file") {
@@ -111,7 +108,7 @@ class TextEditorWindow(
                             }
                         }
                     }
-                    if(textChanged.use()) {
+                    if (textChanged.use()) {
                         Text("(Reload required)") {
                             modifier.alignY(AlignmentY.Center)
                         }

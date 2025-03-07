@@ -1,12 +1,10 @@
 package me.dvyy.particles.compute
 
-import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.util.Time
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.Buffers
 
 class ConvertParticlesShader(
@@ -64,7 +62,8 @@ class ConvertParticlesShader(
             particleTypes = buffers.particleTypesBuffer
             onBeforeDispatch {
                 val count = configRepo.count
-                val shouldRun = Time.frameCount % configRepo.config.value.simulation.conversionRate == 0 //TODO make configurable, real world seconds
+                val conversionRate = configRepo.config.value.simulation.conversionRate
+                val shouldRun = Time.frameCount % conversionRate == 0
                 setNumGroupsByInvocations(if (shouldRun) configRepo.count else 0, 1, 1)
                 randomSeed = count + (Time.gameTime % count).toFloat()
             }

@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.serializer
@@ -57,6 +58,10 @@ object YamlHelpers {
     inline fun <reified T> YamlNode?.decode(default: T): T {
         if (this == null) return default
         return runCatching { yaml.decodeFromYamlNode<T>(serializer<T>(), this) }.getOrDefault(default)
+    }
+
+    fun <T> YamlNode.decode(serializer: KSerializer<T>): T {
+        return yaml.decodeFromYamlNode<T>(serializer, this)
     }
 
     inline fun <reified T> YamlMap.get(yamlPath: String, default: T): T {

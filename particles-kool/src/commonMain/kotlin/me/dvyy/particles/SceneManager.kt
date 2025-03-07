@@ -7,9 +7,10 @@ import de.fabmax.kool.util.delayFrames
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import me.dvyy.particles.compute.ForcesDefinition
+import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.AppUI
-import org.koin.core.component.KoinComponent
 import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
@@ -18,6 +19,7 @@ class SceneManager(
     val ctx: KoolContext,
     /** Classes/data that persists across application reloads. */
     val baseModule: Module,
+    val forces: List<PairwiseForce>
 ) {
     private var loadedScenes: List<Scene> = listOf()
 
@@ -37,6 +39,9 @@ class SceneManager(
                     single<SceneManager> { this@SceneManager }
                 },
                 baseModule,
+                module {
+                    single { ForcesDefinition(forces, get<ConfigRepository>().config.value) }
+                },
                 dataModule(),
                 shadersModule(),
                 sceneModule(),

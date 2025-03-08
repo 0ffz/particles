@@ -7,7 +7,7 @@ import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
 import me.dvyy.particles.compute.forces.PairwiseForce
 
 /**
- * Derivative of the [Lennard Jones potential](https://en.wikipedia.org/wiki/Lennard-Jones_potential)
+ * Derivative of the [Lennard Jones potential](https://en.wikipedia.org/wiki/Lennard-Jones_potential).
  */
 object LennardJones : PairwiseForce("lennardJones") {
     val sigma = param<Float>("sigma")

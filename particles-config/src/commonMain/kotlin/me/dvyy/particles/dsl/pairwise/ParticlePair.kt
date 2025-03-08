@@ -9,9 +9,12 @@ data class ParticlePair(
     val hash: Int = (first.id xor second.id shl 16 or second.id or first.id).toInt()
 
     companion object {
-        fun fromString(pair: String, particleIds: Map<String, ParticleId>): ParticlePair {
+        fun fromString(pair: String, particleIds: Map<String, ParticleId>): ParticlePair? {
+            if(!pair.contains("-")) return null
             val (first, second) = pair.split("-")
-            return ParticlePair(particleIds[first]!!, particleIds[second]!!)
+            val firstId = particleIds[first] ?: return null
+            val secondId = particleIds[second] ?: return null
+            return ParticlePair(firstId, secondId)
         }
     }
 }

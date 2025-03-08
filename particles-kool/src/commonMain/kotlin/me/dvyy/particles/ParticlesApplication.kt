@@ -1,5 +1,5 @@
 package me.dvyy.particles
 
-import me.dvyy.particles.compute.forces.PairwiseForce
+import me.dvyy.particles.compute.forces.Force
 
-expect fun launchParticles(forces: List<PairwiseForce>)
+expect fun launchParticles(forces: List<Force>)

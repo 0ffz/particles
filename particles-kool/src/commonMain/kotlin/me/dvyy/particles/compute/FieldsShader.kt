@@ -1,45 +1,12 @@
 package me.dvyy.particles.compute
 
-import com.charleskorn.kaml.YamlNode
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
-import me.dvyy.particles.compute.forces.FunctionParameter
-import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
-import me.dvyy.particles.config.YamlHelpers.decode
-import me.dvyy.particles.dsl.InteractionConfig
-import me.dvyy.particles.dsl.Parameter
-import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.pairwise.ParticlePair
-
-class ConfiguredFunction(
-    val function: PairwiseForce,
-    val config: InteractionConfig,
-) {
-    val parameters = function.parameters.map { param ->
-        param to (config[param.name] ?: error("Parameter ${param.name} not configured"))
-    }
-    val uniforms = parameters.filter {
-        it.second is Parameter.FromParams
-    } as List<Pair<FunctionParameter<*>, Parameter.FromParams<YamlNode>>>
-}
-
-class ForcesDefinition(
-    val pairwiseForces: List<PairwiseForce>,
-    val config: ParticlesConfig,
-) {
-    val pairwiseInteractions: Map<ParticlePair, List<ConfiguredFunction>> =
-        config.pairwiseInteractions.map { (pair, interactions) ->
-            val forces = interactions.map { (name, config) ->
-                val function = pairwiseForces.find { it.name == name } ?: error("Unknown pairwise interaction: $name")
-                ConfiguredFunction(function, config)
-            }
-            pair to forces
-        }.toMap()
-}
 
 class FieldsShader(
     val configRepo: ConfigRepository,
@@ -96,16 +63,6 @@ class FieldsShader(
             val maxVelocity = uniformFloat1("maxVelocity")
             val boxMax = uniformFloat3("boxMax")
 
-            // Uniforms for live editable parameters
-//            forcesDef.pairwiseInteractions.forEach { (pair, functions) ->
-//                functions.forEach {
-//                    it.function.parameters.forEach {
-//                        //TODO support more than just floats
-//                        it.asUniform(this@KslComputeShader, pair)
-//                    }
-//                }
-//            }
-
             // Storage buffers
             val particle2CellKey = storage1d<KslInt1>("particle2CellKey")
             val cellOffsets = storage1d<KslInt1>("cellOffsets")
@@ -116,8 +73,8 @@ class FieldsShader(
             val colors = storage1d<KslFloat4>("colors")
             val particleTypes = storage1d<KslInt1>("particleTypes")
 
-            // Define all pairwise functions
-            forcesDef.pairwiseForces.forEach {
+            // Define all force functions
+            forcesDef.forces.forEach {
                 it.createFunction(this)
             }
 
@@ -164,6 +121,29 @@ class FieldsShader(
                             val localCellId = int1Var(cellId(xGrid + x, yGrid + y, zGrid + z))
 
                             val startIndex = int1Var(cellOffsets[localCellId])
+
+                            // Individual forces
+                            val individualForceInvocations = forcesDef.individualInteractions.map { (particle, forces) ->
+                                val key = ParticlePair(particle, particle)
+                                val invocations = forces.map {
+                                    val kslFunction = functions[it.function.name] as? KslFunctionFloat3
+                                        ?: error("Function ${it.function.name} not registered")
+                                    kslFunction.invoke(
+                                        position,
+                                        *it.getParameters(this, this@KslComputeShader, key)
+                                    )
+                                }
+                                invocations to key.hash
+                            }
+
+                            individualForceInvocations.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
+                                acc.elseIf(particleType eq hash.const) {
+                                    // Sum all functions, add this to the net force
+                                    nextForce += invocations.reduce { acc, curr -> acc + curr }
+                                }
+                            }
+
+                            // Pairwise forces
                             fori(startIndex, count) { i ->
                                 `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
                                 val otherPos = float3Var(positions[i].xyz)
@@ -178,22 +158,14 @@ class FieldsShader(
                                     int1Var((otherType xor particleType) shl 16.const) or (otherType or particleType)
 
                                 // Prepare function calls for all pairwise interactions
-
                                 val functionCalls = forcesDef.pairwiseInteractions.map { (pair, forces) ->
                                     val invocations = forces.map {
                                         val kslFunction = functions[it.function.name] as? KslFunctionFloat1
                                             ?: error("Function ${it.function.name} not registered")
                                         kslFunction.invoke(
                                             dist,
-                                            maxForce,
-                                            *it.function.parameters.map { param ->
-                                                val configParam = it.config[param.name]!!
-                                                //TODO support more than just floats
-                                                when (configParam) {
-                                                    is Parameter.Value -> (configParam.value.decode(param.serializer) as Float).const
-                                                    is Parameter.FromParams -> param.asUniform(this@KslComputeShader, pair)
-                                                }
-                                            }.toTypedArray()
+                                            maxForce, //TODO move up from here
+                                            *it.getParameters(this, this@KslComputeShader, pair)
                                         )
                                     }
                                     invocations to pair.hash

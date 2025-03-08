@@ -3,7 +3,7 @@ package me.dvyy.particles.forces.pairwise
 import de.fabmax.kool.modules.ksl.lang.div
 import de.fabmax.kool.modules.ksl.lang.minus
 import de.fabmax.kool.modules.ksl.lang.times
-import me.dvyy.particles.compute.forces.KslPairwiseFunction
+import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
 import me.dvyy.particles.compute.forces.PairwiseForce
 
 /**

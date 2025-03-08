@@ -1,4 +1,4 @@
-package me.dvyy.particles.compute.forces
+package me.dvyy.particles.compute.forces.builders
 
 import de.fabmax.kool.modules.ksl.lang.KslProgram
 import de.fabmax.kool.modules.ksl.lang.KslUniformScalar

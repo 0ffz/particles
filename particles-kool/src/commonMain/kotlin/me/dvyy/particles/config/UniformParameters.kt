@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.compute.ForcesDefinition
 import me.dvyy.particles.config.YamlHelpers.decode
-import me.dvyy.particles.config.UniformParameter
 
 class UniformParameters(
     val repo: ConfigRepository,

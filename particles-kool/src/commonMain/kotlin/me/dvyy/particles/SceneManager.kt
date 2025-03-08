@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import me.dvyy.particles.compute.ForcesDefinition
+import me.dvyy.particles.compute.forces.Force
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.AppUI
@@ -19,7 +20,7 @@ class SceneManager(
     val ctx: KoolContext,
     /** Classes/data that persists across application reloads. */
     val baseModule: Module,
-    val forces: List<PairwiseForce>
+    val forces: List<Force>
 ) {
     private var loadedScenes: List<Scene> = listOf()
 

@@ -27,9 +27,15 @@ data class ParticlesConfig(
     val particleIds: Map<String, ParticleId> = nameToParticle.mapValues { ParticleId(highestId++) }
 
     @Transient
-    val pairwiseInteractions: Map<ParticlePair, Interactions> = interactions.map { (name, interactions) ->
-        val pair = ParticlePair.fromString(name, particleIds)
+    val pairwiseInteractions: Map<ParticlePair, Interactions> = interactions.mapNotNull { (name, interactions) ->
+        val pair = ParticlePair.fromString(name, particleIds) ?: return@mapNotNull null
         pair to interactions
+    }.toMap()
+
+    @Transient
+    val individualInteractions = interactions.mapNotNull { (name, interactions) ->
+        val individual = particleIds[name] ?: return@mapNotNull null
+        individual to interactions
     }.toMap()
 //    @Transient
 //    val pairwiseInteractions: List<PairwiseInteractions> = interactions.map { (name, interactions) ->

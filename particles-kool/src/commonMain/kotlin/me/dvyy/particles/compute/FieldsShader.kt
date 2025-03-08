@@ -123,18 +123,20 @@ class FieldsShader(
                             val startIndex = int1Var(cellOffsets[localCellId])
 
                             // Individual forces
-                            val individualForceInvocations = forcesDef.individualInteractions.map { (particle, forces) ->
-                                val key = ParticlePair(particle, particle)
-                                val invocations = forces.map {
-                                    val kslFunction = functions[it.function.name] as? KslFunctionFloat3
-                                        ?: error("Function ${it.function.name} not registered")
-                                    kslFunction.invoke(
-                                        position,
-                                        *it.getParameters(this, this@KslComputeShader, key)
-                                    )
+                            val individualForceInvocations =
+                                forcesDef.individualInteractions.map { (particle, forces) ->
+                                    val key = ParticlePair(particle, particle)
+                                    val invocations = forces.map {
+                                        val kslFunction = functions[it.function.name] as? KslFunctionFloat3
+                                            ?: error("Function ${it.function.name} not registered")
+                                        // TODO apply maxForce to individual forces
+                                        kslFunction.invoke(
+                                            position,
+                                            *it.getParameters(this, this@KslComputeShader, key)
+                                        )
+                                    }
+                                    invocations to key.hash
                                 }
-                                invocations to key.hash
-                            }
 
                             individualForceInvocations.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
                                 acc.elseIf(particleType eq hash.const) {
@@ -164,7 +166,6 @@ class FieldsShader(
                                             ?: error("Function ${it.function.name} not registered")
                                         kslFunction.invoke(
                                             dist,
-                                            maxForce, //TODO move up from here
                                             *it.getParameters(this, this@KslComputeShader, pair)
                                         )
                                     }
@@ -176,7 +177,7 @@ class FieldsShader(
                                 functionCalls.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
                                     acc.elseIf(particleHash eq hash.const) {
                                         // Sum all functions, add this to the net force
-                                        forceBetweenParticles += invocations.reduce { acc, curr -> acc + curr }
+                                        forceBetweenParticles += min(invocations.reduce { acc, curr -> acc + curr }, maxForce)
                                     }
                                 }
 
@@ -193,8 +194,9 @@ class FieldsShader(
                 // --- Begin wall repulsion snippet ---
                 // Define simulation box boundaries
                 // Wall repulsion
+                //TODO make configurable, since lennardJones might not be provided
                 fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-                    .invoke(dist, maxForce, 2f.const, 1f.const)
+                    .invoke(dist, 2f.const, 1f.const)
                 nextForce.x += lJ(position.x - 0f.const + 1f.const)
                 nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
                 nextForce.y += lJ(position.y - 0f.const + 1f.const)

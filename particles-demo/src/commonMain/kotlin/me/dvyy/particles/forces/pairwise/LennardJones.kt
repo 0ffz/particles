@@ -21,7 +21,7 @@ object LennardJones : PairwiseForce("lennardJones") {
             val invR = float1Var(sigma / distance)
             val invR6 = float1Var(invR * invR * invR * invR * invR * invR)
             val invR12 = float1Var(invR6 * invR6)
-            min(24f.const * epsilon * (2f.const * invR12 - invR6) / distance, maxForce)
+            24f.const * epsilon * (2f.const * invR12 - invR6) / distance
         }
     }
 }

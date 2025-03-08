@@ -66,6 +66,7 @@ class ConfigRepository {
         parameters.load()
     }
 
+    //TODO seems to reset count incorrectly when hot-reloaded in config
     fun resetParameters() {
         parameters.reset()
         _config.update { initialConfig ?: it }

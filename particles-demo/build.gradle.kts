@@ -15,21 +15,20 @@ kotlin {
     jvmToolchain(21)
 
     js {
-        binaries.executable()
         browser {
             @OptIn(ExperimentalDistributionDsl::class)
             distribution {
-                outputDirectory.set(File("${rootDir}/dist/js"))
+                outputDirectory.set(projectDir.resolve("output"))
             }
             commonWebpackConfig {
                 //mode = KotlinWebpackConfig.Mode.PRODUCTION
                 mode = KotlinWebpackConfig.Mode.DEVELOPMENT
             }
         }
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             target.set("es2015")
         }
+        binaries.executable()
     }
 
     sourceSets {
@@ -59,6 +58,19 @@ tasks {
     clean {
         doLast {
             delete("$rootDir/dist")
+        }
+    }
+    val jsBrowserProductionWebpack by getting
+    register("jsDist") {
+        dependsOn(jsBrowserProductionWebpack)
+        doLast {
+            copy {
+                from(
+                    "$projectDir/build/processedResources/js/main",
+                    "$projectDir/build/kotlin-webpack/js/productionExecutable/"
+                )
+                into("$rootDir/dist/js")
+            }
         }
     }
 }

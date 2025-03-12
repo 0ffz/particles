@@ -13,9 +13,9 @@ class ConvertParticlesShader(
 ) {
     val shader = KslComputeShader("Fields") {
         computeStage(WORK_GROUP_SIZE) {
-            val convertChances = storage1d<KslFloat1>("convertChances")
-            val convertTo = storage1d<KslInt1>("convertTo")
-            val particleTypes = storage1d<KslInt1>("particleTypes")
+            val convertChances = storage<KslFloat1>("convertChances")
+            val convertTo = storage<KslInt1>("convertTo")
+            val particleTypes = storage<KslInt1>("particleTypes")
             val randomSeed = uniformFloat1("randomSeed")
             val randomF = functionFloat1("randomF") {
                 val seed = paramFloat1("seed")
@@ -39,9 +39,9 @@ class ConvertParticlesShader(
         }
     }
 
-    var convertChances by shader.storage1d("convertChances")
-    var convertTo by shader.storage1d("convertTo")
-    var particleTypes by shader.storage1d("particleTypes")
+    var convertChances by shader.storage("convertChances")
+    var convertTo by shader.storage("convertTo")
+    var particleTypes by shader.storage("particleTypes")
     var randomSeed by shader.uniform1f("randomSeed")
 
     fun addTo(computePass: ComputePass) {
@@ -53,8 +53,9 @@ class ConvertParticlesShader(
             config.particles.forEachIndexed { id, from ->
                 val to = from.convertTo
                 if (to != null) {
-                    conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
-                    conversionChances[id] = to.chance.toFloat()
+                    //TODO
+//                    conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
+//                    conversionChances[id] = to.chance.toFloat()
                 }
             }
             convertTo = conversionBuffer

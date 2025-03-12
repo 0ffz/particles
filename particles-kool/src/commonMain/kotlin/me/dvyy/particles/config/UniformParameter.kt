@@ -13,6 +13,6 @@ data class UniformParameter<T: Any>(
     fun setUniform(shader: ComputeShader) = when(value) {
         is Float -> shader.uniform1f(uniformName).set(value)
         is Int -> shader.uniform1i(uniformName).set(value)
-        else -> error("Can't set uniform of type ${value::class.qualifiedName}")
+        else -> error("Can't set uniform of type ${value::class}")
     }
 }

@@ -78,13 +78,14 @@ class ParticlesViewModel(
         val positions = buffers.positionBuffer
         val simulation = configRepo.config.value.simulation
         for (i in 0 until configRepo.count) {
-            positions[i] = Vec4f(
-                Random.Default.nextInt(simulation.size.width).toFloat(),
-                Random.Default.nextInt(simulation.size.height).toFloat(),
-                if (!simulation.threeDimensions || simulation.size.depth == 0) 0f
-                else Random.Default.nextInt(simulation.size.depth).toFloat(),
-                0f,
-            )
+            TODO()
+//            positions[i] = Vec4f(
+//                Random.Default.nextInt(simulation.size.width).toFloat(),
+//                Random.Default.nextInt(simulation.size.height).toFloat(),
+//                if (!simulation.threeDimensions || simulation.size.depth == 0) 0f
+//                else Random.Default.nextInt(simulation.size.depth).toFloat(),
+//                0f,
+//            )
         }
         buffers.initializeParticlesBuffer()
     }

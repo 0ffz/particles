@@ -3,11 +3,18 @@
 <buildprofiles xsi:noNamespaceSchemaLocation="https://resources.jetbrains.com/writerside/1.0/build-profiles.xsd"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <variables></variables>
+    <variables>
+        <download-title>Download</download-title>
+        <download-page>https://github.com/0ffz/particles/releases/latest</download-page>
+        <showDownloadButton>true</showDownloadButton>
+        <product-web-url>https://github.com/0ffz/particles</product-web-url>
+    </variables>
     <build-profile instance="p">
         <variables>
             <noindex-content>false</noindex-content>
         </variables>
     </build-profile>
-
+    <footer>
+        <link href="https://github.com/0ffz/particles">Source code</link>
+    </footer>
 </buildprofiles>

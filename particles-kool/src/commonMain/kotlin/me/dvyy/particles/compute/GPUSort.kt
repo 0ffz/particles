@@ -22,9 +22,9 @@ class GPUSort(
         computeStage(WORK_GROUP_SIZE) {
             val gridSize = uniformFloat1("gridSize")
             val gridCells = uniformInt3("gridCells")
-            val keys = storage1d<KslInt1>("keys")
-            val indices = storage1d<KslInt1>("indices")
-            val positions = storage1d<KslFloat4>("positions")
+            val keys = storage<KslInt1>("keys")
+            val indices = storage<KslInt1>("indices")
+            val positions = storage<KslFloat4>("positions")
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
 
@@ -50,9 +50,9 @@ class GPUSort(
         val reset = resetBuffersShader.apply {
             uniform1f("gridSize", configRepo.gridSize)
             uniform3i("gridCells", configRepo.gridCells)
-            storage1d("keys", buffers.particleGridCellKeys)
-            storage1d("indices", buffers.sortIndices)
-            storage1d("positions", buffers.positionBuffer)
+            storage("keys", buffers.particleGridCellKeys)
+            storage("indices", buffers.sortIndices)
+            storage("positions", buffers.positionBuffer)
         }
         computePass.addTask(reset, numGroups = Vec3i(configRepo.count / WORK_GROUP_SIZE, 1, 1))
     }
@@ -64,14 +64,14 @@ class GPUSort(
             val groupHeight = uniformInt1("groupHeight")
             val stepIndex = uniformInt1("stepIndex")
 
-            val keys = storage1d<KslInt1>("keys")
-            val indices = storage1d<KslInt1>("indices")
-            val currPositions = storage1d<KslFloat4>("currPositions")
-            val currVelocities = storage1d<KslFloat4>("currVelocities")
-//            val prevPositions = storage1d<KslFloat4>("prevPositions")
-//            val prevVelocities = storage1d<KslFloat4>("prevVelocities")
-            val prevForces = storage1d<KslFloat4>("prevForces")
-            val types = storage1d<KslInt1>("types")
+            val keys = storage<KslInt1>("keys")
+            val indices = storage<KslInt1>("indices")
+            val currPositions = storage<KslFloat4>("currPositions")
+            val currVelocities = storage<KslFloat4>("currVelocities")
+//            val prevPositions = storage<KslFloat4>("prevPositions")
+//            val prevVelocities = storage<KslFloat4>("prevVelocities")
+            val prevForces = storage<KslFloat4>("prevForces")
+            val types = storage<KslInt1>("types")
 
             main {
                 val i = int1Var(inGlobalInvocationId.x.toInt1())
@@ -89,13 +89,13 @@ class GPUSort(
                     val keyHigh = int1Var(keys[indexHigh])
 
                     `if`(keyLow gt keyHigh) {
-                        fun swapFloats(buffer: KslStorage1d<KslStorage1dType<KslFloat4>>) {
+                        fun swapFloats(buffer: KslPrimitiveStorage<KslPrimitiveStorageType<KslFloat4>>) {
                             val currLow = float4Var(buffer[indexLow])
                             val currHigh = float4Var(buffer[indexHigh])
                             buffer[indexLow] = currHigh
                             buffer[indexHigh] = currLow
                         }
-                        fun swapInts(buffer: KslStorage1d<KslStorage1dType<KslInt1>>) {
+                        fun swapInts(buffer: KslPrimitiveStorage<KslPrimitiveStorageType<KslInt1>>) {
                             val currLow = int1Var(buffer[indexLow])
                             val currHigh = int1Var(buffer[indexHigh])
                             buffer[indexLow] = currHigh
@@ -120,16 +120,16 @@ class GPUSort(
         buffers: ParticleBuffers,
         computePass: ComputePass,
     ) {
-        var keys by sorter.storage1d("keys")
-        var indices by sorter.storage1d("indices")
+        var keys by sorter.storage("keys")
+        var indices by sorter.storage("indices")
         var numValues by sorter.uniform1i("numValues")
         var groupWidthU by sorter.uniform1i("groupWidth")
         var groupHeightU by sorter.uniform1i("groupHeight")
         var stepIndexU by sorter.uniform1i("stepIndex")
-        var positions1 by sorter.storage1d("currPositions")
-        var velocities1 by sorter.storage1d("currVelocities")
-        var prevForces by sorter.storage1d("prevForces")
-        var types by sorter.storage1d("types")
+        var positions1 by sorter.storage("currPositions")
+        var velocities1 by sorter.storage("currVelocities")
+        var prevForces by sorter.storage("prevForces")
+        var types by sorter.storage("types")
 
         numValues = count
         keys = buffers.particleGridCellKeys

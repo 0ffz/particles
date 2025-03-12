@@ -17,9 +17,9 @@ class FieldsShader(
     val halfStep = KslComputeShader("Fields Half-Step") {
         computeStage(WORK_GROUP_SIZE) {
             val dT = uniformFloat1("dT")
-            val positions = storage1d<KslFloat4>("positions")
-            val velocities = storage1d<KslFloat4>("velocities")
-            val forces = storage1d<KslFloat4>("forces")
+            val positions = storage<KslFloat4>("positions")
+            val velocities = storage<KslFloat4>("velocities")
+            val forces = storage<KslFloat4>("forces")
             val boxMax = uniformFloat3("boxMax")
 
             main {
@@ -46,9 +46,9 @@ class FieldsShader(
         }
     }
     var halfStep_dT by halfStep.uniform1f("dT")
-    var halfStep_positions by halfStep.storage1d("positions")
-    var halfStep_velocities by halfStep.storage1d("velocities")
-    var halfStep_forces by halfStep.storage1d("forces")
+    var halfStep_positions by halfStep.storage("positions")
+    var halfStep_velocities by halfStep.storage("velocities")
+    var halfStep_forces by halfStep.storage("forces")
     var halfStep_boxMax by halfStep.uniform3f("boxMax")
 
     val shader = KslComputeShader("Fields") {
@@ -64,14 +64,14 @@ class FieldsShader(
             val boxMax = uniformFloat3("boxMax")
 
             // Storage buffers
-            val particle2CellKey = storage1d<KslInt1>("particle2CellKey")
-            val cellOffsets = storage1d<KslInt1>("cellOffsets")
-            val positions = storage1d<KslFloat4>("positions")
-            val velocities = storage1d<KslFloat4>("velocities")
-            val forces = storage1d<KslFloat4>("forces")
+            val particle2CellKey = storage<KslInt1>("particle2CellKey")
+            val cellOffsets = storage<KslInt1>("cellOffsets")
+            val positions = storage<KslFloat4>("positions")
+            val velocities = storage<KslFloat4>("velocities")
+            val forces = storage<KslFloat4>("forces")
 
-            val colors = storage1d<KslFloat4>("colors")
-            val particleTypes = storage1d<KslInt1>("particleTypes")
+            val colors = storage<KslFloat4>("colors")
+            val particleTypes = storage<KslInt1>("particleTypes")
 
             // Define all force functions
             forcesDef.forces.forEach {
@@ -240,15 +240,15 @@ class FieldsShader(
     var maxVelocity by shader.uniform1f("maxVelocity")
 
     // Storage buffers
-    var particle2CellKey by shader.storage1d("particle2CellKey")
-    var cellOffsets by shader.storage1d("cellOffsets")
-    var positions by shader.storage1d("positions")
-    var velocities by shader.storage1d("velocities")
-    var forces by shader.storage1d("forces")
+    var particle2CellKey by shader.storage("particle2CellKey")
+    var cellOffsets by shader.storage("cellOffsets")
+    var positions by shader.storage("positions")
+    var velocities by shader.storage("velocities")
+    var forces by shader.storage("forces")
     var boxMax by shader.uniform3f("boxMax")
-    var colors by shader.storage1d("colors")
+    var colors by shader.storage("colors")
 
-    var particleTypes by shader.storage1d("particleTypes")
+    var particleTypes by shader.storage("particleTypes")
 
     private fun initBuffers() {
         gridSize = configRepo.gridSize

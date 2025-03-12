@@ -39,7 +39,7 @@ class ParticlesMesh(
 //                pipeline { cullMethod = CullMethod.NO_CULLING }
 ////                lightingCfg.ambientLight = AmbientLight.Uniform(MdColor.LIGHT_BLUE tone 400)
 //                modelCustomizer = {
-//                    val positionsBuffer = storage1d<KslFloat4>("positionsBuffer")
+//                    val positionsBuffer = storage<KslFloat4>("positionsBuffer")
 //                    vertexStage {
 //                        main {
 ////                        val modelMat = modelMatrix()
@@ -57,7 +57,7 @@ class ParticlesMesh(
 //                    }
 //                }
 //            }).apply {
-//                storage1d("positionsBuffer", positionsBuffer)
+//                storage("positionsBuffer", positionsBuffer)
 //            }
         val do3dShading = true
         val tintFarAway = buffers.configRepo.boxSize.z > 400f
@@ -69,11 +69,11 @@ class ParticlesMesh(
             vertexStage {
                 main {
                     val camData = cameraData()
-                    val positionsBuffer = storage1d<KslFloat4>("positionsBuffer")
-                    val colorsBuffer = storage1d<KslFloat4>("colorsBuffer")
-                    val typeColorsBuffer = storage1d<KslFloat4>("typeColorsBuffer")
-                    val typesBuffer = storage1d<KslInt1>("typesBuffer")
-                    val radii = storage1d<KslFloat1>("radii")
+                    val positionsBuffer = storage<KslFloat4>("positionsBuffer")
+                    val colorsBuffer = storage<KslFloat4>("colorsBuffer")
+                    val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
+                    val typesBuffer = storage<KslInt1>("typesBuffer")
+                    val radii = storage<KslFloat1>("radii")
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
                     val type = int1Var(typesBuffer[offset])
@@ -130,11 +130,11 @@ class ParticlesMesh(
                 }
             }
         }.apply {
-            storage1d("positionsBuffer", buffers.positionBuffer)
-            storage1d("colorsBuffer", buffers.colorsBuffer)
-            storage1d("typeColorsBuffer", buffers.particleColors)
-            storage1d("radii", buffers.particleRadii)
-            storage1d("typesBuffer", buffers.particleTypesBuffer)
+            storage("positionsBuffer", buffers.positionBuffer)
+            storage("colorsBuffer", buffers.colorsBuffer)
+            storage("typeColorsBuffer", buffers.particleColors)
+            storage("radii", buffers.particleRadii)
+            storage("typesBuffer", buffers.particleTypesBuffer)
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

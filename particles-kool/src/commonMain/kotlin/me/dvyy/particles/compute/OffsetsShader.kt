@@ -15,8 +15,8 @@ class OffsetsShader(
     val shader = KslComputeShader("Offset Compute") {
         computeStage(WORK_GROUP_SIZE) {
             val numValues = uniformInt1("numValues")
-            val keysBuffer = storage1d<KslInt1>("keys")
-            val offsetsBuffer = storage1d<KslInt1>("offsets")
+            val keysBuffer = storage<KslInt1>("keys")
+            val offsetsBuffer = storage<KslInt1>("offsets")
 
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
@@ -36,8 +36,8 @@ class OffsetsShader(
     }
 
     var numValues by shader.uniform1i("numValues")
-    var keys by shader.storage1d("keys")
-    var offsets by shader.storage1d("offsets")
+    var keys by shader.storage("keys")
+    var offsets by shader.storage("offsets")
 
     fun addTo(pass: ComputePass) {
         numValues = configRepo.count

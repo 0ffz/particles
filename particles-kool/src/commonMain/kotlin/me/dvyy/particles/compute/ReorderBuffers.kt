@@ -8,9 +8,9 @@ import me.dvyy.particles.compute.WORK_GROUP_SIZE
 class ReorderBuffersShader() {
     val shader = KslComputeShader("Reorder buffers") {
         computeStage(WORK_GROUP_SIZE) {
-            val indices = storage1d<KslInt1>("indices")
-            val positions = storage1d<KslFloat4>("positions")
-            val velocities = storage1d<KslFloat4>("velocities")
+            val indices = storage<KslInt1>("indices")
+            val positions = storage<KslFloat4>("positions")
+            val velocities = storage<KslFloat4>("velocities")
             val numValues = uniformInt1("numValues")
 
             main {
@@ -28,8 +28,8 @@ class ReorderBuffersShader() {
         }
     }
 
-    var indices by shader.storage1d("indices")
-    var positions by shader.storage1d("positions")
-    var velocities by shader.storage1d("velocities")
+    var indices by shader.storage("indices")
+    var positions by shader.storage("positions")
+    var velocities by shader.storage("velocities")
     var numValues by shader.uniform1i("numValues")
 }

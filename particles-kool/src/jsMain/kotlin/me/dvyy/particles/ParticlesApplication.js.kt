@@ -4,9 +4,8 @@ import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJs
 import de.fabmax.kool.KoolConfigJs.Backend
 import me.dvyy.particles.compute.forces.Force
-import me.dvyy.particles.compute.forces.PairwiseForce
 
-actual fun launchParticles(forces: List<Force>) = KoolApplication(
+actual fun launchParticles(forces: List<Force>, args: Array<String>) = KoolApplication(
     config = KoolConfigJs(
         canvasName = "glCanvas",
         renderBackend = Backend.WEB_GPU,

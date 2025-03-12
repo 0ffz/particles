@@ -61,7 +61,7 @@ fun UiScope.MenuSlider2(
     }
     fun UiModifier.scrollable() = onWheelY {
         val multiplier = if(KeyboardInput.isShiftDown) 1f else 10f
-        boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.delta.y)
+        boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.scroll.y)
     }
 
     MenuRow {

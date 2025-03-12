@@ -14,7 +14,10 @@ import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
+import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.asMutableState
+import me.dvyy.particles.helpers.initFloat3
+import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
 import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
@@ -75,17 +78,8 @@ class ParticlesViewModel(
     }
 
     fun resetPositions() = launchOnMainThread {
-        val positions = buffers.positionBuffer
-        val simulation = configRepo.config.value.simulation
-        for (i in 0 until configRepo.count) {
-            TODO()
-//            positions[i] = Vec4f(
-//                Random.Default.nextInt(simulation.size.width).toFloat(),
-//                Random.Default.nextInt(simulation.size.height).toFloat(),
-//                if (!simulation.threeDimensions || simulation.size.depth == 0) 0f
-//                else Random.Default.nextInt(simulation.size.depth).toFloat(),
-//                0f,
-//            )
+        buffers.positionBuffer.initFloat4 {
+            Buffers.randomPosition(configRepo.boxSize)
         }
         buffers.initializeParticlesBuffer()
     }

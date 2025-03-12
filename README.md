@@ -32,7 +32,7 @@ The pipeline on the GPU currently looks like this:
 - Install Java 21 or above (ex. from [here](https://adoptium.net/))
 - Run in a terminal with `java -jar path/to/particles.jar`
 
-A browser runnable version is coming soon.
+Or, try the [browser release](https://particles.dvyy.me) on a browser with WebGPU support (ex. Google Chrome)
 
 ### Developers
 

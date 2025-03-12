@@ -4,8 +4,8 @@
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
     <variables>
-        <download-title>Download</download-title>
-        <download-page>https://github.com/0ffz/particles/releases/latest</download-page>
+        <download-title>Try Online</download-title>
+        <download-page>https://particles.dvyy.me</download-page>
         <showDownloadButton>true</showDownloadButton>
         <product-web-url>https://github.com/0ffz/particles</product-web-url>
     </variables>
@@ -16,5 +16,6 @@
     </build-profile>
     <footer>
         <link href="https://github.com/0ffz/particles">Source code</link>
+        <link href="https://github.com/0ffz/particles/releases/latest">Download</link>
     </footer>
 </buildprofiles>

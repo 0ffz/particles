@@ -1,6 +1,6 @@
 # Creating a project
 
-Adding custom forces requires compiling this project with them added on top. We publish the `particles-engine` module, which includes an api to create your forces and initialize the program.
+Adding custom forces requires compiling this project with them added on top. We publish the `particles-kool` module, which includes an api to create your forces and initialize the program.
 
 `particles-demo` is an example project that depends on the engine and adds several example forces. We'll try to provide a full template project to copy soon, however if you are familiar with gradle it's possible to get started with its `build.gradle.kts` as a reference.
 

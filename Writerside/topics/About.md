@@ -1,6 +1,7 @@
 # About
 
-This project is designed to run both as a standalone application or as an API to implement custom forces on top of.
-These docs are split into two parts, how to set up a project and create custom forces, and how to configure and use the compiled application.
+Particles is a tool to run particle force simulations on the GPU. Our demo project provides some examples that simulate atomic interactions, however developers can write their own custom interactions using our API.
 
-The goal of this split is to allow less technical user to download a runnable application and configure it live without needing an IDE.
+This project is built on the [Kool engine](https://github.com/kool-engine/kool), which lets us write GPU code for desktop and browser platforms, allowing less technical users to run prebuilt demos easily without the need for special hardware like an external graphics card.
+
+Try the online demo, with instructions available on the [](Installation.md) page.

@@ -23,9 +23,13 @@
 
         <!--    Add up to 2 topics that you want to promote. Use the "type" attribute to select an icon.    -->
         <spotlight>
-            <a href="Usage.md" type="learn" summary="This overrides the card summary of the topic">Using the application</a>
-            <a href="Creating-a-project.md" type="development" summary="This overrides the card summary of the topic">API Docs</a>
+            <a href="Usage.md" type="learn" summary="Install and run Particles"/>
+            <a href="API-Usage.md" type="development" summary="Create custom simulations"/>
         </spotlight>
+        <primary>
+            <title>Learn more</title>
+            <a href="About.md" type="idea" summary="Learn about this project"/>
+        </primary>
     </section-starting-page>
 
 </topic>

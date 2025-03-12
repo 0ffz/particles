@@ -23,6 +23,21 @@ fun <T, R> MutableStateValue<T>.map(mapping: (T) -> R): MutableStateValue<R> {
     }
 }
 
+object AppFonts {
+    suspend fun tryLoad(path: String): MsdfFont =
+        MsdfFont(path).getOrNull() ?: MsdfFont("assets/$path").getOrNull() ?: MsdfFont.DEFAULT_FONT
+
+    private var loaded = false
+    var MONOSPACED = MsdfFont.DEFAULT_FONT
+        private set
+
+    suspend fun loadAll() {
+        if (loaded) return
+        MONOSPACED = tryLoad("fonts/hack/font-hack-regular")
+        loaded = true
+    }
+}
+
 class TextEditorWindow(
     ui: AppUI,
     val configRepository: ConfigRepository,
@@ -82,7 +97,10 @@ class TextEditorWindow(
             }
         }
         scope.launch {
-            consoleFont.update { MsdfFont("assets/fonts/hack/font-hack-regular").getOrThrow().copy(sizePts = 20f) }
+            consoleFont.update {
+                AppFonts.loadAll()
+                AppFonts.MONOSPACED.copy(sizePts = 20f)
+            }
         }
         windowDockable.setFloatingBounds(width = Dp(500f), height = Dp(800f))
     }

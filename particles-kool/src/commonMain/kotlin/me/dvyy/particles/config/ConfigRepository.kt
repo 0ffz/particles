@@ -57,7 +57,51 @@ class ConfigRepository {
     fun loadConfig() {
         val configLines = FileSystemUtils.read(configPath)
             // Use default config if none exists
-            ?: YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), ParticlesConfig())
+            ?: """
+                simulation:
+                  count: 10000
+                  minGridSize: 5.0
+                  dT: 0.001
+                  conversionRate: 100
+                  maxVelocity: 1.21
+                  maxForce: 100000.0
+                  threeDimensions: false
+                  passesPerFrame: 100
+                  size:
+                    width: 1000
+                    height: 1000
+                    depth: 1000
+                particles:
+                  hydrogen:
+                    color: ffffff
+                    radius: 1.0
+                    distribution: 2
+                  oxygen:
+                    color: ff0000
+                    radius: 1.5
+                    distribution: 1
+                    #convertTo:
+                      # type: hydrogen
+                      # chance: 0.01
+                #  hidden:
+                #    color: 000000
+                #    radius: 0
+                #    distribution : 1
+                interactions:
+                  hydrogen-oxygen:
+                    lennardJones:
+                      sigma: !param;max=10 5.0
+                      epsilon: !param;max=500 5.0
+                  hydrogen-hydrogen:
+                    lennardJones:
+                      sigma: !param;max=10 5.0
+                      epsilon: !param;max=500 5.0
+                  oxygen-oxygen:
+                    lennardJones:
+                      sigma: !param;max=10 10.0
+                      epsilon: !param;max=500 5.0
+            """.trimIndent()
+//            ?: YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), ParticlesConfig())
 
         _configLines.update { configLines }
         runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configLines) }

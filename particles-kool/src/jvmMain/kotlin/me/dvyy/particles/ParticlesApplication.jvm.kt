@@ -12,7 +12,7 @@ actual fun launchParticles(forces: List<Force>) = KoolApplication(
         windowTitle = "Particles",
         isVsync = false,
         maxFrameRate = 500,
-        renderBackend = Backend.OPEN_GL,
+        renderBackend = Backend.VULKAN,
         windowSize = Vec2i(1920, 1080)
     )
 ) {

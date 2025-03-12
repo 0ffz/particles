@@ -110,7 +110,7 @@ jobs:
           path: artifacts
 
       - name: Unzip docs artifact
-        run: unzip -O UTF-8 -qq "artifacts/${{ needs.build.outputs.artifact }}" -d dir/docs
+        run: unzip -O UTF-8 -qq "artifacts/${{ needs.docs.outputs.artifact }}" -d dir/docs
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

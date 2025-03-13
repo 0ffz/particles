@@ -12,7 +12,7 @@ actual fun launchParticles(forces: List<Force>, args: Array<String>) {
             windowTitle = "Particles",
             isVsync = false,
             maxFrameRate = 500,
-            renderBackend = if (args.contains("--opengl")) Backend.OPEN_GL else Backend.VULKAN,
+            renderBackend = Backend.OPEN_GL,// else Backend.VULKAN,
             windowSize = Vec2i(1920, 1080)
         )
     ) {

@@ -23,8 +23,6 @@ class ConfigRepository {
     val parameters = YamlParameters(path = paramsPath, scope = appScope)
 
     private val _config = MutableStateFlow(ParticlesConfig())
-    /** Config as it was loaded */
-    var initialConfig: ParticlesConfig? = _config.value
     val config = _config.asStateFlow()
     private val _configLines = MutableStateFlow("")
     val configLines = _configLines.asStateFlow()
@@ -106,14 +104,12 @@ class ConfigRepository {
         _configLines.update { configLines }
         runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configLines) }
             .onSuccess { updateConfig(it) }
-        initialConfig = _config.value
         parameters.load()
     }
 
     //TODO seems to reset count incorrectly when hot-reloaded in config
     fun resetParameters() {
         parameters.reset()
-        _config.update { initialConfig ?: it }
     }
 
     fun updateConfig(config: ParticlesConfig) {

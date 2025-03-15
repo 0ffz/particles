@@ -5,6 +5,7 @@ import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
 import de.fabmax.kool.util.Float32Buffer
+import de.fabmax.kool.util.Int32Buffer
 import kotlin.random.Random
 
 object Buffers {
@@ -66,4 +67,12 @@ inline fun StorageBuffer.initFloat4(set: (Int) -> Vec4f) = apply {
             }
         }
     )
+}
+
+inline fun StorageBuffer.initInt(set: (Int) -> Int) = apply {
+    uploadData(Int32Buffer(size).apply { repeat(size) { i -> put(set(i)) } })
+}
+
+inline fun StorageBuffer.initFloat(set: (Int) -> Float) = apply {
+    uploadData(Float32Buffer(size).apply { repeat(size) { i -> put(set(i)) } })
 }

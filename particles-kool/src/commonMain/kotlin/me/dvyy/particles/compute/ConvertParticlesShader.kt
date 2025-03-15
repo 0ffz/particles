@@ -3,6 +3,8 @@ package me.dvyy.particles.compute
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.util.Float32Buffer
+import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.Time
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.Buffers
@@ -48,18 +50,17 @@ class ConvertParticlesShader(
         val config = configRepo.config.value
         computePass.addTask(shader, numGroups = configRepo.numGroups).apply {
 
-            val conversionBuffer = Buffers.integers(config.particles.size)
-            val conversionChances = Buffers.floats(config.particles.size)
+            val conversionBuffer = Int32Buffer(config.particles.size)
+            val conversionChances = Float32Buffer(config.particles.size)
             config.particles.forEachIndexed { id, from ->
                 val to = from.convertTo
                 if (to != null) {
-                    //TODO
-//                    conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
-//                    conversionChances[id] = to.chance.toFloat()
+                    conversionBuffer[id] = config.particleIds[to.type]!!.id.toInt()
+                    conversionChances[id] = to.chance.toFloat()
                 }
             }
-            convertTo = conversionBuffer
-            convertChances = conversionChances
+            convertTo = Buffers.integers(config.particles.size).apply { uploadData(conversionBuffer) }
+            convertChances = Buffers.floats(config.particles.size).apply { uploadData(conversionChances) }
             particleTypes = buffers.particleTypesBuffer
             onBeforeDispatch {
                 val count = configRepo.count

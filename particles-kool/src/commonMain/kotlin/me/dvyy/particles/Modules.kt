@@ -1,6 +1,7 @@
 package me.dvyy.particles
 
 import OffsetsShader
+import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
@@ -20,6 +21,7 @@ fun dataModule() = module {
     singleOf(::ParticlesViewModel)
     singleOf(::AppUI)
     singleOf(::ParticlesMesh)
+    singleOf(::ParticleClustering)
 }
 
 fun shadersModule() = module {

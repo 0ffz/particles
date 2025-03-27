@@ -13,37 +13,17 @@ import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
+import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.time.Duration.Companion.seconds
-
-fun <T, R> MutableStateValue<T>.map(mapping: (T) -> R): MutableStateValue<R> {
-    return mutableStateOf(mapping(this.value)).also {
-        onChange { oldValue, newValue -> it.set(mapping(newValue)) }
-    }
-}
-
-object AppFonts {
-    suspend fun tryLoad(path: String): MsdfFont =
-        MsdfFont(path).getOrNull() ?: MsdfFont("assets/$path").getOrNull() ?: MsdfFont.DEFAULT_FONT
-
-    private var loaded = false
-    var MONOSPACED = MsdfFont.DEFAULT_FONT
-        private set
-
-    suspend fun loadAll() {
-        if (loaded) return
-        MONOSPACED = tryLoad("fonts/hack/font-hack-regular")
-        loaded = true
-    }
-}
 
 class TextEditorWindow(
     ui: AppUI,
     val configRepository: ConfigRepository,
     val viewModel: ParticlesViewModel,
     val scope: CoroutineScope,
-) : FieldsWindow("Config file", ui) {
+) : FieldsWindow("Config file", ui, icon = Icons.fileCode) {
     val consoleFont = MutableStateFlow(MsdfFont.DEFAULT_FONT)
     val consoleFontAsState = consoleFont.asMutableState(scope, MsdfFont.DEFAULT_FONT)
     val yamlKey = consoleFontAsState.map { TextAttributes(it, Color.ORANGE) }

@@ -2,9 +2,10 @@ package me.dvyy.particles.ui.helpers
 
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.modules.ui2.docking.UiDockable
+import de.fabmax.kool.pipeline.Texture2d
 import me.dvyy.particles.ui.AppUI
 
-abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = false) {
+abstract class FieldsWindow(name: String, val ui: AppUI, val icon: Texture2d? = null, isClosable: Boolean = false) {
     val windowDockable = UiDockable(name, ui.dock)
 
     val windowSurface = WindowSurface(windowDockable) {
@@ -43,7 +44,7 @@ abstract class FieldsWindow(name: String, val ui: AppUI, isClosable: Boolean = f
 
     protected open fun UiScope.modifyWindow() = Unit
 
-    protected abstract fun UiScope.windowContent(): Any
+    abstract fun UiScope.windowContent(): Any
 
     open fun onClose() {}
 }

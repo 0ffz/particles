@@ -16,6 +16,7 @@ import org.jetbrains.letsPlot.geom.geomHistogram
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.label.labs
 import org.jetbrains.letsPlot.letsPlot
+import org.jetbrains.letsPlot.scale.xlim
 
 /**
  * Calculates the start indices in the full particles buffer for each grid cell (where cells are keys, and offsets
@@ -25,7 +26,7 @@ class ParticleClustering(
     val buffers: ParticleBuffers,
     val viewModel: ParticlesViewModel,
 ) {
-    fun read() = launchOnMainThread {
+    fun calculateClusters() = launchOnMainThread {
         val positions = Float32Buffer(configRepo.count * 4)
         buffers.positionBuffer.downloadData(positions)
         val data = Array(configRepo.count) {
@@ -35,9 +36,9 @@ class ParticleClustering(
                 positions[it * 4 + 2].toDouble()
             )
         }
-        val clusters = //withContext(Dispatchers.Default) {
+        val clusters = withContext(Dispatchers.Default) {
             cluster(data, radius = 15.0, minPts = 10)
-//        }
+        }
         buffers.clustersBuffer.uploadData(
             Int32Buffer(configRepo.count).apply {
                 clusters.clusters.forEachIndexed { i, cluster ->
@@ -62,9 +63,10 @@ class ParticleClustering(
             labs(
                 x = "size"
             )
+            xlim(0 to null)
         } + geomHistogram(
-            color = "dark-green",
-            fill = "green",
+            color = "dark-blue",
+            fill = "blue",
             alpha = .3,
             size = 1.0
         ) {

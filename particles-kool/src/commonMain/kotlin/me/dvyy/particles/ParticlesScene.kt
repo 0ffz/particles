@@ -12,12 +12,11 @@ import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class ParticlesScene(
     val buffers: ParticleBuffers,
     val configRepo: ConfigRepository,
-    val viewModel: ParticlesViewModel,
+    val clustering: ParticleClustering,
     val gpuSort: GPUSort,
     val cameraManager: CameraManager,
     val particlesMesh: ParticlesMesh,
@@ -51,7 +50,7 @@ class ParticlesScene(
         onUpdate {
             iterations++
             if (iterations % 100 == 0) {
-                ParticleClustering(configRepo, buffers, viewModel).read()
+                clustering.calculateClusters()
             }
 //            ReadbackBuffers.readValues(buffers, configRepo)
         }

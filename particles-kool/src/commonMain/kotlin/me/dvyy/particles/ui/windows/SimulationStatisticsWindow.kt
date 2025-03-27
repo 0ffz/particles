@@ -4,14 +4,16 @@ import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.AppUI
+import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.helpers.sectionTitleStyle
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class SimulationStatisticsWindow(
     ui: AppUI,
     private val viewModel: ParticlesViewModel,
     private val configRepo: ConfigRepository,
-) : FieldsWindow("Simulation Stats", ui) {
+) : FieldsWindow("Simulation Stats", ui, Icons.chartSpline) {
     val simsPs = mutableStateOf(0.0)
     val fps = mutableStateOf(0.0)
 
@@ -26,8 +28,13 @@ class SimulationStatisticsWindow(
             simsPs.set(it.fps * configRepo.config.value.simulation.passesPerFrame)
         }
         Column(Grow.Std, Grow.Std) {
+            Text("Stats") { sectionTitleStyle() }
             Text("${simsPs.use().toString(2)} sims/s") {}
-//            Text("${fps.use().toString(2)} fps") {}
+
+            Text("Graphs") { sectionTitleStyle() }
+            Image(viewModel.plotTexture) {
+                modifier.width(Grow.Std)
+            }
         }
     }
 }

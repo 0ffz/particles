@@ -4,4 +4,4 @@ actual fun cluster(
     data: Array<DoubleArray>,
     radius: Double,
     minPts: Int
-): IntArray = IntArray(data.size) //TODO find a multiplatform impl for this
+): ClusterInfo = ClusterInfo() //TODO find a multiplatform impl for this

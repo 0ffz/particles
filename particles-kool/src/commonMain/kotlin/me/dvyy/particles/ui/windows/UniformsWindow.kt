@@ -5,17 +5,11 @@ import de.fabmax.kool.toString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.ui.AppUI
-import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.ui.helpers.FieldsWindow
-import me.dvyy.particles.ui.helpers.MenuRow
-import me.dvyy.particles.ui.helpers.MenuSlider
-import me.dvyy.particles.ui.helpers.MenuSlider2
-import me.dvyy.particles.ui.helpers.labelStyle
-import me.dvyy.particles.ui.helpers.liveSlider
-import me.dvyy.particles.ui.helpers.sectionTitleStyle
+import me.dvyy.particles.ui.AppUI
+import me.dvyy.particles.ui.SimulationButtons
+import me.dvyy.particles.ui.helpers.*
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class UniformsWindow(
@@ -38,6 +32,9 @@ class UniformsWindow(
             simsPs.set(it.fps * configRepo.config.value.simulation.passesPerFrame)
         }
         Column(Grow.Std, Grow.Std) {
+            Image(viewModel.plotTexture) {
+
+            }
             Text("Simulation") { sectionTitleStyle() }
             Text("${simsPs.use().toString(2)} sims/s") {}
             MenuRow {

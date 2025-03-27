@@ -1,10 +1,10 @@
 package me.dvyy.particles
 
 import OffsetsShader
-import me.dvyy.particles.clustering.ParticleClustering
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.releaseWith
+import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
@@ -12,10 +12,12 @@ import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
+import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class ParticlesScene(
     val buffers: ParticleBuffers,
     val configRepo: ConfigRepository,
+    val viewModel: ParticlesViewModel,
     val gpuSort: GPUSort,
     val cameraManager: CameraManager,
     val particlesMesh: ParticlesMesh,
@@ -48,8 +50,8 @@ class ParticlesScene(
         var iterations = 0
         onUpdate {
             iterations++
-            if(iterations % 100 == 0) {
-                ParticleClustering(configRepo, buffers).read()
+            if (iterations % 100 == 0) {
+                ParticleClustering(configRepo, buffers, viewModel).read()
             }
 //            ReadbackBuffers.readValues(buffers, configRepo)
         }

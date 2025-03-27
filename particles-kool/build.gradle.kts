@@ -52,6 +52,9 @@ kotlin {
                 api(libs.kotlinx.coroutines.core)
                 api(libs.koin.core)
                 api("com.charleskorn.kaml:kaml:0.67.0")
+                implementation("org.jetbrains.lets-plot:lets-plot-kotlin:4.10.0")
+                implementation("org.jetbrains.lets-plot:lets-plot-image-export:4.6.1")
+
 //                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
         }

@@ -1,8 +1,10 @@
 package me.dvyy.particles.ui.viewmodels
 
 import com.charleskorn.kaml.YamlNode
-import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.modules.ui2.MutableStateValue
+import de.fabmax.kool.pipeline.MipMapping
+import de.fabmax.kool.pipeline.SamplerSettings
+import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.debounce
@@ -16,10 +18,8 @@ import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.helpers.initFloat3
 import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
-import kotlin.random.Random
 import kotlin.time.Duration.Companion.seconds
 
 class ParticlesViewModel(
@@ -53,6 +53,12 @@ class ParticlesViewModel(
             )
         }
         .asMutableState(mutableStateScope, default = listOf())
+
+
+    val plotTexture = Texture2d(
+        mipMapping = MipMapping.Off,
+        samplerSettings = SamplerSettings().nearest(),
+        name = "plot")
 
     init {
         launchOnMainThread {

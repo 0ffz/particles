@@ -1,6 +1,7 @@
 package me.dvyy.particles
 
 import OffsetsShader
+import me.dvyy.particles.clustering.ParticleClustering
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.releaseWith
@@ -44,10 +45,13 @@ class ParticlesScene(
         addNode(particlesMesh.mesh) // Render particles as instanced mesh
 
         // === DEBUGGING ===
-//        var iterations = 0
-//        onUpdate {
-//            iterations++
+        var iterations = 0
+        onUpdate {
+            iterations++
+            if(iterations % 100 == 0) {
+                ParticleClustering(configRepo, buffers).read()
+            }
 //            ReadbackBuffers.readValues(buffers, configRepo)
-//        }
+        }
     }
 }

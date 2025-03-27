@@ -68,6 +68,8 @@ kotlin {
                         runtimeOnly("org.lwjgl:lwjgl-$lib:$lwjglVersion:$platform")
                     }
                 }
+
+                implementation("com.github.haifengl:smile-kotlin:4.3.0")
             }
         }
 

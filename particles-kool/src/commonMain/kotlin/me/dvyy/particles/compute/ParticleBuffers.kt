@@ -31,6 +31,8 @@ class ParticleBuffers(
     val colorsBuffer = StorageBuffer(GpuType.Float4, count)
 
     val particleTypesBuffer = Buffers.integers(count)
+    /** Integer id for the particle's current cluster, or max value if an outlier. */
+    val clustersBuffer = Buffers.integers(count)
     val particleColors = StorageBuffer(GpuType.Float4, particleTypes.size).initFloat4 {
         Color(particleTypes[it].color).toVec4f()
     }

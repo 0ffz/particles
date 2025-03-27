@@ -72,6 +72,7 @@ class GPUSort(
 //            val prevVelocities = storage<KslFloat4>("prevVelocities")
             val prevForces = storage<KslFloat4>("prevForces")
             val types = storage<KslInt1>("types")
+            val clusters = storage<KslInt1>("clusters")
 
             main {
                 val i = int1Var(inGlobalInvocationId.x.toInt1())
@@ -109,6 +110,7 @@ class GPUSort(
                         swapInts(types)
                         swapInts(keys)
                         swapInts(indices)
+                        swapInts(clusters)
                     }
                 }
             }
@@ -130,6 +132,7 @@ class GPUSort(
         var velocities1 by sorter.storage("currVelocities")
         var prevForces by sorter.storage("prevForces")
         var types by sorter.storage("types")
+        var clusters by sorter.storage("clusters")
 
         numValues = count
         keys = buffers.particleGridCellKeys
@@ -138,6 +141,7 @@ class GPUSort(
         velocities1 = buffers.velocitiesBuffer
         prevForces = buffers.forcesBuffer
         types = buffers.particleTypesBuffer
+        clusters = buffers.clustersBuffer
 
         computePass.apply {
             val numPairs = count.takeHighestOneBit() * 2

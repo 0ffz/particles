@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.dvyy.particles.clustering.cluster
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 import kotlin.math.PI
@@ -34,6 +35,7 @@ class ParticlesMesh(
             }
         }
     }
+
     val mesh = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
 //            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
 //                pipeline { cullMethod = CullMethod.NO_CULLING }
@@ -65,6 +67,7 @@ class ParticlesMesh(
             val interColor = interStageFloat4()
             val fragPos = interStageFloat4("fragPos")
             val interCenter = interStageFloat3("interCenter")
+            val interClusterId = interStageInt1("interClusterId")
 
             vertexStage {
                 main {
@@ -72,11 +75,13 @@ class ParticlesMesh(
                     val positionsBuffer = storage<KslFloat4>("positionsBuffer")
                     val colorsBuffer = storage<KslFloat4>("colorsBuffer")
                     val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
+                    val clusterBuffer = storage<KslInt1>("clusterBuffer")
                     val typesBuffer = storage<KslInt1>("typesBuffer")
                     val radii = storage<KslFloat1>("radii")
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
                     val type = int1Var(typesBuffer[offset])
+                    val clusterId = int1Var(clusterBuffer[offset])
                     val positionOffset = positionsBuffer[offset].xyz
                     val radius = float1Var(radii[type])
 //                    texCoordsBlock = texCoordAttributeBlock()
@@ -96,6 +101,7 @@ class ParticlesMesh(
                     interColor.input set float4Var(typeColorsBuffer[type])
                     fragPos.input set outPosition
                     interCenter.input set position
+                    interClusterId.input set clusterId
                 }
             }
             fragmentStage {
@@ -126,7 +132,15 @@ class ParticlesMesh(
                             times(float4Value(dist, dist, dist, 1f.const))
                         } else this
                     }
-                    colorOutput(color)
+                    val cluster = interClusterId.output
+                    fun hash(int: KslExpression<KslInt1>) = fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
+                    val r = hash(cluster)
+                    val g = hash(cluster + 1.const)
+                    val b = hash(cluster + 2.const)
+//                    colorOutput(color)
+
+                    colorOutput(float4Value(r, g, b, 1f.const))
+//                    colorOutput(float4Value(1f, 1f, 1f, 1f))
                 }
             }
         }.apply {
@@ -135,6 +149,7 @@ class ParticlesMesh(
             storage("typeColorsBuffer", buffers.particleColors)
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
+            storage("clusterBuffer", buffers.clustersBuffer)
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

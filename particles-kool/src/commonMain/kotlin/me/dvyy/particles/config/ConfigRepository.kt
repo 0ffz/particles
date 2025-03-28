@@ -14,7 +14,12 @@ import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.FileSystemUtils
+import me.dvyy.particles.render.ParticleColor
 import kotlin.math.sqrt
+
+data class UiOptions(
+    val color: ParticleColor = ParticleColor.TYPE
+)
 
 class ConfigRepository {
     val paramsPath = "parameters.yml"
@@ -23,8 +28,10 @@ class ConfigRepository {
     val parameters = YamlParameters(path = paramsPath, scope = appScope)
 
     private val _config = MutableStateFlow(ParticlesConfig())
-    val config = _config.asStateFlow()
+    private val _uiOptions = MutableStateFlow(UiOptions())
     private val _configLines = MutableStateFlow("")
+    val config = _config.asStateFlow()
+    val uiOptions = _uiOptions.asStateFlow()
     val configLines = _configLines.asStateFlow()
 
     var isDirty: Boolean = true
@@ -54,7 +61,7 @@ class ConfigRepository {
 
     fun loadConfig() {
         val configLines = FileSystemUtils.read(configPath)
-            // Use default config if none exists
+        // Use default config if none exists
             ?: """
                 simulation:
                   count: 10000
@@ -114,6 +121,10 @@ class ConfigRepository {
 
     fun updateConfig(config: ParticlesConfig) {
         _config.update { config }
+    }
+
+    fun updateUiOptions(modify: (UiOptions) -> UiOptions) {
+        _uiOptions.update { modify(it) }
     }
 
     fun saveParameters() {

@@ -5,7 +5,13 @@ import de.fabmax.kool.modules.ui2.docking.UiDockable
 import de.fabmax.kool.pipeline.Texture2d
 import me.dvyy.particles.ui.AppUI
 
-abstract class FieldsWindow(name: String, val ui: AppUI, val icon: Texture2d? = null, isClosable: Boolean = false) {
+abstract class FieldsWindow(
+    name: String,
+    val ui: AppUI,
+    val icon: Texture2d? = null,
+    val preferredWidth: Float? = null,
+    isClosable: Boolean = false
+) {
     val windowDockable = UiDockable(name, ui.dock)
 
     val windowSurface = WindowSurface(windowDockable) {

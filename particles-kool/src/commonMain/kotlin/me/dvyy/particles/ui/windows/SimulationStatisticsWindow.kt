@@ -6,6 +6,8 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.helpers.MenuRow
+import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.helpers.sectionTitleStyle
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
@@ -13,7 +15,12 @@ class SimulationStatisticsWindow(
     ui: AppUI,
     private val viewModel: ParticlesViewModel,
     private val configRepo: ConfigRepository,
-) : FieldsWindow("Simulation Stats", ui, Icons.chartSpline) {
+) : FieldsWindow(
+    name = "Simulation Stats",
+    ui = ui,
+    icon = Icons.chartSpline,
+    preferredWidth = 600f,
+) {
     val simsPs = mutableStateOf(0.0)
     val fps = mutableStateOf(0.0)
 
@@ -29,9 +36,16 @@ class SimulationStatisticsWindow(
         }
         Column(Grow.Std, Grow.Std) {
             Text("Stats") { sectionTitleStyle() }
-            Text("${simsPs.use().toString(2)} sims/s") {}
+            Text("Simulation speed: ${simsPs.use().toString(2)} sims/s") {}
 
             Text("Graphs") { sectionTitleStyle() }
+            MenuRow {
+                Text("Cluster size distribution") {
+                    labelStyle()
+                    modifier.width(Grow.Std)
+                }
+//                Switch(false) {}
+            }
             Image(viewModel.plotTexture) {
                 modifier.width(Grow.Std)
             }

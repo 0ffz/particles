@@ -56,11 +56,12 @@ class ParticleClustering(
 
     fun createPlot(clusters: ClusterInfo): Plot {
         val data = mapOf<String, Any>(
-            "size" to clusters.sizes.filter { it < 1000 }
+            "size" to clusters.sizes.sorted().dropLast(1) // drop the largest value (usually the outlier cluster)
         )
 
         return letsPlot(data) {
             labs(
+                caption = "Cluster size distribution",
                 x = "size"
             )
             xlim(0 to null)

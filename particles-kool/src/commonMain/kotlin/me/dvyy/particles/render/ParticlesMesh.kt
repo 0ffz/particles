@@ -8,18 +8,21 @@ import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.vertexAttribFloat3
 import de.fabmax.kool.scene.Mesh
 import de.fabmax.kool.scene.MeshInstanceList
-import de.fabmax.kool.scene.Scene
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import me.dvyy.particles.clustering.cluster
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+
+
+enum class ParticleColor {
+    TYPE, FORCE, CLUSTER
+}
 
 class ParticlesMesh(
     val buffers: ParticleBuffers,
@@ -32,6 +35,11 @@ class ParticlesMesh(
         scope.launch {
             configRepository.config.map { it.simulation.targetCount }.distinctUntilChanged().collectLatest {
                 instances.numInstances = configRepository.count
+            }
+        }
+        scope.launch {
+            configRepository.uiOptions.map { it.color }.distinctUntilChanged().collectLatest {
+                mesh.shader?.uniform1i("colorType")?.set(it.ordinal)
             }
         }
     }
@@ -68,6 +76,7 @@ class ParticlesMesh(
             val fragPos = interStageFloat4("fragPos")
             val interCenter = interStageFloat3("interCenter")
             val interClusterId = interStageInt1("interClusterId")
+            val interColorType = interStageInt1("interColorType")
 
             vertexStage {
                 main {
@@ -78,6 +87,8 @@ class ParticlesMesh(
                     val clusterBuffer = storage<KslInt1>("clusterBuffer")
                     val typesBuffer = storage<KslInt1>("typesBuffer")
                     val radii = storage<KslFloat1>("radii")
+                    val colorType = uniformInt1("colorType")
+
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
                     val type = int1Var(typesBuffer[offset])
@@ -102,6 +113,7 @@ class ParticlesMesh(
                     fragPos.input set outPosition
                     interCenter.input set position
                     interClusterId.input set clusterId
+                    interColorType.input set colorType
                 }
             }
             fragmentStage {
@@ -118,7 +130,24 @@ class ParticlesMesh(
 //                        discard()
 //                    }
 //                    float4Value(texCoordBlock.getTextureCoords(), 1f, 1f))//
-                    val color = interColor.output.run {
+
+                    // Choose color based on specified option
+                    val baseColor = float4Var(interColor.output)
+                    `if`(interColorType.output eq ParticleColor.CLUSTER.ordinal.const) {
+                        val cluster = interClusterId.output
+                        fun hash(int: KslExpression<KslInt1>) =
+                            fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
+
+                        val r = hash(cluster)
+                        val g = hash(cluster + 1.const)
+                        val b = hash(cluster + 2.const)
+                        baseColor set float4Value(r, g, b, 1f.const)
+                    }.elseIf(interColorType.output eq ParticleColor.FORCE.ordinal.const) {
+                        //TODO
+                    }
+
+                    // Tint color in 3d and apply sphere-like shadow
+                    val color = baseColor.run {
                         if (tintFarAway) {
                             val depth = float1Var(
                                 clamp(fragPos.output.z / fragPos.output.w * 2000f.const, 0.6f.const, 1f.const)
@@ -132,15 +161,8 @@ class ParticlesMesh(
                             times(float4Value(dist, dist, dist, 1f.const))
                         } else this
                     }
-                    val cluster = interClusterId.output
-                    fun hash(int: KslExpression<KslInt1>) = fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
-                    val r = hash(cluster)
-                    val g = hash(cluster + 1.const)
-                    val b = hash(cluster + 2.const)
-//                    colorOutput(color)
 
-                    colorOutput(float4Value(r, g, b, 1f.const))
-//                    colorOutput(float4Value(1f, 1f, 1f, 1f))
+                    colorOutput(color)
                 }
             }
         }.apply {

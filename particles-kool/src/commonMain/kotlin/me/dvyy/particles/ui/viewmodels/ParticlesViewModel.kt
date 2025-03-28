@@ -14,6 +14,7 @@ import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.config.UiOptions
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.Buffers
@@ -32,12 +33,6 @@ class ParticlesViewModel(
         .distinctUntilChanged()
         .map { state ->
             listOf(
-//                UiConfigurable.Slider("Count", state.targetCount, 0f, 100_000f, precision = 0) {
-//                    updateState { copy(targetCount = it.roundToInt()) }
-//                },
-//                UiConfigurable.Slider("Min Grid Size", state.minGridSize, 0f, 100f) {
-//                    updateState { copy(minGridSize = it.toDouble()) }
-//                },
                 UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
                     updateState { copy(dT = it.toDouble()) }
                 },
@@ -47,13 +42,11 @@ class ParticlesViewModel(
                 UiConfigurable.Slider("Max Force", state.maxForce, 0f, 100_000f) {
                     updateState { copy(maxForce = it.toDouble()) }
                 },
-//                UiConfigurable.Toggle("3d", state.threeDimensions) {
-//                    updateState { copy(threeDimensions = it) }
-//                },
             )
         }
         .asMutableState(mutableStateScope, default = listOf())
 
+    val uiOptionsState = configRepo.uiOptions.asMutableState(mutableStateScope, default = UiOptions())
 
     val plotTexture = Texture2d(
         mipMapping = MipMapping.Off,

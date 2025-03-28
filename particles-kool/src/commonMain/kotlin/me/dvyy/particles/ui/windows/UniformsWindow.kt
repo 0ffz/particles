@@ -20,7 +20,12 @@ class UniformsWindow(
     val configRepo: ConfigRepository,
     val uniforms: UniformParameters,
     val scope: CoroutineScope,
-) : FieldsWindow("Live Parameters", ui, Icons.slidersHorizontal) {
+) : FieldsWindow(
+    name = "Live Parameters",
+    ui = ui,
+    icon = Icons.slidersHorizontal,
+    preferredWidth = 300f,
+) {
     val paramsState = uniforms.uniformParams.asMutableState(scope, default = emptyList())
 
     override fun UiScope.windowContent() = ScrollArea(

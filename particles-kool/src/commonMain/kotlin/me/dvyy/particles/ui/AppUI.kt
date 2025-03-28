@@ -40,7 +40,7 @@ class AppUI(
     val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
     val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository)
-    val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel)
+    val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel, configRepository)
 
     val ui = UiScene {
         dock.dockingSurface.colors = colors
@@ -92,8 +92,8 @@ class AppUI(
         dockPath?.let {
             val leaf = dock.getLeafAtPath(it)
             leaf?.dock(window.windowDockable)
-            if(leaf?.width?.value !is Dp)
-                leaf?.width?.set(Dp(300f))
+            if(leaf?.width?.value !is Dp && window.preferredWidth != null)
+                leaf?.width?.set(Dp(window.preferredWidth))
             return
         }
 

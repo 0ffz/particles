@@ -36,6 +36,9 @@ class ParticleClustering(
                 positions[it * 4 + 2].toDouble()
             )
         }
+        // TODO because this operation takes a while, by the time it's finished
+        //  the uploaded data is out of order due to us sorting particles.
+        //  This leads to some visual issues, but the data is otherwise correct.
         val clusters = withContext(Dispatchers.Default) {
             cluster(data, radius = 15.0, minPts = 10)
         }

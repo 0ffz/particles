@@ -19,11 +19,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-
-enum class ParticleColor {
-    TYPE, FORCE, CLUSTER
-}
-
 class ParticlesMesh(
     val buffers: ParticleBuffers,
     val configRepository: ConfigRepository,
@@ -138,10 +133,15 @@ class ParticlesMesh(
                         fun hash(int: KslExpression<KslInt1>) =
                             fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
 
+                        `if`(cluster eq (-1).const) {
+                            baseColor set float4Value(0.1f, 0.1f, 0.1f, 1f)
+                        }.`else` {
+
                         val r = hash(cluster)
                         val g = hash(cluster + 1.const)
                         val b = hash(cluster + 2.const)
                         baseColor set float4Value(r, g, b, 1f.const)
+                        }
                     }.elseIf(interColorType.output eq ParticleColor.FORCE.ordinal.const) {
                         //TODO
                     }

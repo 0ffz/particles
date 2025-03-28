@@ -54,8 +54,6 @@ kotlin {
                 api("com.charleskorn.kaml:kaml:0.67.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin:4.10.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-image-export:4.6.1")
-
-//                implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.6.0")
             }
         }
 
@@ -71,8 +69,6 @@ kotlin {
                         runtimeOnly("org.lwjgl:lwjgl-$lib:$lwjglVersion:$platform")
                     }
                 }
-
-                implementation("com.github.haifengl:smile-kotlin:4.3.0")
             }
         }
 

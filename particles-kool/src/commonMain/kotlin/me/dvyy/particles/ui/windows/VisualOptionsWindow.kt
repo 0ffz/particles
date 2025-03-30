@@ -1,21 +1,30 @@
 package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
-import me.dvyy.particles.config.ConfigRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.update
+import me.dvyy.particles.config.AppSettings
+import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.render.ParticleColor
+import me.dvyy.particles.render.UiScale
+import me.dvyy.particles.ui.AppSizes
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuRow
+import me.dvyy.particles.ui.helpers.UiSizes
 import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class VisualOptionsWindow(
     ui: AppUI,
     private val viewModel: ParticlesViewModel,
-    private val configRepo: ConfigRepository,
+    private val settings: AppSettings,
+    private val scope: CoroutineScope,
 ) : FieldsWindow("Visual options", ui, Icons.eye) {
-    val sizeList = listOf(Sizes.small, Sizes.medium, Sizes.large)
+//    val sizeList = listOf(Sizes.small, Sizes.medium, Sizes.large)
+    val coloring = settings.ui.coloring.asMutableState(scope)
+    val size = settings.ui.scale.asMutableState(scope)
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
         withVerticalScrollbar = false,
@@ -29,9 +38,9 @@ class VisualOptionsWindow(
                     modifier.width(Grow.Std)
                 }
                 ComboBox {
-                    modifier.items(listOf("Small", "Medium", "Large"))
-                        .selectedIndex(sizeList.indexOf(ui.uiSizes.use()))
-                        .onItemSelected { ui.uiSizes.set(sizeList[it]) }
+                    modifier.items(UiScale.entries.map { it.name.lowercase().capitalize() })
+                        .selectedIndex(size.use().ordinal)
+                        .onItemSelected { new -> settings.ui.scale.update { UiScale.entries[new] } }
                 }
             }
             MenuRow {
@@ -41,8 +50,8 @@ class VisualOptionsWindow(
                 }
                 ComboBox {
                     modifier.items(ParticleColor.entries.map { it.name.lowercase().capitalize() })
-                        .selectedIndex(viewModel.uiOptionsState.use().color.ordinal)
-                        .onItemSelected { color -> configRepo.updateUiOptions { it.copy(color = ParticleColor.entries[color] )} }
+                        .selectedIndex(coloring.use().ordinal)
+                        .onItemSelected { color -> settings.ui.coloring.update { ParticleColor.entries[color]  } }
                 }
             }
         }

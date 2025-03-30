@@ -4,6 +4,7 @@ import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.modules.ui2.mutableStateOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -15,4 +16,8 @@ fun <T> Flow<T>.asMutableState(scope: CoroutineScope, default: T): MutableStateV
         collect { state.set(it) }
     }
     return state
+}
+
+fun <T> StateFlow<T>.asMutableState(scope: CoroutineScope): MutableStateValue<T> {
+    return asMutableState(scope, this.value)
 }

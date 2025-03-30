@@ -26,7 +26,7 @@ class UniformsWindow(
     icon = Icons.slidersHorizontal,
     preferredWidth = 300f,
 ) {
-    val paramsState = uniforms.uniformParams.asMutableState(scope, default = emptyList())
+    val paramsState = uniforms.uniformParams.asMutableState(scope)
 
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,

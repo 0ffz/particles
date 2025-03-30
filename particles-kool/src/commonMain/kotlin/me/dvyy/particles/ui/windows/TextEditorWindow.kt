@@ -25,7 +25,7 @@ class TextEditorWindow(
     val scope: CoroutineScope,
 ) : FieldsWindow("Config file", ui, icon = Icons.fileCode) {
     val consoleFont = MutableStateFlow(MsdfFont.DEFAULT_FONT)
-    val consoleFontAsState = consoleFont.asMutableState(scope, MsdfFont.DEFAULT_FONT)
+    val consoleFontAsState = consoleFont.asMutableState(scope)
     val yamlKey = consoleFontAsState.map { TextAttributes(it, Color.ORANGE) }
     val yamlValue = consoleFontAsState.map { TextAttributes(it, Color.WHITE) }
     val yamlTag = consoleFontAsState.map { TextAttributes(it, Color.LIGHT_YELLOW) }

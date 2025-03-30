@@ -64,7 +64,6 @@ class ParticleClustering(
 
         return letsPlot(data) {
             labs(
-                caption = "Cluster size distribution",
                 x = "size"
             )
             xlim(0 to null)

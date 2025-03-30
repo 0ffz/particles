@@ -7,27 +7,28 @@ import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.config.UiOptions
+import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
-import kotlin.time.Duration.Companion.seconds
 
 class ParticlesViewModel(
     private val buffers: ParticleBuffers,
     private val configRepo: ConfigRepository,
     private val mutableStateScope: CoroutineScope,
     private val sceneManager: SceneManager,
+    private val paramOverrides: ParameterOverrides,
+    private val scope: CoroutineScope,
 ) {
     val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
         .distinctUntilChanged()
@@ -46,29 +47,20 @@ class ParticlesViewModel(
         }
         .asMutableState(mutableStateScope, default = listOf())
 
-    val uiOptionsState = configRepo.uiOptions.asMutableState(mutableStateScope, default = UiOptions())
-
     val plotTexture = Texture2d(
         mipMapping = MipMapping.Off,
         samplerSettings = SamplerSettings().nearest(),
-        name = "plot")
+        name = "plot"
+    )
 
-    init {
-        launchOnMainThread {
-            configRepo.parameters.overrides.debounce(1.seconds).collect {
-                saveParameters()
-            }
-        }
-    }
-
-    fun updateState(simulation: Simulation.() -> Simulation) = launchOnMainThread {
+    fun updateState(simulation: Simulation.() -> Simulation) = scope.launch {
         val config = configRepo.config.value
         val newSimulation = simulation(config.simulation)
         configRepo.updateConfig(config.copy(simulation = newSimulation))
     }
 
-    fun <T> updateOverrides(key: String, newValue: T, serializer: KSerializer<T>) = launchOnMainThread {
-        configRepo.parameters.update(
+    fun <T> updateOverrides(key: String, newValue: T, serializer: KSerializer<T>) = scope.launch {
+        paramOverrides.update(
             key, YamlHelpers.yaml.decodeFromString(
                 YamlNode.serializer(),
                 YamlHelpers.yaml.encodeToString(serializer, newValue)
@@ -76,22 +68,18 @@ class ParticlesViewModel(
         )
     }
 
-    fun resetPositions() = launchOnMainThread {
+    fun resetPositions() = scope.launch {
         buffers.positionBuffer.initFloat4 {
             Buffers.randomPosition(configRepo.boxSize)
         }
         buffers.initializeParticlesBuffer()
     }
 
-    fun restartSimulation() = launchOnMainThread {
+    fun restartSimulation() = launchOnMainThread { // scope will get cancelled during reload, so we use main thread
         sceneManager.reload()
     }
 
-    fun saveParameters() = launchOnMainThread {
-        configRepo.saveParameters()
-    }
-
-    fun resetParameters() = launchOnMainThread {
-        configRepo.resetParameters()
+    fun resetParameters() = scope.launch {
+        paramOverrides.reset()
     }
 }

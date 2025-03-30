@@ -50,7 +50,8 @@ class ParticlesScene(
         onUpdate {
             iterations++
             if (iterations % 100 == 0) {
-                clustering.calculateClusters()
+                //TODO make toggle
+//                clustering.calculateClusters()
             }
 //            ReadbackBuffers.readValues(buffers, configRepo)
         }

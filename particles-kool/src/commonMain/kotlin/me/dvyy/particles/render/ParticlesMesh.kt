@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.config.UiSettings
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -22,6 +24,7 @@ import kotlin.math.sin
 class ParticlesMesh(
     val buffers: ParticleBuffers,
     val configRepository: ConfigRepository,
+    val settings: AppSettings,
     val scope: CoroutineScope,
 ) {
     val instances = MeshInstanceList(configRepository.count).apply { numInstances = configRepository.count }
@@ -33,7 +36,7 @@ class ParticlesMesh(
             }
         }
         scope.launch {
-            configRepository.uiOptions.map { it.color }.distinctUntilChanged().collectLatest {
+            settings.ui.coloring.collectLatest {
                 mesh.shader?.uniform1i("colorType")?.set(it.ordinal)
             }
         }

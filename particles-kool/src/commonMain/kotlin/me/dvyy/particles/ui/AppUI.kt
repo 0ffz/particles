@@ -10,8 +10,14 @@ import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.MdColor
 import de.fabmax.kool.util.launchDelayed
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.launch
+import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
+import me.dvyy.particles.render.UiScale
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
@@ -29,6 +35,7 @@ class AppUI(
     val uniforms: UniformParameters,
     val viewModel: ParticlesViewModel,
     val configRepository: ConfigRepository,
+    val settings: AppSettings,
     val scope: CoroutineScope,
 ) {
     val uiSizes = mutableStateOf(Sizes.large)
@@ -40,7 +47,7 @@ class AppUI(
     val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
     val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository)
-    val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel, configRepository)
+    val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel, settings, scope)
 
     val ui = UiScene {
         dock.dockingSurface.colors = colors
@@ -83,6 +90,10 @@ class AppUI(
         )
         val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
         dock.getLeafAtPath("0:row/1:leaf")?.dock(centerSpacer)
+    }
+
+    init {
+        scope.launch { settings.ui.scale.collect { uiSizes.set(it.size) } }
     }
 
     private val windowSpawnLocation = MutableVec2f(32f, 32f)

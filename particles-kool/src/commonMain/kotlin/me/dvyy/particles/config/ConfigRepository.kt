@@ -14,24 +14,16 @@ import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.FileSystemUtils
-import me.dvyy.particles.render.ParticleColor
 import kotlin.math.sqrt
 
-data class UiOptions(
-    val color: ParticleColor = ParticleColor.TYPE
-)
 
 class ConfigRepository {
-    val paramsPath = "parameters.yml"
     val configPath = "particles.yml"
     private val appScope = CoroutineScope(Dispatchers.RenderLoop)
-    val parameters = YamlParameters(path = paramsPath, scope = appScope)
 
     private val _config = MutableStateFlow(ParticlesConfig())
-    private val _uiOptions = MutableStateFlow(UiOptions())
     private val _configLines = MutableStateFlow("")
     val config = _config.asStateFlow()
-    val uiOptions = _uiOptions.asStateFlow()
     val configLines = _configLines.asStateFlow()
 
     var isDirty: Boolean = true
@@ -111,26 +103,10 @@ class ConfigRepository {
         _configLines.update { configLines }
         runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configLines) }
             .onSuccess { updateConfig(it) }
-        parameters.load()
-    }
-
-    //TODO seems to reset count incorrectly when hot-reloaded in config
-    fun resetParameters() {
-        parameters.reset()
     }
 
     fun updateConfig(config: ParticlesConfig) {
         _config.update { config }
-    }
-
-    fun updateUiOptions(modify: (UiOptions) -> UiOptions) {
-        _uiOptions.update { modify(it) }
-    }
-
-    fun saveParameters() {
-//        val config = YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value)
-//        FileSystemUtils.write(configPath, config)
-        parameters.save()
     }
 
     fun saveConfigLines(newLines: String) {

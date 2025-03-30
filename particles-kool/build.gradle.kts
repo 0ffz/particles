@@ -54,6 +54,10 @@ kotlin {
                 api("com.charleskorn.kaml:kaml:0.67.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-kotlin:4.10.0")
                 implementation("org.jetbrains.lets-plot:lets-plot-image-export:4.6.1")
+                implementation("com.russhwolf:multiplatform-settings:1.3.0")
+                implementation("com.russhwolf:multiplatform-settings-make-observable:1.3.0")
+                implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
+                implementation("com.russhwolf:multiplatform-settings-serialization:1.3.0")
             }
         }
 

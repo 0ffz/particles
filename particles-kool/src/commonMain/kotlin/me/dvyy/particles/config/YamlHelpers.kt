@@ -1,54 +1,14 @@
 package me.dvyy.particles.config
 
-import com.charleskorn.kaml.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import com.charleskorn.kaml.SingleLineStringStyle
+import com.charleskorn.kaml.Yaml
+import com.charleskorn.kaml.YamlConfiguration
+import com.charleskorn.kaml.YamlMap
+import com.charleskorn.kaml.YamlNode
+import com.charleskorn.kaml.yamlMap
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.serializer
-import me.dvyy.particles.config.YamlHelpers.convertMapToNestedMap
-import me.dvyy.particles.config.YamlHelpers.convertMapToYaml
-import me.dvyy.particles.helpers.FileSystemUtils
-
-class YamlParameters(
-    val path: String,
-    val scope: CoroutineScope,
-) {
-    private val _overrides = mutableMapOf<String, YamlNode>()
-    val overrides = MutableSharedFlow<Map<String, YamlNode>>(
-        replay = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST,
-    )
-
-    fun update(key: String, value: YamlNode) {
-        _overrides[key] = value
-        overrides.tryEmit(_overrides)
-    }
-
-    fun save(path: String = this.path) {
-        val encoded = YamlHelpers.yaml.encodeToString(_overrides)
-        FileSystemUtils.write(path, encoded)
-    }
-
-    fun load(path: String = this.path) {
-        val decoded = runCatching {
-            YamlHelpers.yaml.decodeFromString<Map<String, YamlNode>>(FileSystemUtils.read(path) ?: "{}")
-        }.getOrDefault(emptyMap())
-
-        _overrides.clear()
-        _overrides.putAll(decoded)
-        overrides.tryEmit(_overrides)
-    }
-
-    fun reset() {
-        _overrides.clear()
-        overrides.tryEmit(_overrides)
-    }
-}
+import kotlin.collections.iterator
 
 object YamlHelpers {
     fun YamlNode.getPath(key: String): YamlNode = key.split(".").fold(this) { acc: YamlNode, stringPart ->
@@ -65,7 +25,7 @@ object YamlHelpers {
     }
 
     inline fun <reified T> YamlMap.get(yamlPath: String, default: T): T {
-        return runCatching { YamlHelpers.yaml.decodeFromYamlNode<T>(serializer<T>(), getPath(yamlPath)) }
+        return runCatching { yaml.decodeFromYamlNode<T>(serializer<T>(), getPath(yamlPath)) }
             .getOrDefault(default)
     }
 
@@ -127,4 +87,3 @@ object YamlHelpers {
         return nestedMapToYaml(nestedMap)
     }
 }
-

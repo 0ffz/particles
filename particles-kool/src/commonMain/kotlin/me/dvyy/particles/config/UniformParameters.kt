@@ -9,11 +9,12 @@ import me.dvyy.particles.compute.ForcesDefinition
 import me.dvyy.particles.config.YamlHelpers.decode
 
 class UniformParameters(
-    val repo: ConfigRepository,
+    val configRepo: ConfigRepository,
+    val overrides: ParameterOverrides,
     val scope: CoroutineScope,
     val forces: ForcesDefinition,
 ) {
-    val uniformParams = combine(repo.config, repo.parameters.overrides) { config, params ->
+    val uniformParams = combine(configRepo.config, overrides.overrides) { config, params ->
         forces.pairwiseInteractions.flatMap { (pair, interactions) ->
             interactions.flatMap { interaction ->
                 interaction.uniforms.map { (param, config) ->

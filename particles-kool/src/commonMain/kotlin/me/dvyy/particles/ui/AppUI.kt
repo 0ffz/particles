@@ -13,10 +13,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
+import me.dvyy.particles.config.getFlow
+import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.render.UiScale
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
@@ -137,18 +140,19 @@ class AppUI(
     }
 
     fun UiScope.windowSelector(windows: List<FieldsWindow>, nodePath: String) {
-        val selected = remember<Int?>(0)
-        MultiSelect(windows, selected.use(), onSelect = {
+        val selected = remember { settings.settings.getFlow<Int?>("window-selector/$nodePath", 0, scope) }
+        val mutableState = remember { selected.asMutableState(scope) }
+        MultiSelect(windows, mutableState.use(), onSelect = { newValue ->
             val previous = selected.value
             if (previous != null) {
                 val prevWindow = windows[previous]
                 dock.getLeafAtPath(nodePath)?.undock(prevWindow.windowDockable, removeIfEmpty = false)
                 dock.removeDockableSurface(prevWindow.windowSurface)
             }
-            if (it != null) {
-                spawnWindow(windows[it], nodePath)
+            if (newValue != null) {
+                spawnWindow(windows[newValue], nodePath)
             }
-            selected.set(it)
+            selected.update { newValue }
         })
     }
 }

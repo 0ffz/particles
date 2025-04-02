@@ -9,6 +9,7 @@ import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.FieldsShader
 import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
@@ -23,6 +24,7 @@ class ParticlesScene(
     val offsetsShader: OffsetsShader,
     val convertShader: ConvertParticlesShader,
     val fieldsShader: FieldsShader,
+    val settings: AppSettings,
 ) {
     val config = configRepo.config.value
 
@@ -50,8 +52,9 @@ class ParticlesScene(
         onUpdate {
             iterations++
             if (iterations % 100 == 0) {
-                //TODO make toggle
-//                clustering.calculateClusters()
+                val clusterOptions = settings.clusterOptions.value
+                if (clusterOptions.enabled)
+                    clustering.calculateClusters(clusterOptions)
             }
 //            ReadbackBuffers.readValues(buffers, configRepo)
         }

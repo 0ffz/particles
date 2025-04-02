@@ -50,7 +50,7 @@ class AppUI(
 
     val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
-    val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository)
+    val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, scope)
     val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel, settings, scope)
     val projectSwitcherWindow = ProjectSwitcherWindow(this@AppUI, viewModel, settings, scope)
 

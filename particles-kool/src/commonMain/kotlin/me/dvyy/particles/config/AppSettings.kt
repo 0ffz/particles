@@ -15,6 +15,7 @@ class AppSettings() {
     val settings: ObservableSettings = createSettings()
     val ui = UiSettings(settings, scope)
     val recentProjectPaths = settings.getFlow("recentProjectPaths", listOf<String>(), scope)
+    val clusterOptions = settings.getFlow("clusterOptions", ClusterOptions(enabled = false), scope)
 
     fun removeKeys(startingWith: String) {
         settings.keys.filter { it.startsWith(startingWith) }.forEach {

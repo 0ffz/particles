@@ -9,6 +9,7 @@ import de.fabmax.kool.util.toBuffer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.config.ClusterOptions
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.toSvg
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
@@ -26,7 +27,7 @@ class ParticleClustering(
     val buffers: ParticleBuffers,
     val viewModel: ParticlesViewModel,
 ) {
-    fun calculateClusters() = launchOnMainThread {
+    fun calculateClusters(options: ClusterOptions) = launchOnMainThread {
         val positions = Float32Buffer(configRepo.count * 4)
         buffers.positionBuffer.downloadData(positions)
         val data = Array(configRepo.count) {
@@ -40,7 +41,7 @@ class ParticleClustering(
         //  the uploaded data is out of order due to us sorting particles.
         //  This leads to some visual issues, but the data is otherwise correct.
         val clusters = withContext(Dispatchers.Default) {
-            cluster(data, radius = 15.0, minPts = 10)
+            cluster(data, radius = options.radius, minPts = options.minPoints)
         }
         buffers.clustersBuffer.uploadData(
             Int32Buffer(configRepo.count).apply {
@@ -49,6 +50,8 @@ class ParticleClustering(
                 }
             },
         )
+
+        if(!options.drawGraph) return@launchOnMainThread
 
         val texture = withContext(Dispatchers.Default) {
             val svg = createPlot(clusters).toSvg()

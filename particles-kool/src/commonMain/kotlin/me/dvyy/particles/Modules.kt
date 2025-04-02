@@ -21,8 +21,8 @@ import org.koin.dsl.module
 /** This module persists across application reloads (i.e. the reload button) */
 fun persistentModule(ctx: KoolContext) = module {
     single<KoolContext> { ctx }
-    singleOf(::ConfigRepository)
     singleOf(::AppSettings)
+    singleOf(::ConfigRepository)
     singleOf(::ParameterOverrides)
 }
 

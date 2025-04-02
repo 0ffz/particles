@@ -6,18 +6,27 @@ import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.launchOnMainThread
+import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.name
+import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.io.files.Path
 import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.Buffers
+import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
@@ -26,6 +35,7 @@ class ParticlesViewModel(
     private val buffers: ParticleBuffers,
     private val configRepo: ConfigRepository,
     private val mutableStateScope: CoroutineScope,
+    val settings: AppSettings,
     private val sceneManager: SceneManager,
     private val paramOverrides: ParameterOverrides,
     private val scope: CoroutineScope,
@@ -81,5 +91,21 @@ class ParticlesViewModel(
 
     fun resetParameters() = scope.launch {
         paramOverrides.reset()
+    }
+
+    fun attemptOpenProject() = launchOnMainThread {
+        val file = FileKit.openFilePicker(type = FileKitType.File("yml")) ?: return@launchOnMainThread
+        sceneManager.open(file)
+        val path = FileSystemUtils.getPathOrNull(file) ?: return@launchOnMainThread
+        settings.recentProjectPaths.update { it + path.toString() }
+    }
+
+    fun openProject(path: String) = launchOnMainThread {
+        sceneManager.open(FileSystemUtils.toFileOrNull(Path(path)) ?: return@launchOnMainThread)
+        settings.recentProjectPaths.update { listOf(path) + (it - path) }
+    }
+
+    fun removeProject(path: String) = launchOnMainThread {
+        settings.recentProjectPaths.update { it - path }
     }
 }

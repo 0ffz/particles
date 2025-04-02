@@ -1,16 +1,23 @@
 package me.dvyy.particles
 
+import com.russhwolf.settings.Settings
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.util.RenderLoop
 import de.fabmax.kool.util.delayFrames
+import de.fabmax.kool.util.launchOnMainThread
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import kotlinx.io.files.Path
 import me.dvyy.particles.compute.ForcesDefinition
 import me.dvyy.particles.compute.forces.Force
 import me.dvyy.particles.compute.forces.PairwiseForce
+import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.ui.AppUI
 import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
@@ -23,6 +30,7 @@ class SceneManager(
     val forces: List<Force>
 ) {
     private var loadedScenes: List<Scene> = listOf()
+    val globalApplication = koinApplication { modules(baseModule) }
 
     suspend fun reload() {
         unload()
@@ -30,7 +38,7 @@ class SceneManager(
         load()
     }
 
-    fun load() {
+    fun load() = launchOnMainThread {
         val sceneScope = CoroutineScope(Dispatchers.RenderLoop)
         // Create dependencies with koin
         val application = koinApplication {
@@ -49,6 +57,12 @@ class SceneManager(
             )
         }.koin
         val configRepo = application.get<ConfigRepository>()
+        val settings = application.get<AppSettings>()
+        if(configRepo.currentFile.value == null) {
+            settings.recentProjectPaths.value.firstOrNull()
+                ?.let { FileSystemUtils.toFileOrNull(Path(it)) }
+                ?.let { configRepo.openFile(it) }
+        }
         configRepo.isDirty = true
         val ui = application.get<AppUI>().ui
         val scene = application.get<ParticlesScene>().scene
@@ -65,5 +79,11 @@ class SceneManager(
             it.release()
         }
         loadedScenes = listOf()
+    }
+
+    suspend fun open(file: PlatformFile) {
+        val config = globalApplication.koin.get<ConfigRepository>()
+        config.openFile(file)
+        reload()
     }
 }

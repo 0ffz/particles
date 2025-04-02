@@ -6,6 +6,7 @@ import com.charleskorn.kaml.YamlNode
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
 import de.fabmax.kool.util.RenderLoop
+import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import me.dvyy.particles.render.ParticleColor
@@ -15,6 +16,7 @@ class AppSettings() {
     private val scope = CoroutineScope(Dispatchers.RenderLoop)
     val settings: ObservableSettings = createSettings()
     val ui = UiSettings(settings, scope)
+    val recentProjectPaths = settings.getFlow("recentProjectPaths", listOf<String>(), scope)
 
     fun removeKeys(startingWith: String) {
         settings.keys.filter { it.startsWith(startingWith) }.forEach {

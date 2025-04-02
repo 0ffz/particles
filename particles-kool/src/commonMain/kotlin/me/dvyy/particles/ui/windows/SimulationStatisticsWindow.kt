@@ -35,19 +35,15 @@ class SimulationStatisticsWindow(
             simsPs.set(it.fps * configRepo.config.value.simulation.passesPerFrame)
         }
         Column(Grow.Std, Grow.Std) {
-            Text("Stats") { sectionTitleStyle() }
-            Text("Simulation speed: ${simsPs.use().toString(2)} sims/s") {}
-
-            Text("Graphs") { sectionTitleStyle() }
-            MenuRow {
-                Text("Cluster size distribution") {
-                    labelStyle()
-                    modifier.width(Grow.Std)
-                }
-//                Switch(false) {}
+            Category("Stats") {
+                Text("Simulation speed: ${simsPs.use().toString(2)} sims/s") {}
             }
-            Image(viewModel.plotTexture) {
-                modifier.width(Grow.Std)
+            Category("Graphs") {
+                Subcategory("Cluster size distribution") {
+                    Image(viewModel.plotTexture) {
+                        modifier.width(Grow.Std)
+                    }
+                }
             }
         }
     }

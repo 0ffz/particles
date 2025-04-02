@@ -5,6 +5,8 @@ import de.fabmax.kool.math.toVec3f
 import de.fabmax.kool.math.toVec3i
 import de.fabmax.kool.util.RenderLoop
 import de.fabmax.kool.util.delayFrames
+import io.github.vinceglb.filekit.PlatformFile
+import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,14 +19,17 @@ import me.dvyy.particles.helpers.FileSystemUtils
 import kotlin.math.sqrt
 
 
-class ConfigRepository {
-    val configPath = "particles.yml"
+class ConfigRepository(
+    val settings: AppSettings,
+) {
     private val appScope = CoroutineScope(Dispatchers.RenderLoop)
 
     private val _config = MutableStateFlow(ParticlesConfig())
     private val _configLines = MutableStateFlow("")
+    private val _currentFile = MutableStateFlow<PlatformFile?>(null)
     val config = _config.asStateFlow()
     val configLines = _configLines.asStateFlow()
+    val currentFile = _currentFile.asStateFlow()
 
     var isDirty: Boolean = true
 
@@ -51,57 +56,9 @@ class ConfigRepository {
     val gridCells get() = desiredSize.toVec3f().div(gridSize).toVec3i()
     val boxSize get() = gridCells.toVec3f().times(gridSize)
 
-    fun loadConfig() {
-        val configLines = FileSystemUtils.read(configPath)
-        // Use default config if none exists
-            ?: """
-                simulation:
-                  count: 10000
-                  minGridSize: 5.0
-                  dT: 0.001
-                  conversionRate: 100
-                  maxVelocity: 1.21
-                  maxForce: 100000.0
-                  threeDimensions: false
-                  passesPerFrame: 100
-                  size:
-                    width: 1000
-                    height: 1000
-                    depth: 1000
-                particles:
-                  hydrogen:
-                    color: ffffff
-                    radius: 1.0
-                    distribution: 2
-                  oxygen:
-                    color: ff0000
-                    radius: 1.5
-                    distribution: 1
-                    #convertTo:
-                      # type: hydrogen
-                      # chance: 0.01
-                #  hidden:
-                #    color: 000000
-                #    radius: 0
-                #    distribution : 1
-                interactions:
-                  hydrogen-oxygen:
-                    lennardJones:
-                      sigma: !param;max=10 5.0
-                      epsilon: !param;max=500 5.0
-                  hydrogen-hydrogen:
-                    lennardJones:
-                      sigma: !param;max=10 5.0
-                      epsilon: !param;max=500 5.0
-                  oxygen-oxygen:
-                    lennardJones:
-                      sigma: !param;max=10 10.0
-                      epsilon: !param;max=500 5.0
-            """.trimIndent()
-//            ?: YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), ParticlesConfig())
-
-        _configLines.update { configLines }
-        runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configLines) }
+    fun loadConfig(configString: String) {
+        _configLines.update { configString }
+        runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configString) }
             .onSuccess { updateConfig(it) }
     }
 
@@ -110,7 +67,8 @@ class ConfigRepository {
     }
 
     fun saveConfigLines(newLines: String) {
-        FileSystemUtils.write(configPath, newLines)
+        val path = FileSystemUtils.getPathOrNull(_currentFile.value ?: return) ?: return
+        FileSystemUtils.write(path.toString(), newLines)
         _configLines.update { newLines }
     }
 
@@ -118,8 +76,12 @@ class ConfigRepository {
         if (isDirty) run(config.value)
     }
 
+    suspend fun openFile(file: PlatformFile) {
+        _currentFile.update { file }
+        loadConfig(file.readString())
+    }
+
     init {
-        loadConfig()
         appScope.launch {
             isDirty = false
             config.collect {

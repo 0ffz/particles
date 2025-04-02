@@ -24,6 +24,7 @@ import me.dvyy.particles.render.UiScale
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
+import me.dvyy.particles.ui.windows.ProjectSwitcherWindow
 import me.dvyy.particles.ui.windows.SimulationStatisticsWindow
 import me.dvyy.particles.ui.windows.TextEditorWindow
 import me.dvyy.particles.ui.windows.UniformsWindow
@@ -51,6 +52,7 @@ class AppUI(
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
     val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository)
     val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel, settings, scope)
+    val projectSwitcherWindow = ProjectSwitcherWindow(this@AppUI, viewModel, settings, scope)
 
     val ui = UiScene {
         dock.dockingSurface.colors = colors
@@ -68,7 +70,7 @@ class AppUI(
             modifier.height(Grow.Std).backgroundColor(colors.background)
             Box {
                 modifier.width(sidebarSize)
-                windowSelector(listOf(uniformsWindow, textEditorWindow), "0:row/0:leaf")
+                windowSelector(listOf(uniformsWindow, textEditorWindow, projectSwitcherWindow), "0:row/0:leaf")
             }
         }
         addPanelSurface {

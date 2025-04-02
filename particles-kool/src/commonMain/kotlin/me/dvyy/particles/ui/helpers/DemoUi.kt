@@ -125,12 +125,21 @@ fun UiScope.LabeledSwitch(label: String, state: Boolean, onToggle: ((Boolean) ->
 fun TextScope.sectionTitleStyle() {
     modifier
         .width(Grow.Std)
-        .margin(vertical = UiSizes.hGap)    // hGap is intentional, since we want a little more spacing around titles
+//        .margin(vertical = UiSizes.hGap)    // hGap is intentional, since we want a little more spacing around titles
         .padding(vertical = sizes.smallGap)
         .textColor(colors.primary)
-        .backgroundColor(colors.primaryVariant.withAlpha(0.2f))
         .font(sizes.largeText)
         .textAlignX(AlignmentX.Center)
+}
+
+fun TextScope.sectionSubtitleStyle() {
+    modifier
+        .width(Grow.Std)
+        .padding(vertical = sizes.smallGap)
+        .textColor(colors.primary)
+        .font(sizes.normalText)
+        .textAlignX(AlignmentX.Center)
+
 }
 
 fun TextScope.labelStyle(width: Dimension = FitContent) {

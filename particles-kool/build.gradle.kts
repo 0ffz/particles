@@ -58,6 +58,8 @@ kotlin {
                 implementation("com.russhwolf:multiplatform-settings-make-observable:1.3.0")
                 implementation("com.russhwolf:multiplatform-settings-coroutines:1.3.0")
                 implementation("com.russhwolf:multiplatform-settings-serialization:1.3.0")
+                implementation("io.github.vinceglb:filekit-core:0.10.0-beta01")
+                implementation("io.github.vinceglb:filekit-dialogs:0.10.0-beta01")
             }
         }
 

@@ -35,26 +35,19 @@ class CameraManager(
         lineMesh.set(scene.addLineMesh {
             addBoundingBox(bb, Color.WHITE)
         })
-        if (config.simulation.threeDimensions) scene.orbitCamera {
-            maxZoom = boxMax.x.toDouble()
+        scene.clearColor = ClearColorFill(Color("444444"))
+        scene.orbitCamera {
+            maxZoom = boxMax.length().toDouble()
             minZoom = 1.0
-            zoom = boxMax.x.toDouble() / 2
-            zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
-            translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0))
-            setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
-        }
-        else {
-            scene.clearColor = ClearColorFill(Color("444444"))
-            scene.orbitCamera {
-                maxZoom = boxMax.x.toDouble()
-                minZoom = 1.0
+            if (!config.simulation.threeDimensions) {
                 leftDragMethod = OrbitInputTransform.DragMethod.PAN
                 middleDragMethod = OrbitInputTransform.DragMethod.ROTATE
-                zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
-                zoom = boxMax.x.toDouble() / 2
-                translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0, 500.0, 0.0))
-                setTranslation(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
             }
+            zoom = boxMax.length().toDouble() / 2
+            zoomAnimator.set(boxMax.length().toDouble() / 2) // skip zoom animation
+            zoomMethod = OrbitInputTransform.ZoomMethod.ZOOM_TRANSLATE
+            translation.set(bb.center.x.toDouble(), bb.center.y.toDouble(), bb.center.z.toDouble())
+            translationBounds = bb.toBoundingBoxD().expand(Vec3d(500.0))
         }
     }
 }

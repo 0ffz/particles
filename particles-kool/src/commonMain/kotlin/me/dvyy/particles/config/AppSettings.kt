@@ -2,11 +2,9 @@
 
 package me.dvyy.particles.config
 
-import com.charleskorn.kaml.YamlNode
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.ObservableSettings
 import de.fabmax.kool.util.RenderLoop
-import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import me.dvyy.particles.render.ParticleColor

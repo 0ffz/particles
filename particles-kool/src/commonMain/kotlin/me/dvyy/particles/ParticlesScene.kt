@@ -51,12 +51,6 @@ class ParticlesScene(
         var iterations = 0
         onUpdate {
             iterations++
-            if (iterations % 100 == 0) {
-                val clusterOptions = settings.clusterOptions.value
-                if (clusterOptions.enabled)
-                    clustering.calculateClusters(clusterOptions)
-            }
-//            ReadbackBuffers.readValues(buffers, configRepo)
         }
     }
 }

@@ -1,42 +1,45 @@
 simulation:
-  count: 10000
+  count: 100000
   minGridSize: 5.0
-  dT: 0.001
+  dT: 0.05
   conversionRate: 50
-  maxVelocity: 1.21
+  maxVelocity: 3
   maxForce: 100000.0
   threeDimensions: false
-  passesPerFrame: 100
+  passesPerFrame: 50
   size:
-    width: 1000
-    height: 1000
+    width: 5000
+    height: 5000
     depth: 1000
 particles:
-  hydrogen:
+  ligand:
     color: ffffff
     radius: 1.0
     distribution: 2
-  oxygen:
+  monomer:
     color: ff0000
     radius: 1.5
     distribution: 1
     #convertTo:
-      # type: hydrogen
+      # type: ligand
       # chance: 0.01
 #  hidden:
 #    color: 000000
 #    radius: 0
 #    distribution : 1
 interactions:
-  hydrogen-oxygen:
-    lennardJones:
-      sigma: !param;max=10 5.0
-      epsilon: !param;max=500 5.0
-  hydrogen-hydrogen:
-    lennardJones:
-      sigma: !param;max=10 5.0
-      epsilon: !param;max=500 5.0
-  oxygen-oxygen:
-    lennardJones:
-      sigma: !param;max=10 10.0
-      epsilon: !param;max=500 5.0
+  ligand-monomer:
+    morse:
+      De: !param;max=10 5.0
+      a: !param;max=500 5.0
+      re: !param;max=10 1.0
+  ligand-ligand:
+    morse:
+      De: !param;max=10 5.0
+      a: !param;max=500 5.0
+      re: !param;max=10 1.0
+  monomer-monomer:
+    morse:
+      De: !param;max=10 5.0
+      a: !param;max=500 5.0
+      re: !param;max=10 1.0

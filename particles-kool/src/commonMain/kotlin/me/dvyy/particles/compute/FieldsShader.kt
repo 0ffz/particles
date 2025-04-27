@@ -196,7 +196,7 @@ class FieldsShader(
                 // Wall repulsion
                 //TODO make configurable, since lennardJones might not be provided
                 fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-                    .invoke(dist, 2f.const, 1f.const)
+                    .invoke(dist, 5f.const, 0.2f.const)
                 nextForce.x += lJ(position.x - 0f.const + 1f.const)
                 nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
                 nextForce.y += lJ(position.y - 0f.const + 1f.const)

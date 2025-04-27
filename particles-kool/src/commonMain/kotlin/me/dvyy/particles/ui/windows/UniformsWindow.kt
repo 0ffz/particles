@@ -75,7 +75,7 @@ fun UiScope.Category(name: String, content: UiScope.() -> Unit) {
         }
         val icon = if (toggled.use()) Icons.chevronUp else Icons.chevronDown
         IconButton(icon, onClick = { toggled.set(!toggled.value) }) {
-            modifier.height(Grow.Std).width(32.dp)
+            modifier.size(40.dp, 40.dp)
         }
     }
     if (toggled.use()) {

@@ -28,13 +28,10 @@ The pipeline on the GPU currently looks like this:
 
 ## Running
 
-- Download the [latest release](https://github.com/0ffz/particles/releases/latest)
-- Install Java 21 or above (ex. from [here](https://adoptium.net/))
-- Run in a terminal with `java -jar path/to/particles.jar`
-
-Or, try the [browser release](https://particles.dvyy.me) on a browser with WebGPU support (ex. Google Chrome)
+Check the [installation docs](https://particles.dvyy.me/docs/installation.html) to run a prebuilt application, or the [browser release](https://particles.dvyy.me) on a Chromium-based browser.
 
 ### Developers
 
 - Clone this repository
-- Run with `./gradlew run` (or `gradlew.bat run` on Windows)
+- Run JVM target with `./gradlew run` (or `gradlew.bat run` on Windows)
+- Run JS target with `gradle :particles-demo:jsRun`

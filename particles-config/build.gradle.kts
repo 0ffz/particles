@@ -32,7 +32,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.charleskorn.kaml:kaml:0.67.0")
+                implementation(libs.kaml)
             }
         }
     }

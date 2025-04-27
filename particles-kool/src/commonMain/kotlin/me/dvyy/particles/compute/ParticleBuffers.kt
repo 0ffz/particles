@@ -11,6 +11,7 @@ import de.fabmax.kool.util.MemoryLayout
 import de.fabmax.kool.util.Releasable
 import de.fabmax.kool.util.Struct
 import de.fabmax.kool.util.releaseWith
+import me.dvyy.particles.clustering.ClusterInfo
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.helpers.Buffers
@@ -33,6 +34,7 @@ class ParticleBuffers(
     val particleTypesBuffer = Buffers.integers(count)
     /** Integer id for the particle's current cluster, or max value if an outlier. */
     val clustersBuffer = Buffers.integers(count)
+    var clusterInfo: ClusterInfo? = null
     val particleColors = StorageBuffer(GpuType.Float4, particleTypes.size).initFloat4 {
         Color(particleTypes[it].color).toVec4f()
     }
@@ -60,11 +62,11 @@ class ParticleBuffers(
         var offset = 0
         particleTypesBuffer.uploadData(Int32Buffer(count).apply {
             repeat(count) {
-                this[it] = type
-                if (it - offset >= counts[type] && it != counts.lastIndex) {
+                if (it - offset >= counts[type] && type != counts.lastIndex) {
                     type++
                     offset = it
                 }
+                this[it] = type
             }
         })
     }

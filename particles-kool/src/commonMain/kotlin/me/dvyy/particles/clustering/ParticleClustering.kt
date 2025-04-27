@@ -29,9 +29,14 @@ class ParticleClustering(
 ) {
     fun calculateClusters(options: ClusterOptions) = launchOnMainThread {
         val positions = Float32Buffer(configRepo.count * 4)
+        val types = Int32Buffer(configRepo.count)
         buffers.positionBuffer.downloadData(positions)
-        val data = Array(configRepo.count) {
-            doubleArrayOf(
+        buffers.particleTypesBuffer.downloadData(types)
+        val allowedTypes = intArrayOf(configRepo.config.value.particleIds["monomer"]!!.id.toInt())
+
+        val data = mutableListOf<DoubleArray>()
+        repeat(configRepo.count) {
+            if (types[it] in allowedTypes) data += doubleArrayOf(
                 positions[it * 4].toDouble(),
                 positions[it * 4 + 1].toDouble(),
                 positions[it * 4 + 2].toDouble()
@@ -50,6 +55,7 @@ class ParticleClustering(
                 }
             },
         )
+        buffers.clusterInfo = clusters
 
         if(!options.drawGraph) return@launchOnMainThread
 
@@ -62,7 +68,7 @@ class ParticleClustering(
 
     fun createPlot(clusters: ClusterInfo): Plot {
         val data = mapOf<String, Any>(
-            "size" to clusters.sizes.sorted().dropLast(1) // drop the largest value (usually the outlier cluster)
+            "size" to clusters.sizes.sorted().dropLast(10) // drop the largest value (usually the outlier cluster)
         )
 
         return letsPlot(data) {

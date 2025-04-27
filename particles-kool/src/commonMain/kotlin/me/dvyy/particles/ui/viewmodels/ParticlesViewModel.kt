@@ -8,9 +8,8 @@ import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
 import io.github.vinceglb.filekit.dialogs.openFilePicker
-import io.github.vinceglb.filekit.name
-import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -107,5 +106,12 @@ class ParticlesViewModel(
 
     fun removeProject(path: String) = launchOnMainThread {
         settings.recentProjectPaths.update { it - path }
+    }
+
+    fun saveClusterData() {
+        launchOnMainThread {
+            val info = buffers.clusterInfo?.sizes ?: return@launchOnMainThread
+            FileKit.openFileSaver(info.joinToString("\n").encodeToByteArray(), "data", "csv")
+        }
     }
 }

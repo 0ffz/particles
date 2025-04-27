@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
+import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.FileSystemUtils
 import kotlin.math.sqrt
 
@@ -24,7 +26,7 @@ class ConfigRepository(
 ) {
     private val appScope = CoroutineScope(Dispatchers.RenderLoop)
 
-    private val _config = MutableStateFlow(ParticlesConfig())
+    private val _config = MutableStateFlow(ParticlesConfig(nameToParticle = mapOf("argon"  to Particle(color = "ff0000"))))
     private val _configLines = MutableStateFlow("")
     private val _currentFile = MutableStateFlow<PlatformFile?>(null)
     val config = _config.asStateFlow()

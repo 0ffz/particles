@@ -10,25 +10,18 @@ import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.MdColor
 import de.fabmax.kool.util.launchDelayed
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.config.getFlow
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.render.UiScale
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
-import me.dvyy.particles.ui.windows.ProjectSwitcherWindow
-import me.dvyy.particles.ui.windows.SimulationStatisticsWindow
-import me.dvyy.particles.ui.windows.TextEditorWindow
-import me.dvyy.particles.ui.windows.UniformsWindow
-import me.dvyy.particles.ui.windows.VisualOptionsWindow
+import me.dvyy.particles.ui.windows.*
 
 object AppSizes {
     val sidebarSize = Dp(32f)
@@ -41,6 +34,7 @@ class AppUI(
     val configRepository: ConfigRepository,
     val settings: AppSettings,
     val scope: CoroutineScope,
+    val clustering: ParticleClustering,
 ) {
     val uiSizes = mutableStateOf(Sizes.large)
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
@@ -50,7 +44,7 @@ class AppUI(
 
     val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
-    val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, scope)
+    val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, clustering, scope)
     val visualsWindow = VisualOptionsWindow(this@AppUI, viewModel, settings, scope)
     val projectSwitcherWindow = ProjectSwitcherWindow(this@AppUI, viewModel, settings, scope)
 
@@ -108,7 +102,7 @@ class AppUI(
         dockPath?.let {
             val leaf = dock.getLeafAtPath(it)
             leaf?.dock(window.windowDockable)
-            if(leaf?.width?.value !is Dp && window.preferredWidth != null)
+            if (leaf?.width?.value !is Dp && window.preferredWidth != null)
                 leaf?.width?.set(Dp(window.preferredWidth))
             return
         }
@@ -179,7 +173,7 @@ fun UiScope.SquareButton(
     selected: Boolean,
     icon: Texture2d?,
     tint: Color = colors.onBackground,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val color = if (selected) colors.primaryVariant else Color.BLACK.withAlpha(0f)
     Box {

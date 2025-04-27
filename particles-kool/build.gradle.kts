@@ -40,7 +40,7 @@ kotlin {
         val targetPlatforms = listOf("natives-windows", "natives-linux", "natives-macos", "natives-macos-arm64")
         val lwjglVersion = libs.versions.lwjgl.get()
 
-        val commonMain by getting {
+        commonMain {
             dependencies {
                 // add additional kotlin multi-platform dependencies here...
 
@@ -61,7 +61,7 @@ kotlin {
             }
         }
 
-        val jvmMain by getting {
+        jvmMain {
             dependencies {
                 // add additional jvm-specific dependencies here...
 
@@ -76,7 +76,7 @@ kotlin {
             }
         }
 
-        val jsMain by getting {
+        jsMain {
             dependencies {
                 // add additional js-specific dependencies here...
             }

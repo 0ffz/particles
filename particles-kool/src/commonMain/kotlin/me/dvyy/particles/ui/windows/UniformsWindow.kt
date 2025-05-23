@@ -32,9 +32,10 @@ class UniformsWindow(
 
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
+        vScrollbarModifier = { it },
         containerModifier = { it.background(null) }
     ) {
-        modifier.width(Grow.Std)
+        modifier.width(Grow.Std).padding(end = 8.dp)
         Column(Grow.Std, Grow.Std) {
             Category("Simulation") {
                 val state = viewModel.uiState.use()

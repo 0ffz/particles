@@ -1,11 +1,12 @@
 package me.dvyy.particles.ui
 
 import de.fabmax.kool.Assets
-import de.fabmax.kool.MimeType
+import de.fabmax.kool.loadImage2d
+import de.fabmax.kool.pipeline.ImageData2d
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
-import de.fabmax.kool.util.toBuffer
+import kotlinx.coroutines.launch
 
 /**
  * Icons from https://lucide.dev/icons/
@@ -23,13 +24,16 @@ object Icons {
     fun icon(svg: String) = lazy {
         Texture2d(
             mipMapping = MipMapping.Off,
-            samplerSettings = SamplerSettings().nearest(),
-            name = "plot",
-            loader = {
-                Assets.loadImageFromBuffer(
-                    svg.replace("stroke=\"currentColor\"", "stroke=\"#ffffff\"").encodeToByteArray().toBuffer(),
-                    MimeType.IMAGE_SVG
-                )
-            })
+            samplerSettings = SamplerSettings().nearest()
+        ).apply {
+            Assets.launch {
+                loadSvg(svg.replace("stroke=\"currentColor\"", "stroke=\"#ffffff\"")).onSuccess { upload(it) }
+            }
+        }
     }
 }
+
+/**
+ * Loads an SVG from string, using platform-specific implementations.
+ */
+expect suspend fun loadSvg(svg: String): Result<ImageData2d>

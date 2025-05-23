@@ -61,19 +61,17 @@ class AppUI(
         addPanelSurface {
             surface.sizes = this@AppUI.uiSizes.use()
             surface.colors = this@AppUI.colors
-            modifier.height(Grow.Std).backgroundColor(colors.background)
-            Box {
-                modifier.width(sidebarSize)
+            modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
+            Box(width = sidebarSize) {
                 windowSelector(listOf(uniformsWindow, textEditorWindow, projectSwitcherWindow), "0:row/0:leaf")
             }
         }
         addPanelSurface {
             surface.sizes = this@AppUI.uiSizes.use()
             surface.colors = this@AppUI.colors
-            modifier.height(Grow.Std).backgroundColor(colors.background)
+            modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
                 .alignX(AlignmentX.End)
-            Box {
-                modifier.width(sidebarSize)
+            Box(width = sidebarSize) {
                 windowSelector(listOf(statsWindow, visualsWindow), "0:row/2:leaf")
             }
         }

@@ -1,6 +1,6 @@
 [versions]
-kotlin = "2.1.20"
-kool = "0.17.0-SNAPSHOT"
+kotlin = "2.1.21"
+kool = "0.17.0"
 lwjgl = "3.3.5"
 coroutines = "1.8.0"
 kaml = "0.67.0"
@@ -40,5 +40,5 @@ filekit-dialogs = { group = "io.github.vinceglb", name = "filekit-dialogs", vers
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-shadow = { id = "com.gradleup.shadow", version = "8.3.5" }
+shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta13" }
 graalvm-nativeimage = "org.graalvm.buildtools.native:0.10.3"

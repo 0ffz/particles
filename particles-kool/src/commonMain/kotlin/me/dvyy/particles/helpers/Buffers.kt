@@ -2,6 +2,7 @@ package me.dvyy.particles.helpers
 
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec4f
+import de.fabmax.kool.pipeline.GpuBuffer
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
 import de.fabmax.kool.util.Float32Buffer
@@ -42,7 +43,7 @@ object Buffers {
     }
 }
 
-inline fun StorageBuffer.initFloat3(set: (Int) -> Vec3f) = apply {
+inline fun GpuBuffer.initFloat3(set: (Int) -> Vec3f) = apply {
     uploadData(
         Float32Buffer(size * 3).apply {
             repeat(size) { i ->
@@ -55,7 +56,7 @@ inline fun StorageBuffer.initFloat3(set: (Int) -> Vec3f) = apply {
     )
 }
 
-inline fun StorageBuffer.initFloat4(set: (Int) -> Vec4f) = apply {
+inline fun GpuBuffer.initFloat4(set: (Int) -> Vec4f) = apply {
     uploadData(
         Float32Buffer(size * 4).apply {
             repeat(size) { i ->
@@ -69,10 +70,10 @@ inline fun StorageBuffer.initFloat4(set: (Int) -> Vec4f) = apply {
     )
 }
 
-inline fun StorageBuffer.initInt(set: (Int) -> Int) = apply {
+inline fun GpuBuffer.initInt(set: (Int) -> Int) = apply {
     uploadData(Int32Buffer(size).apply { repeat(size) { i -> put(set(i)) } })
 }
 
-inline fun StorageBuffer.initFloat(set: (Int) -> Float) = apply {
+inline fun GpuBuffer.initFloat(set: (Int) -> Float) = apply {
     uploadData(Float32Buffer(size).apply { repeat(size) { i -> put(set(i)) } })
 }

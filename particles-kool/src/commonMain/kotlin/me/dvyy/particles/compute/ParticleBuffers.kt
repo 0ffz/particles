@@ -1,26 +1,18 @@
 package me.dvyy.particles.compute
 
-import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec4f
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
-import de.fabmax.kool.scene.Scene
-import de.fabmax.kool.util.Color
-import de.fabmax.kool.util.Int32Buffer
-import de.fabmax.kool.util.MemoryLayout
-import de.fabmax.kool.util.Releasable
-import de.fabmax.kool.util.Struct
-import de.fabmax.kool.util.releaseWith
+import de.fabmax.kool.util.*
 import me.dvyy.particles.clustering.ClusterInfo
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.helpers.Buffers
-import me.dvyy.particles.helpers.initFloat3
 import me.dvyy.particles.helpers.initFloat4
 
 class ParticleBuffers(
     val configRepo: ConfigRepository,
-): Releasable {
+) : Releasable {
     val count = configRepo.count
     val particleTypes: List<Particle> = configRepo.config.value.particles
     val positionBuffer = Buffers.positions(count, configRepo.boxSize)
@@ -32,6 +24,7 @@ class ParticleBuffers(
     val colorsBuffer = StorageBuffer(GpuType.Float4, count)
 
     val particleTypesBuffer = Buffers.integers(count)
+
     /** Integer id for the particle's current cluster, or max value if an outlier. */
     val clustersBuffer = Buffers.integers(count)
     var clusterInfo: ClusterInfo? = null
@@ -42,7 +35,7 @@ class ParticleBuffers(
         particleTypes[it].radius.toFloat()
     }
 
-    object ParticleType: Struct<ParticleType>("ParticleType", MemoryLayout.Std430) {
+    object ParticleType : Struct("ParticleType", MemoryLayout.Std430) {
         val color = float4("color")
         val radius = float1("radius")
     }

@@ -36,6 +36,8 @@ class UiSettings(
 ) {
     val coloring = settings.getFlow("coloring", ParticleColor.TYPE, scope)
     val scale = settings.getFlow("scale", UiScale.LARGE, scope)
+    val targetFPS = settings.getFlow("targetFPS", 60, scope)
+    val shouldCalibrateFPS = settings.getFlow("shouldCalibrateFPS", true, scope)
 }
 
 

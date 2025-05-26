@@ -11,6 +11,7 @@ import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -39,6 +40,7 @@ class ParticlesViewModel(
     private val paramOverrides: ParameterOverrides,
     private val scope: CoroutineScope,
 ) {
+    val passesPerFrame = MutableStateFlow(1)
     val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
         .distinctUntilChanged()
         .map { state ->

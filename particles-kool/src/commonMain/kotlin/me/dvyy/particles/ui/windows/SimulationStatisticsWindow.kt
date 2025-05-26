@@ -41,7 +41,7 @@ class SimulationStatisticsWindow(
         modifier.width(Grow.Std)
         surface.onEachFrame {
             fps.set(it.fps)
-            simsPs.set(it.fps * configRepo.config.value.simulation.passesPerFrame)
+            simsPs.set(it.fps * viewModel.passesPerFrame.value)
         }
         Column(Grow.Std, Grow.Std) {
             Category("Stats") {

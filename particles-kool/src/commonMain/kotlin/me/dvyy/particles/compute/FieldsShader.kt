@@ -177,7 +177,10 @@ class FieldsShader(
                                 functionCalls.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
                                     acc.elseIf(particleHash eq hash.const) {
                                         // Sum all functions, add this to the net force
-                                        forceBetweenParticles += min(invocations.reduce { acc, curr -> acc + curr }, maxForce)
+                                        forceBetweenParticles += min(
+                                            invocations.reduce { acc, curr -> acc + curr },
+                                            maxForce
+                                        )
                                     }
                                 }
 
@@ -269,37 +272,40 @@ class FieldsShader(
         halfStep_boxMax = configRepo.boxSize
     }
 
-    fun addTo(computePass: ComputePass) {
+    fun addTo(computePass: ComputePass): List<Pair<ComputePass.Task, ComputePass.Task>> {
         val config = configRepo.config.value
 
         initBuffers()
-
-        repeat(config.simulation.passesPerFrame) { passIndex ->
-            computePass.addTask(halfStep, numGroups = configRepo.numGroups).apply {
-                onBeforeDispatch {
-                    configRepo.whenDirty {
-                        halfStep_dT = simulation.dT.toFloat()
-                        val count = simulation.targetCount
-                        setNumGroupsByInvocations(count)
+        val passes = buildList {
+            repeat(config.simulation.passesPerFrame) { passIndex ->
+                val halfStep = computePass.addTask(halfStep, numGroups = configRepo.numGroups).apply {
+                    onBeforeDispatch {
+                        configRepo.whenDirty {
+                            halfStep_dT = simulation.dT.toFloat()
+                            val count = simulation.targetCount
+                            setNumGroupsByInvocations(count)
+                        }
                     }
                 }
-            }
-            computePass.addTask(shader, numGroups = configRepo.numGroups).apply {
-                onBeforeDispatch {
-                    configRepo.whenDirty {
-                        dT = simulation.dT.toFloat()
-                        maxVelocity = simulation.maxVelocity.toFloat()
-                        maxForce = simulation.maxForce.toFloat()
-                        val count = simulation.targetCount
-                        this@FieldsShader.count = count
-                        setNumGroupsByInvocations(count)
-                    }
-                    //TODO move up to whenDirty
-                    uniforms.uniformParams.value.forEach { uniform ->
-                        uniform.setUniform(shader)
+                val fullStep = computePass.addTask(shader, numGroups = configRepo.numGroups).apply {
+                    onBeforeDispatch {
+                        configRepo.whenDirty {
+                            dT = simulation.dT.toFloat()
+                            maxVelocity = simulation.maxVelocity.toFloat()
+                            maxForce = simulation.maxForce.toFloat()
+                            val count = simulation.targetCount
+                            this@FieldsShader.count = count
+                            setNumGroupsByInvocations(count)
+                        }
+                        //TODO move up to whenDirty
+                        uniforms.uniformParams.value.forEach { uniform ->
+                            uniform.setUniform(shader)
+                        }
                     }
                 }
+                add(halfStep to fullStep)
             }
         }
+        return passes
     }
 }

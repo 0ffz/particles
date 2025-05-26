@@ -66,7 +66,7 @@ class UniformsWindow(
     }
 }
 
-fun UiScope.Category(name: String, content: UiScope.() -> Unit) {
+fun UiScope.Category(name: String, desc: String? = null, content: UiScope.() -> Unit) {
     val toggled = remember(true)
     Row(Grow.Std) {
         modifier.backgroundColor(colors.primaryVariant.withAlpha(0.2f))
@@ -80,6 +80,9 @@ fun UiScope.Category(name: String, content: UiScope.() -> Unit) {
         }
     }
     if (toggled.use()) {
+        if (desc != null) Text("*$desc") {
+            modifier.padding(sizes.smallGap).textColor(colors.onBackgroundAlpha(0.5f)).isWrapText(true).width(Grow.Std)
+        }
         content()
     }
 }

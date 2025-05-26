@@ -3,6 +3,7 @@ package me.dvyy.particles
 import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJs
 import de.fabmax.kool.KoolConfigJs.Backend
+import de.fabmax.kool.NativeAssetLoader
 import me.dvyy.particles.compute.forces.Force
 
 actual fun launchParticles(forces: List<Force>, args: Array<String>) = KoolApplication(

@@ -49,8 +49,16 @@ class ParticlesScene(
 
         // === DEBUGGING ===
         var iterations = 0
+        var clearNextFrame = false
         onUpdate {
             iterations++
+
+            // Unmark config repo as dirty in one frame, allows compute shaders to read values
+            if (clearNextFrame)  {
+                configRepo.isDirty = false
+                clearNextFrame = false
+            }
+            if (configRepo.isDirty) clearNextFrame = true
         }
     }
 }

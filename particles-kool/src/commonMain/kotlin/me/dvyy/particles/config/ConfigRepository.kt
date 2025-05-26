@@ -3,20 +3,14 @@ package me.dvyy.particles.config
 import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.math.toVec3f
 import de.fabmax.kool.math.toVec3i
-import de.fabmax.kool.util.RenderLoop
-import de.fabmax.kool.util.delayFrames
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readString
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.dsl.ParticlesConfig
-import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.FileSystemUtils
 import kotlin.math.sqrt
 
@@ -24,9 +18,9 @@ import kotlin.math.sqrt
 class ConfigRepository(
     val settings: AppSettings,
 ) {
-    private val appScope = CoroutineScope(Dispatchers.RenderLoop)
-
-    private val _config = MutableStateFlow(ParticlesConfig(nameToParticle = mapOf("argon"  to Particle(color = "ff0000"))))
+    private val _config = MutableStateFlow(
+        ParticlesConfig(nameToParticle = mapOf("argon" to Particle(color = "ff0000")))
+    )
     private val _configLines = MutableStateFlow("")
     private val _currentFile = MutableStateFlow<PlatformFile?>(null)
     val config = _config.asStateFlow()
@@ -66,6 +60,7 @@ class ConfigRepository(
 
     fun updateConfig(config: ParticlesConfig) {
         _config.update { config }
+        isDirty = true
     }
 
     fun saveConfigLines(newLines: String) {
@@ -81,18 +76,5 @@ class ConfigRepository(
     suspend fun openFile(file: PlatformFile) {
         _currentFile.update { file }
         loadConfig(file.readString())
-    }
-
-    init {
-        appScope.launch {
-            isDirty = false
-            config.collect {
-                if (!isDirty) {
-                    isDirty = true
-                    delayFrames(1)
-                    isDirty = false
-                }
-            }
-        }
     }
 }

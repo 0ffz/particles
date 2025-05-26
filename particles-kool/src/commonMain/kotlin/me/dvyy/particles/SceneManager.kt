@@ -1,20 +1,17 @@
 package me.dvyy.particles
 
-import com.russhwolf.settings.Settings
 import de.fabmax.kool.KoolContext
 import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.util.RenderLoop
 import de.fabmax.kool.util.delayFrames
 import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.io.files.Path
 import me.dvyy.particles.compute.ForcesDefinition
 import me.dvyy.particles.compute.forces.Force
-import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.FileSystemUtils

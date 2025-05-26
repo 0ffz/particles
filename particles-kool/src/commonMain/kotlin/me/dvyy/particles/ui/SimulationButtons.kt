@@ -10,7 +10,7 @@ fun UiScope.SimulationButtons(viewModel: ParticlesViewModel) {
             Button("Reset positions") {
                 modifier.onClick { viewModel.resetPositions() }.width(Grow.Std).margin(end = sizes.smallGap)
             }
-            Button("Reset Parameters") {
+            Button("Reset parameters") {
                 modifier.onClick { viewModel.resetParameters() }.width(Grow.Std)
             }
         }

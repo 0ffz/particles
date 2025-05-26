@@ -16,7 +16,7 @@ class ParticleBuffers(
     val count = configRepo.count
     val particleTypes: List<Particle> = configRepo.config.value.particles
     val positionBuffer = Buffers.positions(count, configRepo.boxSize)
-    val velocitiesBuffer = Buffers.velocities(count, configRepo.config.value.simulation.threeDimensions, 20.0)
+    val velocitiesBuffer = Buffers.velocities(count, configRepo.config.value.simulation.threeDimensions, configRepo.config.value.simulation.maxVelocity)
     val forcesBuffer = StorageBuffer(GpuType.Float4, count).initFloat4 { Vec4f.ZERO }
     val particleGridCellKeys = Buffers.integers(count)
     val sortIndices = Buffers.integers(count)

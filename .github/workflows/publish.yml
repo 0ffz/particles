@@ -24,3 +24,5 @@ jobs:
           build-tasks: 'shadowJar'
           release-files: |
             dist/jvm/*.jar
+      - name: Stop gradle daemon
+        run: ./gradlew --stop

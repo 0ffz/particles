@@ -89,6 +89,8 @@ jobs:
         with:
           name: web-demo
           path: dist/js
+      - name: Stop gradle daemon
+        run: ./gradlew --stop
 
   deploy:
     environment:

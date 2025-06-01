@@ -17,7 +17,6 @@ inline fun <T> ObservableSettings.getFlow(
     crossinline setter: (String, T) -> Unit,
     crossinline addListener: ObservableSettings.(String, T, (T) -> Unit) -> SettingsListener,
 ): MutableStateFlow<T> {
-    println("Get flow for $key")
     val flow = MutableStateFlow(
         getter(
             key,
@@ -27,13 +26,11 @@ inline fun <T> ObservableSettings.getFlow(
     val listener = addListener(key, defaultValue) { newValue ->
         flow.update { newValue }
     }
-    println("added listener")
     scope.launch {
         flow.collect { setter(key, it) }
     }.invokeOnCompletion {
         listener.deactivate()
     }
-    println("Collected listener")
     return flow
 }
 

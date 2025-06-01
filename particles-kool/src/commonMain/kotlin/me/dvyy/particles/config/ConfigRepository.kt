@@ -21,7 +21,7 @@ class ConfigRepository(
     private val _config = MutableStateFlow(
         ParticlesConfig(nameToParticle = mapOf("argon" to Particle(color = "ff0000")))
     )
-    private val _configLines = MutableStateFlow("")
+    private val _configLines = MutableStateFlow(YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value))
     private val _currentFile = MutableStateFlow<PlatformFile?>(null)
     val config = _config.asStateFlow()
     val configLines = _configLines.asStateFlow()

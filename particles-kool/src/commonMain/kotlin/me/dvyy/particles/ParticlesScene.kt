@@ -35,7 +35,6 @@ class ParticlesScene(
 
     val scene = scene {
         buffers.releaseWith(this)
-        onRelease { println("Released $this") }
 
         // === COMPUTE ===
         val computePass = ComputePass("Particles Compute")
@@ -58,7 +57,6 @@ class ParticlesScene(
 
         /// === Calibrate FPS ===
         var enabledPasses = viewModel.passesPerFrame
-        enabledPasses.update { fieldsPasses.size }
         var iter = 0
 
         launch {

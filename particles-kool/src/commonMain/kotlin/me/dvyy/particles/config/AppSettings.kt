@@ -14,11 +14,6 @@ import me.dvyy.particles.render.UiScale
 class AppSettings() {
     private val scope = CoroutineScope(Dispatchers.RenderLoop)
     val settings: ObservableSettings = createSettings()
-    init {
-        println("Created serializer ${serializer<List<String>>()}")
-        println("Created serializer ${serializer<ClusterOptions>()}")
-        println("Created serializer ${serializer<ParticleColor>()}")
-    }
     val ui = UiSettings(settings, scope)
     val recentProjectPaths = settings.getFlow("recentProjectPaths", listOf<String>(), scope)
     val clusterOptions = settings.getFlow("clusterOptions", ClusterOptions(enabled = false), scope)
@@ -37,7 +32,7 @@ class UiSettings(
     val coloring = settings.getFlow("coloring", ParticleColor.TYPE, scope)
     val scale = settings.getFlow("scale", UiScale.LARGE, scope)
     val targetFPS = settings.getFlow("targetFPS", 60, scope)
-    val shouldCalibrateFPS = settings.getFlow("shouldCalibrateFPS", true, scope)
+    val shouldCalibrateFPS = settings.getFlow("shouldCalibrateFPS", false, scope)
 }
 
 

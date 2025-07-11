@@ -145,6 +145,22 @@ class FieldsShader(
                                 }
                             }
 
+                            // TODO move into preprocess step for pairwise forces
+                            // Calculate local neighbours (as in tersoff)
+                            // Given distance between two particles, return a smoothed cutoff from 1 to 0
+                            val localCount = float1Var(0f.const)
+
+                            //TODO duplicate code
+                            fori(startIndex, count) { i ->
+                                `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
+                                val otherPos = float3Var(positions[i].xyz)
+                                `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
+                                val direction = float3Var(position - otherPos)
+                                val dist = float1Var(length(direction))
+                                `if`(dist gt gridSize) { `continue`() }
+                                localCount += 1f.const //TODO cutoff function
+                            }
+
                             // Pairwise forces
                             fori(startIndex, count) { i ->
                                 `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
@@ -166,6 +182,7 @@ class FieldsShader(
                                             ?: error("Function ${it.function.name} not registered")
                                         kslFunction.invoke(
                                             dist,
+                                            localCount, //TODO generalize to a preprocess step
                                             *it.getParameters(this, this@KslComputeShader, pair)
                                         )
                                     }
@@ -199,7 +216,7 @@ class FieldsShader(
                 // Wall repulsion
                 //TODO make configurable, since lennardJones might not be provided
                 fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-                    .invoke(dist, 5f.const, 0.2f.const)
+                    .invoke(dist, 1f.const, 5f.const, 0.2f.const)
                 nextForce.x += lJ(position.x - 0f.const + 1f.const)
                 nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
                 nextForce.y += lJ(position.y - 0f.const + 1f.const)

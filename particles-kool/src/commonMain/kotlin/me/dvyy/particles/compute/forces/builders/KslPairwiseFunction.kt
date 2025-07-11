@@ -44,6 +44,7 @@ class KslPairwiseFunction(
     override val function = stage.functionFloat1(name) { }
 
     val distance = function.paramFloat1("dist")
+    val localCount = function.paramFloat1("localCount")
 
     inline fun body(crossinline apply: KslScopeBuilder.() -> KslExpression<KslFloat1>) = function.body {
         apply()

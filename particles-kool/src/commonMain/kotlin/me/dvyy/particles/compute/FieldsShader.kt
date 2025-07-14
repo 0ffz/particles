@@ -1,5 +1,6 @@
 package me.dvyy.particles.compute
 
+import de.fabmax.kool.math.PI_F
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
@@ -150,6 +151,16 @@ class FieldsShader(
                             // Given distance between two particles, return a smoothed cutoff from 1 to 0
                             val localCount = float1Var(0f.const)
 
+                            fun cutoff(
+                                distance: KslScalarExpression<KslFloat1>,
+                                cutoffR: KslScalarExpression<KslFloat1>,
+                                cutoffD: KslScalarExpression<KslFloat1>,
+                            ): KslScalarExpression<KslFloat1> {
+                                // Clamp the distance to the transition range [lowerBound, upperBound].
+                                val clampedDistance = clamp(distance, cutoffR - cutoffD, cutoffR + cutoffD)
+                                return 0.5f.const - (0.5f.const * sin((PI_F / 2f).const * (clampedDistance - cutoffR) / cutoffD))
+                            }
+
                             //TODO duplicate code
                             fori(startIndex, count) { i ->
                                 `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
@@ -157,8 +168,8 @@ class FieldsShader(
                                 `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
                                 val direction = float3Var(position - otherPos)
                                 val dist = float1Var(length(direction))
-                                `if`(dist gt gridSize) { `continue`() }
-                                localCount += 1f.const //TODO cutoff function
+                                `if`(dist gt 5f.const) { `continue`() }
+                                localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
                             }
 
                             // Pairwise forces

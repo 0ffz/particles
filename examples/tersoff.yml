@@ -1,9 +1,9 @@
 simulation:
-  count: 10000
+  count: 1000
   minGridSize: 5.0
-  dT: 0.001
+  dT: 0.01
   conversionRate: 50
-  maxVelocity: 3
+  maxVelocity: 1
   maxForce: 100000.0
   threeDimensions: false
   passesPerFrame: 50

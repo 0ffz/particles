@@ -4,6 +4,8 @@ import de.fabmax.kool.modules.ui2.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.config.ParameterOverrides
+import me.dvyy.particles.config.UniformParameter
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
@@ -22,6 +24,7 @@ class UniformsWindow(
     val configRepo: ConfigRepository,
     val uniforms: UniformParameters,
     val scope: CoroutineScope,
+    val paramOverrides: ParameterOverrides,
 ) : FieldsWindow(
     name = "Live Parameters",
     ui = ui,
@@ -29,6 +32,7 @@ class UniformsWindow(
     preferredWidth = 300f,
 ) {
     val paramsState = uniforms.uniformParams.asMutableState(scope)
+    val overrides = paramOverrides.overrides.asMutableState(scope, mapOf())
 
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
@@ -42,7 +46,7 @@ class UniformsWindow(
                 state.forEach {
                     with(it) { draw() }
                 }
-                SimulationButtons(viewModel)
+                SimulationButtons(viewModel, paramsChanged = overrides.use().isNotEmpty())
             }
             Category("Interactions") {
                 paramsState
@@ -51,17 +55,48 @@ class UniformsWindow(
                     .forEach { (name, params) ->
                         Subcategory(name) {
                             params.forEach { param ->
-                                MenuSlider2(
-                                    param.name,
-                                    param.value,
-                                    min = param.range.start.toFloat(),
-                                    max = param.range.endInclusive.toFloat(),
-                                    onChange = { viewModel.updateOverrides(param.configPath, it, Float.serializer()) },
-                                )
+                                val isOverridden = overrides.use().contains(param.configPath)
+                                ParameterSlider(param, isOverridden, onChange = {
+                                    viewModel.updateOverrides(param.configPath, it, Float.serializer())
+                                })
                             }
                         }
                     }
             }
+        }
+    }
+}
+
+//private fun UiScope.ParameterGraph() {
+//    val graph = remember {
+//        LineGraphNode().apply {
+//            launchOnMainThread { renderGpuFunction(scene, TestForce) }
+//        }
+//    }
+//    Box(Grow.Std, 400.dp) {
+//        modifier.background(graph)
+//    }
+//}
+
+private fun UiScope.ParameterSlider(
+    param: UniformParameter<Float>,
+    isOverridden: Boolean,
+    onChange: (Float) -> Unit,
+) {
+    val showSlider = remember(false)
+    Row(width = Grow.Std) {
+        Column(width = Grow.Std) {
+            MenuSlider2(
+                if (isOverridden) param.name + "(*)" else param.name,
+                param.value,
+                min = param.range.start.toFloat(),
+                max = param.range.endInclusive.toFloat(),
+                onChange = { onChange(it) },
+                sliderShown = showSlider.use(),
+            )
+        }
+        ToggleButton(showSlider.use(), small = true) {
+            showSlider.set(it)
         }
     }
 }
@@ -74,16 +109,25 @@ fun UiScope.Category(name: String, desc: String? = null, content: UiScope.() -> 
         Text(name) {
             sectionTitleStyle()
         }
-        val icon = if (toggled.use()) Icons.chevronUp else Icons.chevronDown
-        IconButton(icon, onClick = { toggled.set(!toggled.value) }) {
-            modifier.size(40.dp, 40.dp)
-        }
+        ToggleButton(toggled.use()) { toggled.set(it) }
     }
     if (toggled.use()) {
         if (desc != null) Text("*$desc") {
             modifier.padding(sizes.smallGap).textColor(colors.onBackgroundAlpha(0.5f)).isWrapText(true).width(Grow.Std)
         }
         content()
+    }
+}
+
+fun UiScope.ToggleButton(
+    toggled: Boolean,
+    small: Boolean = false,
+    onToggle: (Boolean) -> Unit,
+) {
+    val size = if (small) 24.dp else 40.dp
+    val icon = if (toggled) Icons.chevronUp else Icons.chevronDown
+    IconButton(icon, onClick = { onToggle(!toggled) }) {
+        modifier.size(size, size)
     }
 }
 

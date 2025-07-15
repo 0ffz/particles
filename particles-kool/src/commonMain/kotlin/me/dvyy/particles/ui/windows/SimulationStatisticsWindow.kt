@@ -1,15 +1,12 @@
 package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
-import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.toString
-import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.helpers.TestForce
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
@@ -17,7 +14,6 @@ import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuRow
 import me.dvyy.particles.ui.helpers.MenuSlider2
 import me.dvyy.particles.ui.helpers.labelStyle
-import me.dvyy.particles.ui.nodes.LineGraphNode
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class SimulationStatisticsWindow(
@@ -27,7 +23,6 @@ class SimulationStatisticsWindow(
     private val settings: AppSettings,
     private val clustering: ParticleClustering,
     private val scope: CoroutineScope,
-    private val scene: Scene,
 ) : FieldsWindow(
     name = "Simulation Stats",
     ui = ui,
@@ -53,14 +48,6 @@ class SimulationStatisticsWindow(
                 Text("Simulation speed: ${simsPs.use().toString(2)} sims/s") {}
             }
             Category("Graphs") {
-                val graph = remember {
-                    LineGraphNode().apply {
-                        launchOnMainThread { renderGpuFunction(scene, TestForce) }
-                    }
-                }
-                Box(Grow.Std, 400.dp) {
-                    modifier.background(graph)
-                }
                 Subcategory("Cluster size distribution") {
                     val opts by clusterOptions
                     MenuRow {

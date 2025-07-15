@@ -13,10 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.dvyy.particles.clustering.ParticleClustering
-import me.dvyy.particles.config.AppSettings
-import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.config.UniformParameters
-import me.dvyy.particles.config.getFlow
+import me.dvyy.particles.config.*
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
@@ -35,6 +32,7 @@ class AppUI(
     val settings: AppSettings,
     val scope: CoroutineScope,
     val clustering: ParticleClustering,
+    val paramOverrides: ParameterOverrides,
 ) {
     val uiSizes = mutableStateOf(Sizes.large)
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
@@ -42,9 +40,9 @@ class AppUI(
     }
     val dock = Dock("Dock")
 
-    val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope)
+    val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope, paramOverrides)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
-    val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, clustering, scope, ctx.scenes.first())
+    val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, clustering, scope)
     val visualsWindow = VisualOptionsWindow(this@AppUI, settings, scope)
     val projectSwitcherWindow = ProjectSwitcherWindow(this@AppUI, viewModel, settings, scope)
 

@@ -11,8 +11,8 @@ data class FunctionParameter<T>(val name: String, val serializer: KSerializer<T>
 
     fun asUniform(builder: KslProgram, pair: ParticlePair): KslUniformScalar<*> = builder.run {
         val name = uniformNameFor(pair)
-        when(serializer) {
-            Float.Companion.serializer() -> uniformFloat1(name)
+        when (serializer) {
+            Float.serializer() -> uniformFloat1(name)
             Int.serializer() -> uniformInt1(name)
             else -> error("Unsupported field type $serializer")
         }

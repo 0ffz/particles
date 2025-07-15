@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.ParticleBuffers
-import me.dvyy.particles.compute.simulation.FieldsShader.SimulationParameters
+import me.dvyy.particles.compute.simulation.SimulationParametersStruct
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import kotlin.math.PI
@@ -42,7 +42,7 @@ class ParticlesMesh(
         }
         scope.launch {
             configRepository.config.map { it.simulation }.distinctUntilChanged().collectLatest {
-                mesh.shader?.uniformStruct("params", ::SimulationParameters)?.set {
+                mesh.shader?.uniformStruct("params", ::SimulationParametersStruct)?.set {
                     maxVelocity.set(it.maxVelocity.toFloat())
                     maxForce.set(it.maxForce.toFloat())
                 }
@@ -51,30 +51,6 @@ class ParticlesMesh(
     }
 
     val mesh = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
-//            shader = KslBlinnPhongShader(KslBlinnPhongShaderConfig {
-//                pipeline { cullMethod = CullMethod.NO_CULLING }
-////                lightingCfg.ambientLight = AmbientLight.Uniform(MdColor.LIGHT_BLUE tone 400)
-//                modelCustomizer = {
-//                    val positionsBuffer = storage<KslFloat4>("positionsBuffer")
-//                    vertexStage {
-//                        main {
-////                        val modelMat = modelMatrix()
-//                            val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
-//                            val offset = int1Var(inInstanceIndex.toInt1())// * 4.const)
-//                            val positionOffset = positionsBuffer[offset].xyz
-////                        val position = float4Value(0f, 0f, 0f, 0f)
-////                        outPosition set float4Value(position, 1f.const)
-////                            getFloat3Port("worldPos").input(position + positionOffset)
-////                            outPosition set camData.viewProjMat * float4Value(
-////                                position + positionOffset,
-////                                1f.const
-////                            )
-//                        }
-//                    }
-//                }
-//            }).apply {
-//                storage("positionsBuffer", positionsBuffer)
-//            }
         val do3dShading = true
         val tintFarAway = buffers.configRepo.boxSize.z > 400f
         shader = KslShader("test") {
@@ -91,13 +67,12 @@ class ParticlesMesh(
                     val camData = cameraData()
                     val positionsBuffer = storage<KslFloat4>("positionsBuffer")
                     val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
-                    val colorsBuffer = storage<KslFloat4>("colorsBuffer")
                     val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
                     val clusterBuffer = storage<KslInt1>("clusterBuffer")
                     val typesBuffer = storage<KslInt1>("typesBuffer")
                     val radii = storage<KslFloat1>("radii")
                     val colorType = uniformInt1("colorType")
-                    val simulationParams = uniformStruct("params", provider = ::SimulationParameters)
+                    val simulationParams = uniformStruct("params", provider = ::SimulationParametersStruct)
 
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
@@ -196,7 +171,6 @@ class ParticlesMesh(
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
             storage("clusterBuffer", buffers.clustersBuffer)
-
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

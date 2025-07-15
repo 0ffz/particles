@@ -28,7 +28,8 @@ class VerletHalfStepShader {
             }
         }
     }
-    var halfStep_dT by shader.uniform1f("dT")
+
+    var dT by shader.uniform1f("dT")
     var positions by shader.storage("positions")
     var velocities by shader.storage("velocities")
     var forces by shader.storage("forces")

@@ -6,7 +6,9 @@ import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.OffsetsShader
+import me.dvyy.particles.compute.simulation.FieldsMultiPasses
 import me.dvyy.particles.compute.simulation.FieldsShader
+import me.dvyy.particles.compute.simulation.VerletHalfStepShader
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
@@ -41,6 +43,8 @@ fun shadersModule() = module {
     singleOf(::OffsetsShader)
     singleOf(::GPUSort)
     singleOf(::FieldsShader)
+    singleOf(::VerletHalfStepShader)
+    singleOf(::FieldsMultiPasses)
 }
 
 fun sceneModule() = module {

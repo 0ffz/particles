@@ -14,7 +14,9 @@ import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuRow
 import me.dvyy.particles.ui.helpers.MenuSlider2
 import me.dvyy.particles.ui.helpers.labelStyle
+import me.dvyy.particles.ui.nodes.LineGraphNode
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
+import kotlin.math.sin
 
 class SimulationStatisticsWindow(
     ui: AppUI,
@@ -48,6 +50,14 @@ class SimulationStatisticsWindow(
                 Text("Simulation speed: ${simsPs.use().toString(2)} sims/s") {}
             }
             Category("Graphs") {
+                val graph = remember {
+                    LineGraphNode().apply {
+                        renderFunction(0f, 20f) { sin(it) }
+                    }
+                }
+                Box(Grow.Std, 400.dp) {
+                    modifier.background(graph)
+                }
                 Subcategory("Cluster size distribution") {
                     val opts by clusterOptions
                     MenuRow {

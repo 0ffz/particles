@@ -1,5 +1,5 @@
 simulation:
-  count: 1000
+  count: 10000
   minGridSize: 5.0
   dT: 0.01
   conversionRate: 50
@@ -15,6 +15,10 @@ particles:
     color: ffffff
     radius: 2.0
     distribution: 2
+  monomer:
+    color: 0f0f0f
+    radius: 2.0
+    distribution: 0
 #  monomer:
 #    color: ff0000
 #    radius: 1.5

@@ -1,0 +1,25 @@
+simulation:
+  count: 20000
+  minGridSize: 3.0
+  dT: 0.005
+  maxVelocity: 1.5
+  maxForce: 100000.0
+  threeDimensions: false
+  passesPerFrame: 100
+  size:
+    width: 1000
+    height: 1000
+particles:
+  a:
+    color: ffffff
+    radius: 2
+    distribution: 1
+interactions:
+  a:
+    gravity:
+      force: 0.005
+  a-a:
+    morse:
+      De: !param;max=10 0.1
+      a: !param;max=500 20
+      re: !param;max=500 5

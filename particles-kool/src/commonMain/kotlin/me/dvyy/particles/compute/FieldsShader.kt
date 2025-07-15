@@ -5,6 +5,8 @@ import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.util.MemoryLayout
+import de.fabmax.kool.util.Struct
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.dsl.pairwise.ParticlePair
@@ -54,14 +56,16 @@ class FieldsShader(
 
     val shader = KslComputeShader("Fields") {
         val config = configRepo.config.value
+        struct { SimulationParameters() }
         computeStage(WORK_GROUP_SIZE) {
             // Uniforms
             val gridSize = uniformFloat1("gridSize")
             val gridCells = uniformInt3("gridCells")
             val dT = uniformFloat1("dT")
             val count = uniformInt1("count")
-            val maxForce = uniformFloat1("maxForce")
-            val maxVelocity = uniformFloat1("maxVelocity")
+//            val maxForce = uniformFloat1("maxForce")
+//            val maxVelocity = uniformFloat1("maxVelocity")
+            val params = uniformStruct("params") { SimulationParameters() }
             val boxMax = uniformFloat3("boxMax")
 
             // Storage buffers
@@ -90,6 +94,7 @@ class FieldsShader(
                 // Extract the 2D position from the stored vec4
                 val position = float3Var(positions[id].xyz) //p(t + dt); since half step runs before this
                 val particleType = int1Var(particleTypes[id])
+                val params = params.struct
 
                 // Compute grid indices based on the particle position
                 val xGrid = int1Var((position.x / gridSize).toInt1())
@@ -207,7 +212,7 @@ class FieldsShader(
                                         // Sum all functions, add this to the net force
                                         forceBetweenParticles += min(
                                             invocations.reduce { acc, curr -> acc + curr },
-                                            maxForce
+                                            params.maxForce.ksl
                                         )
                                     }
                                 }
@@ -237,16 +242,16 @@ class FieldsShader(
                     nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
                 }
                 // Cap force
-                `if`(length(nextForce) gt maxForce) {
-                    nextForce set normalize(nextForce) * maxForce
+                `if`(length(nextForce) gt params.maxForce.ksl) {
+                    nextForce set normalize(nextForce) * params.maxForce.ksl
                 }
 
                 // Compute next velocity with Verlet integration
                 val currForce = float3Var(forces[id].xyz)
                 val nextVelocity = float3Var(velocity + ((currForce + nextForce) * dT / 2f.const))
                 // Cap velocity and net force to their maximum values
-                `if`(length(nextVelocity) gt maxVelocity) {
-                    nextVelocity set normalize(nextVelocity) * maxVelocity
+                `if`(length(nextVelocity) gt params.maxVelocity.ksl) {
+                    nextVelocity set normalize(nextVelocity) * params.maxVelocity.ksl
                 }
 
                 forces[id] = float4Value(nextForce, 0f)
@@ -267,8 +272,13 @@ class FieldsShader(
     var gridCells by shader.uniform3i("gridCells")
     var dT by shader.uniform1f("dT")
     var count by shader.uniform1i("count")
-    var maxForce by shader.uniform1f("maxForce")
-    var maxVelocity by shader.uniform1f("maxVelocity")
+//    var params by shader.uniformStruct("params") { SimulationParameters() }
+
+    class SimulationParameters : Struct("SimulationParametersStruct", MemoryLayout.Std140) {
+        val maxVelocity = float1()
+        val maxForce = float1()
+    }
+
 
     // Storage buffers
     var particle2CellKey by shader.storage("particle2CellKey")
@@ -278,6 +288,7 @@ class FieldsShader(
     var forces by shader.storage("forces")
     var boxMax by shader.uniform3f("boxMax")
     var colors by shader.storage("colors")
+    var params = shader.uniformStruct("params", ::SimulationParameters)
 
     var particleTypes by shader.storage("particleTypes")
 
@@ -319,8 +330,10 @@ class FieldsShader(
                     onBeforeDispatch {
                         configRepo.whenDirty {
                             dT = simulation.dT.toFloat()
-                            maxVelocity = simulation.maxVelocity.toFloat()
-                            maxForce = simulation.maxForce.toFloat()
+                            params.set {
+                                maxVelocity.set(simulation.maxVelocity.toFloat())
+                                maxForce.set(simulation.maxForce.toFloat())
+                            }
                             val count = simulation.targetCount
                             this@FieldsShader.count = count
                             setNumGroupsByInvocations(count)

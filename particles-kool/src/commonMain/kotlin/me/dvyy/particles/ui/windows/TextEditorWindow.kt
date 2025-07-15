@@ -72,7 +72,7 @@ class TextEditorWindow(
             }
         }
         scope.launch {
-            lines.debounce(2.seconds).collectLatest {
+            lines.drop(1).debounce(2.seconds).collectLatest {
                 configRepository.saveConfigLines(lines.value.joinToString("\n"))
             }
         }

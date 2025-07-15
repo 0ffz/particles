@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.dsl.ParticlesConfig
+import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.FileSystemUtils
 import kotlin.math.sqrt
 
@@ -19,7 +20,7 @@ class ConfigRepository(
     val settings: AppSettings,
 ) {
     private val _config = MutableStateFlow(
-        ParticlesConfig(nameToParticle = mapOf("argon" to Particle(color = "ff0000")))
+        ParticlesConfig(simulation = Simulation(targetCount = 1000, maxVelocity = 1.0),nameToParticle = mapOf("argon" to Particle(color = "ff0000", radius = 2.0)))
     )
     private val _configLines = MutableStateFlow(YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value))
     private val _currentFile = MutableStateFlow<PlatformFile?>(null)
@@ -73,7 +74,7 @@ class ConfigRepository(
         if (isDirty) run(config.value)
     }
 
-    suspend fun openFile(file: PlatformFile) {
+    suspend fun openFile(file: PlatformFile): Result<Unit> = runCatching {
         _currentFile.update { file }
         loadConfig(file.readString())
     }

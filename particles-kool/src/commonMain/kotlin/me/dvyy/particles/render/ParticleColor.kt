@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class ParticleColor {
-    TYPE, FORCE, CLUSTER
+    TYPE, VELOCITY, FORCE, CLUSTER
 }
 
 @Serializable

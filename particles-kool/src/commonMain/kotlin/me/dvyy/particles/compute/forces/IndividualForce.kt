@@ -6,7 +6,7 @@ import me.dvyy.particles.compute.forces.builders.KslIndividualForceFunction
 abstract class IndividualForce(name: String) : Force(name) {
     abstract fun KslIndividualForceFunction.createFunction()
 
-    override fun createFunction(stage: KslComputeStage) {
-        KslIndividualForceFunction(stage, name).createFunction()
+    override fun createFunction(stage: KslComputeStage): KslIndividualForceFunction {
+        return KslIndividualForceFunction(stage, name).apply { createFunction() }
     }
 }

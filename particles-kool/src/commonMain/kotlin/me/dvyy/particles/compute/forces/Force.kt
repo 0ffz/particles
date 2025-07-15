@@ -4,6 +4,8 @@ import de.fabmax.kool.modules.ksl.lang.KslComputeStage
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 import me.dvyy.particles.compute.forces.builders.FunctionParameter
+import me.dvyy.particles.compute.forces.builders.KslForceFocuntion
+import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
 
 abstract class Force(val name: String) {
     @PublishedApi
@@ -18,6 +20,6 @@ abstract class Force(val name: String) {
         return param
     }
 
-    abstract fun createFunction(stage: KslComputeStage)
+    abstract fun createFunction(stage: KslComputeStage): KslForceFocuntion
 }
 

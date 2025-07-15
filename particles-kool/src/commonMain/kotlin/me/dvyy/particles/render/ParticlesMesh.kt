@@ -13,10 +13,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import me.dvyy.particles.compute.FieldsShader.SimulationParameters
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.config.UiSettings
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -38,6 +38,14 @@ class ParticlesMesh(
         scope.launch {
             settings.ui.coloring.collectLatest {
                 mesh.shader?.uniform1i("colorType")?.set(it.ordinal)
+            }
+        }
+        scope.launch {
+            configRepository.config.map { it.simulation }.distinctUntilChanged().collectLatest {
+                mesh.shader?.uniformStruct("params", ::SimulationParameters)?.set {
+                    maxVelocity.set(it.maxVelocity.toFloat())
+                    maxForce.set(it.maxForce.toFloat())
+                }
             }
         }
     }
@@ -72,20 +80,24 @@ class ParticlesMesh(
         shader = KslShader("test") {
             val interColor = interStageFloat4()
             val fragPos = interStageFloat4("fragPos")
+            val interVelocity = interStageFloat1("interVelocity")
             val interCenter = interStageFloat3("interCenter")
             val interClusterId = interStageInt1("interClusterId")
             val interColorType = interStageInt1("interColorType")
+            val interMaxVelocity = interStageFloat1("maxVelocity")
 
             vertexStage {
                 main {
                     val camData = cameraData()
                     val positionsBuffer = storage<KslFloat4>("positionsBuffer")
+                    val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
                     val colorsBuffer = storage<KslFloat4>("colorsBuffer")
                     val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
                     val clusterBuffer = storage<KslInt1>("clusterBuffer")
                     val typesBuffer = storage<KslInt1>("typesBuffer")
                     val radii = storage<KslFloat1>("radii")
                     val colorType = uniformInt1("colorType")
+                    val simulationParams = uniformStruct("params", provider = ::SimulationParameters)
 
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
@@ -112,6 +124,8 @@ class ParticlesMesh(
                     interCenter.input set position
                     interClusterId.input set clusterId
                     interColorType.input set colorType
+                    interVelocity.input set length(velocitiesBuffer[offset])
+                    interMaxVelocity.input set simulationParams.struct.maxVelocity.ksl
                 }
             }
             fragmentStage {
@@ -139,14 +153,13 @@ class ParticlesMesh(
                         `if`(cluster eq (-1).const) {
                             baseColor set float4Value(0.1f, 0.1f, 0.1f, 1f)
                         }.`else` {
-
-                        val r = hash(cluster)
-                        val g = hash(cluster + 1.const)
-                        val b = hash(cluster + 2.const)
-                        baseColor set float4Value(r, g, b, 1f.const)
+                            val r = hash(cluster)
+                            val g = hash(cluster + 1.const)
+                            val b = hash(cluster + 2.const)
+                            baseColor set float4Value(r, g, b, 1f.const)
                         }
-                    }.elseIf(interColorType.output eq ParticleColor.FORCE.ordinal.const) {
-                        //TODO
+                    }.elseIf(interColorType.output eq ParticleColor.VELOCITY.ordinal.const) {
+                        baseColor set float4Value(pow(interVelocity.output / (interMaxVelocity.output + 1f.const), 1.5f.const), 0f.const, 0f.const, 1f.const)
                     }
 
                     // Tint color in 3d and apply sphere-like shadow
@@ -170,11 +183,13 @@ class ParticlesMesh(
             }
         }.apply {
             storage("positionsBuffer", buffers.positionBuffer)
+            storage("velocitiesBuffer", buffers.velocitiesBuffer)
             storage("colorsBuffer", buffers.colorsBuffer)
             storage("typeColorsBuffer", buffers.particleColors)
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
             storage("clusterBuffer", buffers.clustersBuffer)
+
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

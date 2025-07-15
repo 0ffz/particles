@@ -1,12 +1,15 @@
 package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
+import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.toString
+import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.helpers.TestForce
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
@@ -16,7 +19,6 @@ import me.dvyy.particles.ui.helpers.MenuSlider2
 import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.nodes.LineGraphNode
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
-import kotlin.math.sin
 
 class SimulationStatisticsWindow(
     ui: AppUI,
@@ -25,6 +27,7 @@ class SimulationStatisticsWindow(
     private val settings: AppSettings,
     private val clustering: ParticleClustering,
     private val scope: CoroutineScope,
+    private val scene: Scene,
 ) : FieldsWindow(
     name = "Simulation Stats",
     ui = ui,
@@ -52,7 +55,7 @@ class SimulationStatisticsWindow(
             Category("Graphs") {
                 val graph = remember {
                     LineGraphNode().apply {
-                        renderFunction(0f, 20f) { sin(it) }
+                        launchOnMainThread { renderGpuFunction(scene, TestForce) }
                     }
                 }
                 Box(Grow.Std, 400.dp) {

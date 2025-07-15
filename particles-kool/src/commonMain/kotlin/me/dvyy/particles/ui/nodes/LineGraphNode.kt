@@ -2,20 +2,24 @@ package me.dvyy.particles.ui.nodes
 
 import de.fabmax.kool.math.MutableVec4f
 import de.fabmax.kool.math.Vec2f
-import de.fabmax.kool.modules.ksl.KslUnlitShader
+import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ui2.Ui2Shader
 import de.fabmax.kool.modules.ui2.UiNode
 import de.fabmax.kool.modules.ui2.UiRenderer
-import de.fabmax.kool.pipeline.Attribute
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.pipeline.GpuType
+import de.fabmax.kool.pipeline.StorageBuffer
 import de.fabmax.kool.scene.Mesh
-import de.fabmax.kool.scene.addColorMesh
-import de.fabmax.kool.scene.addMesh
-import de.fabmax.kool.scene.addTextureMesh
+import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.scene.geometry.IndexedVertexList
 import de.fabmax.kool.scene.geometry.MeshBuilder
 import de.fabmax.kool.scene.geometry.Usage
 import de.fabmax.kool.util.Color
+import de.fabmax.kool.util.Float32Buffer
+import de.fabmax.kool.util.launchOnMainThread
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.compute.forces.PairwiseForce
 
 class LineGraphNode : UiRenderer<UiNode> {
@@ -25,8 +29,8 @@ class LineGraphNode : UiRenderer<UiNode> {
     private val clipBounds = MutableVec4f()
     private var width = 0
     private var height = 0
-    private var valuesX = arrayOf<Float>()
-    private var valuesY = arrayOf<Float>()
+    private var valuesX = floatArrayOf()
+    private var valuesY = floatArrayOf()
     private var viewport = MutableVec4f(-0.1f, -0.1f, 1f, 1f) // graph -> ui node positions
     private var updated = true
 
@@ -39,16 +43,48 @@ class LineGraphNode : UiRenderer<UiNode> {
         )
     }
 
-//    fun renderGpuFunction(force: PairwiseForce) {
-//        val computePass = ComputePass("single-shot")
-//        val task = computePass.addTask(force.createFunction(), groupDimensions)
-//        scene.addComputePass(computePass)
-//        task.onAfterDispatch {
-//            scene.removeComputePass(computePass)
-//            // or
-//            task.isEnabled = false
-//        }
-//    }
+    suspend fun renderGpuFunction(scene: Scene, force: PairwiseForce) {
+        val valuesX = FloatArray(256) { it.toFloat() / 256 }
+        val valuesY = getOneShotResultsFor(scene, force).await()
+        render(valuesX, valuesY)
+    }
+
+    fun getOneShotResultsFor(scene: Scene, force: PairwiseForce): Deferred<FloatArray> {
+        val computePass = ComputePass("single-shot")
+        val resolution = 256
+        val shader = force.createForceComputeShader()
+        shader.uniform1f("localNeighbors", 1f)
+        shader.uniform1i("lastIndex", resolution)
+        shader.storage("distances", StorageBuffer(GpuType.Float1, size = resolution).apply {
+            uploadData(Float32Buffer(resolution).apply {
+                repeat(resolution) {
+                    put(5f * it.toFloat() / resolution)
+                }
+            })
+        })
+        val outputBuffer = StorageBuffer(GpuType.Float1, size = resolution)
+        shader.storage("outputBuffer", outputBuffer)
+        val task = computePass.addTask(shader, Vec3i((resolution + WORK_GROUP_SIZE) / WORK_GROUP_SIZE, 1, 1))
+        scene.addComputePass(computePass)
+
+        val deferred = CompletableDeferred<FloatArray>()
+        task.onAfterDispatch {
+            task.isEnabled = false
+            try {
+                launchOnMainThread {
+                    val result = Float32Buffer(resolution)
+                    outputBuffer.downloadData(result)
+                    deferred.complete(result.toArray())
+                }
+            } catch (e: Exception) {
+                println(e.stackTraceToString())
+            } finally {
+                scene.removeComputePass(computePass)
+            }
+        }
+
+        return deferred
+    }
 
     fun renderFunction(
         from: Float,
@@ -56,11 +92,17 @@ class LineGraphNode : UiRenderer<UiNode> {
         resolution: Int = 100,
         function: (Float) -> Float,
     ) {
-        valuesX = Array(resolution) { from + ((it.toFloat() / resolution) * (to - from)) }
-        valuesY = Array(resolution) {
+        val valuesX = FloatArray(resolution) { from + ((it.toFloat() / resolution) * (to - from)) }
+        val valuesY = FloatArray(resolution) {
             val x = from + ((it.toFloat() / resolution) * (to - from))
             function(x)
         }
+        render(valuesX, valuesY)
+    }
+
+    fun render(valuesX: FloatArray, valuesY: FloatArray) {
+        this.valuesX = valuesX
+        this.valuesY = valuesY
         viewport.set(
             valuesX.min(),
             valuesY.min(),
@@ -95,6 +137,7 @@ class LineGraphNode : UiRenderer<UiNode> {
                 height = heightPx.toInt()
                 graphBuilder.clear()
                 // Render graph
+                if (valuesX.isEmpty() || valuesY.isEmpty()) return@apply
                 graphBuilder.configured(Color.Companion.WHITE) {
                     var prev = Vec2f(valuesX[0], valuesY[0]).toUi()
                     for (i in 1..valuesX.lastIndex) {

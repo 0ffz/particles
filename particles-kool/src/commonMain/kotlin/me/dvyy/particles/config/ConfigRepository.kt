@@ -8,7 +8,7 @@ import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import me.dvyy.particles.compute.WORK_GROUP_SIZE
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.Simulation

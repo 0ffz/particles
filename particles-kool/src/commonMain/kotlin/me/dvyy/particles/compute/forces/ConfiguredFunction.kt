@@ -1,10 +1,9 @@
-package me.dvyy.particles.compute
+package me.dvyy.particles.compute.forces
 
 import com.charleskorn.kaml.YamlNode
 import de.fabmax.kool.modules.ksl.lang.KslProgram
 import de.fabmax.kool.modules.ksl.lang.KslScalarExpression
 import de.fabmax.kool.modules.ksl.lang.KslScopeBuilder
-import me.dvyy.particles.compute.forces.Force
 import me.dvyy.particles.compute.forces.builders.FunctionParameter
 import me.dvyy.particles.config.YamlHelpers.decode
 import me.dvyy.particles.dsl.InteractionConfig

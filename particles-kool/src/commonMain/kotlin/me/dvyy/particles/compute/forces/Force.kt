@@ -5,7 +5,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
 import me.dvyy.particles.compute.forces.builders.FunctionParameter
 import me.dvyy.particles.compute.forces.builders.KslForceFocuntion
-import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
 
 abstract class Force(val name: String) {
     @PublishedApi

@@ -1,6 +1,6 @@
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
-import me.dvyy.particles.compute.WORK_GROUP_SIZE
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
 /**
  * Calculates

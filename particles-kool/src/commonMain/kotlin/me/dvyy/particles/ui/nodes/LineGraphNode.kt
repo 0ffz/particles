@@ -19,8 +19,8 @@ import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.compute.forces.PairwiseForce
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
 class LineGraphNode : UiRenderer<UiNode> {
     private val graphMesh: Mesh

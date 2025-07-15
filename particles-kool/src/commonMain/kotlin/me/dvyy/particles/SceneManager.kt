@@ -10,8 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.io.files.Path
-import me.dvyy.particles.compute.ForcesDefinition
 import me.dvyy.particles.compute.forces.Force
+import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.FileSystemUtils

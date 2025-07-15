@@ -1,4 +1,4 @@
-package me.dvyy.particles.compute
+package me.dvyy.particles.compute.simulation
 
 import de.fabmax.kool.math.PI_F
 import de.fabmax.kool.math.Vec3f
@@ -7,7 +7,12 @@ import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.util.MemoryLayout
 import de.fabmax.kool.util.Struct
+import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.forces.ForcesDefinition
+import me.dvyy.particles.compute.helpers.cellId
 import me.dvyy.particles.compute.helpers.forNearbyGridCells
+import me.dvyy.particles.compute.helpers.pairwiseFunctionCalls
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.dsl.pairwise.ParticlePair
@@ -19,7 +24,7 @@ class FieldsShader(
     val uniforms: UniformParameters,
     val forcesDef: ForcesDefinition,
 ) {
-    val halfStep = HalfStepShader()
+    val halfStep = VerletHalfStepShader()
     val shader = KslComputeShader("Fields") {
         computeStage(WORK_GROUP_SIZE) {
             // Uniforms
@@ -135,19 +140,7 @@ class FieldsShader(
                         val particleHash =
                             int1Var((otherType xor particleType) shl 16.const) or (otherType or particleType)
 
-                        // Prepare function calls for all pairwise interactions
-                        val functionCalls = forcesDef.pairwiseInteractions.map { (pair, forces) ->
-                            val invocations = forces.map {
-                                val kslFunction = functions[it.function.name] as? KslFunctionFloat1
-                                    ?: error("Function ${it.function.name} not registered")
-                                kslFunction.invoke(
-                                    dist,
-                                    localCount, //TODO generalize to a preprocess step
-                                    *it.getParameters(this, this@KslComputeShader, pair)
-                                )
-                            }
-                            invocations to pair.hash
-                        }
+                        val functionCalls = pairwiseFunctionCalls(forcesDef, dist, localCount)
 
                         // Add to pairwise force based on particle interaction hash
                         // TODO replace with a switch statement if added to KSL

@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.1.21"
+kotlin = "2.2.0"
 kool = "0.17.0"
 lwjgl = "3.3.5"
 coroutines = "1.8.0"

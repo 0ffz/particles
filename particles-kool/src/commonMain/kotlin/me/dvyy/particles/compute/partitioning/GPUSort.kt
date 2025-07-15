@@ -1,10 +1,11 @@
-package me.dvyy.particles.compute
+package me.dvyy.particles.compute.partitioning
 
 import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
-import de.fabmax.kool.scene.Scene
+import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.helpers.cellId
 import me.dvyy.particles.config.ConfigRepository
 
 const val WORK_GROUP_SIZE = 64
@@ -34,9 +35,9 @@ class GPUSort(
                 // get global invocation id
                 val idx = int1Var(inGlobalInvocationId.x.toInt1())
                 val position = positions[idx]
-                val xGrid = int1Var((position.x / gridSize).toInt1());
-                val yGrid = int1Var((position.y / gridSize).toInt1());
-                val zGrid = int1Var((position.z / gridSize).toInt1());
+                val xGrid = int1Var((position.x / gridSize).toInt1())
+                val yGrid = int1Var((position.y / gridSize).toInt1())
+                val zGrid = int1Var((position.z / gridSize).toInt1())
                 val cellId = int1Var(cellId(xGrid, yGrid, zGrid))
                 keys[idx] = cellId
                 indices[idx] = idx

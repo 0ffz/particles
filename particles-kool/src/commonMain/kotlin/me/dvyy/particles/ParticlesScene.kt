@@ -1,6 +1,5 @@
 package me.dvyy.particles
 
-import OffsetsShader
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Time
@@ -8,9 +7,10 @@ import de.fabmax.kool.util.releaseWith
 import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
-import me.dvyy.particles.compute.FieldsShader
-import me.dvyy.particles.compute.GPUSort
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.partitioning.GPUSort
+import me.dvyy.particles.compute.partitioning.OffsetsShader
+import me.dvyy.particles.compute.simulation.FieldsShader
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.launch

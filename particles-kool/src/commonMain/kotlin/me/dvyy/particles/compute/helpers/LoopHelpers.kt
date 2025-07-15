@@ -1,10 +1,12 @@
 package me.dvyy.particles.compute.helpers
 
+import de.fabmax.kool.modules.ksl.lang.KslFloat1
 import de.fabmax.kool.modules.ksl.lang.KslInt1
 import de.fabmax.kool.modules.ksl.lang.KslScalarExpression
 import de.fabmax.kool.modules.ksl.lang.KslScopeBuilder
 
 internal typealias KslInt = KslScalarExpression<KslInt1>
+internal typealias KslFloat = KslScalarExpression<KslFloat1>
 
 /** Loops over a third z value if config is set to threeDimensions */
 internal fun KslScopeBuilder.forZIf3d(

@@ -1,9 +1,10 @@
-package me.dvyy.particles.compute
+package me.dvyy.particles.compute.simulation
 
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
-class HalfStepShader {
+class VerletHalfStepShader {
     val shader = KslComputeShader("Fields Half-Step") {
         computeStage(WORK_GROUP_SIZE) {
             val dT = uniformFloat1("dT")

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.builtins.serializer
-import me.dvyy.particles.compute.ForcesDefinition
+import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.YamlHelpers.decode
 
 class UniformParameters(

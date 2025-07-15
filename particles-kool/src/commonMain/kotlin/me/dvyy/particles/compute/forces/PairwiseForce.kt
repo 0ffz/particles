@@ -2,8 +2,8 @@ package me.dvyy.particles.compute.forces
 
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
-import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.compute.forces.builders.KslPairwiseFunction
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
 /**
  * A force between two particles, given only distance as a parameter

@@ -1,8 +1,9 @@
+package me.dvyy.particles.compute.partitioning
+
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import me.dvyy.particles.compute.ParticleBuffers
-import me.dvyy.particles.compute.WORK_GROUP_SIZE
 import me.dvyy.particles.config.ConfigRepository
 
 /**
@@ -23,7 +24,7 @@ class OffsetsShader(
 
                 // Early return if beyond numValues
                 `if`(id lt numValues) {
-                    val notPresent = int1Var(numValues);
+                    val notPresent = int1Var(numValues)
                     val key = int1Var(keysBuffer[id])
                     val keyPrev = int1Var(notPresent)
                     `if`(id ne 0.const) {

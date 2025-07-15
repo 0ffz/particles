@@ -6,6 +6,7 @@ import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.Time
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.Buffers
 

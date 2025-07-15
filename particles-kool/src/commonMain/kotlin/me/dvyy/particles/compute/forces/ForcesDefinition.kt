@@ -1,8 +1,5 @@
-package me.dvyy.particles.compute
+package me.dvyy.particles.compute.forces
 
-import me.dvyy.particles.compute.forces.Force
-import me.dvyy.particles.compute.forces.IndividualForce
-import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.pairwise.ParticlePair
 

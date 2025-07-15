@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import me.dvyy.particles.compute.FieldsShader.SimulationParameters
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.simulation.FieldsShader.SimulationParameters
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import kotlin.math.PI

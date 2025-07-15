@@ -162,6 +162,13 @@ class ParticlesMesh(
                         baseColor set float4Value(pow(interVelocity.output / (interMaxVelocity.output + 1f.const), 1.5f.const), 0f.const, 0f.const, 1f.const)
                     }
 
+                    // TODO FORCE color
+                    // Update the color buffer based on the magnitude of the net force
+//                    colors[id] = float4Value(
+//                        log(length(nextForce)) / (2f.const * log(1000f.const)),
+//                        0f.const, 0f.const, 1f.const
+//                    )
+
                     // Tint color in 3d and apply sphere-like shadow
                     val color = baseColor.run {
                         if (tintFarAway) {

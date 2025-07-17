@@ -1,6 +1,7 @@
 package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
+import de.fabmax.kool.util.Color
 import kotlinx.coroutines.CoroutineScope
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
@@ -10,10 +11,8 @@ import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.ui.components.IconButton
-import me.dvyy.particles.ui.helpers.FieldsWindow
-import me.dvyy.particles.ui.helpers.MenuSlider2
-import me.dvyy.particles.ui.helpers.sectionSubtitleStyle
-import me.dvyy.particles.ui.helpers.sectionTitleStyle
+import me.dvyy.particles.ui.helpers.*
+import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class UniformsWindow(
@@ -21,6 +20,7 @@ class UniformsWindow(
     val viewModel: ParticlesViewModel,
     val configRepo: ConfigRepository,
     val scope: CoroutineScope,
+    val forceParametersViewModel: ForceParametersViewModel,
     val paramOverrides: ParameterOverrides,
 ) : FieldsWindow(
     name = "Live Parameters",
@@ -28,7 +28,8 @@ class UniformsWindow(
     icon = Icons.slidersHorizontal,
     preferredWidth = 300f,
 ) {
-//    val paramsState = uniforms.uniformParams.asMutableState(scope)
+    //    val paramsState = uniforms.uniformParams.asMutableState(scope)
+    val forceStates = forceParametersViewModel.parameters.asMutableState(scope, arrayOf())
     val overrides = paramOverrides.overrides.asMutableState(scope, mapOf())
 
     override fun UiScope.windowContent() = ScrollArea(
@@ -46,6 +47,55 @@ class UniformsWindow(
                 SimulationButtons(viewModel, paramsChanged = overrides.use().isNotEmpty())
             }
             Category("Interactions") {
+                forceStates.use().forEach { force ->
+                    40.dp
+                    Subcategory(force.name) {
+                        Row(Grow.Std) {
+                            Column(width = Grow.Std) {
+                                Text("Pair") { }
+                                force.interactions.forEachIndexed { row, interaction ->
+                                    Box(width = Grow.Std) {
+                                        val bg = if (row % 2 == 0) Color.WHITE.withAlpha(0.1f) else Color.TRANSPARENT
+                                        modifier.backgroundColor(bg)
+                                        Row {
+                                            interaction.set.ids.forEachIndexed { i, it ->
+                                                val particle = configRepo.config.value.particles[it.id]
+                                                val name = configRepo.config.value.particleName(it)
+                                                Text(name) {
+                                                    labelStyle()
+                                                    modifier.textColor(Color(particle.color).mix(Color.WHITE, 0.7f))
+                                                }
+                                                if (i != interaction.set.ids.lastIndex)
+                                                    Text("-") { labelStyle(); modifier.textColor(Color.LIGHT_GRAY) }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            force.interactions.firstOrNull()?.parameters?.indices?.forEach { i ->
+                                Column {
+                                    Text(force.interactions.first().parameters[i].name) { modifier.padding(horizontal = 8.dp) }
+                                    force.interactions.forEachIndexed { row, interaction ->
+                                        Box(Grow.MinFit) {
+                                            val bg =
+                                                if (row % 2 == 0) Color.WHITE.withAlpha(0.1f) else Color.TRANSPARENT
+                                            modifier.padding(horizontal = 8.dp).backgroundColor(bg)
+                                            val parameter = interaction.parameters[i]
+                                            ParameterTextInput(parameter, onChange = { new ->
+                                                forceParametersViewModel.updateParameter(
+                                                    force = force.name,
+                                                    interaction = interaction.set,
+                                                    name = parameter.name,
+                                                    value = new
+                                                )
+                                            })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 //                paramsState
 //                    .use()
 //                    .groupBy { it.configPath.substringBeforeLast(".").substringAfter(".") }
@@ -76,7 +126,7 @@ class UniformsWindow(
 //}
 
 private fun UiScope.ParameterSlider(
-    param: UniformParameter<Float>,
+    param: UniformParameter,
     isOverridden: Boolean,
     onChange: (Float) -> Unit,
 ) {
@@ -96,6 +146,19 @@ private fun UiScope.ParameterSlider(
             showSlider.set(it)
         }
     }
+}
+
+private fun UiScope.ParameterTextInput(
+    param: UniformParameter,
+    onChange: (Float) -> Unit,
+) {
+    MenuTextInput(
+        value = param.value,
+        min = param.range.start.toFloat(),
+        max = param.range.endInclusive.toFloat(),
+        precision = param.precision,
+        onChange = onChange,
+    )
 }
 
 fun UiScope.Category(name: String, desc: String? = null, content: UiScope.() -> Unit) {

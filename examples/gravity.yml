@@ -15,11 +15,7 @@ particles:
     radius: 2
     distribution: 1
 interactions:
-  a:
-    gravity:
-      force: 0.005
-  a-a:
-    morse:
-      De: !param;max=10 0.1
-      a: !param;max=500 20
-      re: !param;max=500 5
+  gravity:
+    a: { force: 0.005 }
+  morse:
+    a-a: { De: 0.1, a: 20, re: 5 }

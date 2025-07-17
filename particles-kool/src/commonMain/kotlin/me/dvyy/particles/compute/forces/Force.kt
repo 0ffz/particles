@@ -24,6 +24,7 @@ abstract class Force(val name: String) {
         .toFloatArray()
 
     /** The GPU shader code that defines this force. May require input parameters. */
-    abstract fun createFunction(stage: KslComputeStage): KslForceFocuntion
+    context(stage: KslComputeStage)
+    abstract fun createFunction(): KslForceFocuntion
 }
 

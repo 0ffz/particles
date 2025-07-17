@@ -40,7 +40,7 @@ class FieldsShader(
 
             // Define all force functions, create uniforms for their parameters
             forcesDef.forceTypes.forEach {
-                it.createFunction(this)
+                it.createFunction()
             }
             forcesDef.forces.forEach {
                 it.kslUniformBuffer
@@ -73,28 +73,16 @@ class FieldsShader(
                     val localCellId = int1Var(cellId(grid.x + x, grid.y + y, grid.z + z))
                     val startIndex = int1Var(cellOffsets[localCellId])
 
-                    // TODO Individual forces
-//                    val individualForceInvocations =
-//                        forcesDef.individualInteractions.map { (particle, forces) ->
-//                            val key = ParticlePair(particle, particle)
-//                            val invocations = forces.map {
-//                                val kslFunction = functions[it.function.name] as? KslFunctionFloat3
-//                                    ?: error("Function ${it.function.name} not registered")
-//                                // TODO apply maxForce to individual forces
-//                                kslFunction.invoke(
-//                                    position,
-//                                    *it.getParameters(this, this@KslComputeShader, key)
-//                                )
-//                            }
-//                            invocations to key.hash
-//                        }
-//
-//                    individualForceInvocations.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
-//                        acc.elseIf(particleType eq hash.const) {
-//                            // Sum all functions, add this to the net force
-//                            nextForce += invocations.reduce { acc, curr -> acc + curr }
-//                        }
-//                    }
+                    fun KslFloat.clampMaxForce() = min(this, params.maxForce.ksl)
+
+                    // Individual forces
+                    // TODO apply maxForce to individual forces
+                    forcesDef.individualForces.forEach {
+                        val functionRef = it.force.kslReference
+                        val paramsMat = mat4Var(it.kslUniformBuffer[particleType])
+                        val functionParams = it.extractParameters(paramsMat)
+                        nextForce += paramsMat[0][0] * functionRef.invoke(position, *functionParams)
+                    }
 
                     // TODO move into preprocess step for pairwise forces
                     // Calculate local neighbours (as in tersoff)
@@ -121,8 +109,6 @@ class FieldsShader(
                         `if`(dist gt 5f.const) { `continue`() }
                         localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
                     }
-
-                    fun KslFloat.clampMaxForce() = min(this, params.maxForce.ksl)
 
                     // Pairwise forces
                     fori(startIndex, count) { i ->

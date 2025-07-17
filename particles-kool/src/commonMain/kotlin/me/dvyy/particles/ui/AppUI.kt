@@ -20,6 +20,7 @@ import me.dvyy.particles.config.getFlow
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import me.dvyy.particles.ui.windows.*
 
@@ -35,6 +36,7 @@ class AppUI(
     val scope: CoroutineScope,
     val clustering: ParticleClustering,
     val paramOverrides: ParameterOverrides,
+    val paramsViewModel: ForceParametersViewModel,
 ) {
     val uiSizes = mutableStateOf(Sizes.large)
     val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
@@ -42,7 +44,7 @@ class AppUI(
     }
     val dock = Dock("Dock")
 
-    val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, scope, paramOverrides)
+    val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, scope, paramsViewModel, paramOverrides)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
     val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, clustering, scope)
     val visualsWindow = VisualOptionsWindow(this@AppUI, settings, scope)

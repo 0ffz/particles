@@ -12,12 +12,10 @@ import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 abstract class PairwiseForce(name: String) : Force(name) {
     abstract fun KslPairwiseFunction.createFunction()
 
-    override fun createFunction(stage: KslComputeStage): KslPairwiseFunction {
+    context(stage: KslComputeStage)
+    override fun createFunction(): KslPairwiseFunction {
         return KslPairwiseFunction(stage, name).apply { createFunction() }
     }
-
-    context(stage: KslComputeStage)
-    val kslReference get(): KslFunctionFloat1 = stage.functions[name] as KslFunctionFloat1
 
     fun createForceComputeShader() = KslComputeShader("force-one-shot") {
         computeStage(WORK_GROUP_SIZE) {
@@ -26,7 +24,7 @@ abstract class PairwiseForce(name: String) : Force(name) {
             val distances = storage<KslFloat1>("distances")
             val output = storage<KslFloat1>("outputBuffer")
 
-            val function = createFunction(this)
+            val function = createFunction()
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 `if`(id le lastIndex) {
@@ -35,6 +33,9 @@ abstract class PairwiseForce(name: String) : Force(name) {
             }
         }
     }
+
+    context(stage: KslComputeStage)
+    val kslReference get(): KslFunctionFloat1 = stage.functions[name] as KslFunctionFloat1
 
     companion object {
         /** Gets the hash for a pair of particle types (symmetrical), knowing the total particle type count. */

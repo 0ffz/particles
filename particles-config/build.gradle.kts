@@ -11,6 +11,10 @@ kotlin {
     jvm()
     jvmToolchain(21)
 
+    compilerOptions {
+        freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
+    }
+
     js {
         binaries.executable()
         browser {

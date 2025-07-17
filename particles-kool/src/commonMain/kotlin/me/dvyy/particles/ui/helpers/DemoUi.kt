@@ -46,6 +46,43 @@ fun UiScope.MenuSlider(
     }
 }
 
+fun UiScope.MenuTextInput(
+    value: Float,
+    min: Float = 0.0f,
+    max: Float,
+    precision: Int = 2,
+    txtFormat: (Float) -> String = { it.toString(precision) },
+    onChange: (Float) -> Unit,
+) {
+    val tempValue = remember { mutableStateOf(txtFormat(value)) }
+    val prevValue = remember { mutableStateOf(value) }
+    if (prevValue.value != value) {
+        prevValue.set(value)
+        tempValue.set(txtFormat(value))
+    }
+
+    val round = 10.0.pow(precision)
+    fun boundedChange(value: Float) {
+        onChange(((value.coerceAtLeast(min) * round).roundToInt() / round).toFloat())
+    }
+
+    fun UiModifier.scrollable() = onWheelY {
+        val multiplier = if (KeyboardInput.isShiftDown) 1f else 10f
+        boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.scroll.y)
+    }
+
+    TextField(tempValue.use()) {
+        modifier
+            .onChange { tempValue.set(it) }
+            .onEnterPressed {
+                tempValue.value.toFloatOrNull()?.let { boundedChange(it) }
+                tempValue.set(txtFormat(value))
+            }
+            .align(yAlignment = AlignmentY.Center)
+            .padding(vertical = sizes.smallGap * 0.5f)
+            .scrollable()
+    }
+}
 fun UiScope.MenuSlider2(
     label: String,
     value: Float,
@@ -68,23 +105,7 @@ fun UiScope.MenuSlider2(
 
     MenuRow {
         Text(label) { labelStyle(Grow.Std) }
-        val tempValue = remember { mutableStateOf(txtFormat(value)) }
-        val prevValue = remember { mutableStateOf(value) }
-        if (prevValue.value != value) {
-            prevValue.set(value)
-            tempValue.set(txtFormat(value))
-        }
-        TextField(tempValue.use()) {
-            modifier
-                .onChange { tempValue.set(it) }
-                .onEnterPressed {
-                    tempValue.value.toFloatOrNull()?.let { boundedChange(it) }
-                    tempValue.set(txtFormat(value))
-                }
-                .align(yAlignment = AlignmentY.Center)
-                .padding(vertical = sizes.smallGap * 0.5f)
-                .scrollable()
-        }
+        MenuTextInput(value, min, max, precision, txtFormat, onChange)
     }
     if (sliderShown) MenuRow {
         Slider(value, min, max) {

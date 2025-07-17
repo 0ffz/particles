@@ -19,12 +19,17 @@ data class ParticlesConfig(
     @Transient
     val particles = nameToParticle.values.toList()
 
+    val particleTypeCount = particles.size
+
     @Transient
     private var highestId = 0
 
     @Transient
     val particleIds: Map<String, ParticleId> = nameToParticle.mapValues { ParticleId(highestId++) }
 
+    fun particle(name: String): ParticleId = particleIds[name] ?: error("Particle with name $name not found")
+
+    fun particleName(id: ParticleId) = particleIds.entries.firstOrNull { it.value == id }?.key ?: error("Particle with id $id not found")
 //    @Transient
 //    val pairwiseInteractions: Map<InteractionName, Map<ParticlePair, Parameters>> = interactions.mapNotNull { (name, interactions) ->
 //        val pair = ParticlePair.fromString(name, particleIds) ?: return@mapNotNull null

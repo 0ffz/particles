@@ -57,6 +57,7 @@ class ConfigRepository(
         _configLines.update { configString }
         runCatching { YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), configString) }
             .onSuccess { updateConfig(it) }
+            .onFailure { it.printStackTrace() }
     }
 
     fun updateConfig(config: ParticlesConfig) {

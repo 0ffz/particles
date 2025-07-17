@@ -1,18 +1,14 @@
 package me.dvyy.particles.config
 
-import de.fabmax.kool.pipeline.ComputeShader
-
-data class UniformParameter<T: Any>(
+data class UniformParameter(
     val name: String,
     val configPath: String,
-    val uniformName: String,
-    val value: T,
-    val precision : Int = 0,
+    val value: Float,
+    val precision: Int = when(value) {
+        in 0f..1f -> 3
+        in 0f..100f -> 2
+        in 0f..10000f -> 1
+        else -> 0
+    },
     val range: ClosedFloatingPointRange<Double> = 0.0..100.0,
-)  {
-    fun setUniform(shader: ComputeShader) = when(value) {
-        is Float -> shader.uniform1f(uniformName).set(value)
-        is Int -> shader.uniform1i(uniformName).set(value)
-        else -> error("Can't set uniform of type ${value::class}")
-    }
-}
+)

@@ -39,6 +39,7 @@ filekit-dialogs = { group = "io.github.vinceglb", name = "filekit-dialogs", vers
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+kotlin-powerassert = { id = "org.jetbrains.kotlin.plugin.power-assert", version.ref = "kotlin" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta13" }
 graalvm-nativeimage = "org.graalvm.buildtools.native:0.10.3"

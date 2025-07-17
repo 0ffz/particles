@@ -13,7 +13,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.dvyy.particles.clustering.ParticleClustering
-import me.dvyy.particles.config.*
+import me.dvyy.particles.config.AppSettings
+import me.dvyy.particles.config.ConfigRepository
+import me.dvyy.particles.config.ParameterOverrides
+import me.dvyy.particles.config.getFlow
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppSizes.sidebarSize
 import me.dvyy.particles.ui.helpers.FieldsWindow
@@ -26,7 +29,6 @@ object AppSizes {
 
 class AppUI(
     val ctx: KoolContext,
-    val uniforms: UniformParameters,
     val viewModel: ParticlesViewModel,
     val configRepository: ConfigRepository,
     val settings: AppSettings,
@@ -40,7 +42,7 @@ class AppUI(
     }
     val dock = Dock("Dock")
 
-    val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, uniforms, scope, paramOverrides)
+    val uniformsWindow = UniformsWindow(this@AppUI, viewModel, configRepository, scope, paramOverrides)
     val textEditorWindow = TextEditorWindow(this@AppUI, configRepository, viewModel, scope)
     val statsWindow = SimulationStatisticsWindow(this@AppUI, viewModel, configRepository, settings, clustering, scope)
     val visualsWindow = VisualOptionsWindow(this@AppUI, settings, scope)

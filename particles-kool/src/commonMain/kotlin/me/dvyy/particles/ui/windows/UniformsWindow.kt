@@ -2,11 +2,9 @@ package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.serialization.builtins.serializer
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.UniformParameter
-import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
@@ -22,7 +20,6 @@ class UniformsWindow(
     ui: AppUI,
     val viewModel: ParticlesViewModel,
     val configRepo: ConfigRepository,
-    val uniforms: UniformParameters,
     val scope: CoroutineScope,
     val paramOverrides: ParameterOverrides,
 ) : FieldsWindow(
@@ -31,7 +28,7 @@ class UniformsWindow(
     icon = Icons.slidersHorizontal,
     preferredWidth = 300f,
 ) {
-    val paramsState = uniforms.uniformParams.asMutableState(scope)
+//    val paramsState = uniforms.uniformParams.asMutableState(scope)
     val overrides = paramOverrides.overrides.asMutableState(scope, mapOf())
 
     override fun UiScope.windowContent() = ScrollArea(
@@ -49,19 +46,19 @@ class UniformsWindow(
                 SimulationButtons(viewModel, paramsChanged = overrides.use().isNotEmpty())
             }
             Category("Interactions") {
-                paramsState
-                    .use()
-                    .groupBy { it.configPath.substringBeforeLast(".").substringAfter(".") }
-                    .forEach { (name, params) ->
-                        Subcategory(name) {
-                            params.forEach { param ->
-                                val isOverridden = overrides.use().contains(param.configPath)
-                                ParameterSlider(param, isOverridden, onChange = {
-                                    viewModel.updateOverrides(param.configPath, it, Float.serializer())
-                                })
-                            }
-                        }
-                    }
+//                paramsState
+//                    .use()
+//                    .groupBy { it.configPath.substringBeforeLast(".").substringAfter(".") }
+//                    .forEach { (name, params) ->
+//                        Subcategory(name) {
+//                            params.forEach { param ->
+//                                val isOverridden = overrides.use().contains(param.configPath)
+//                                ParameterSlider(param, isOverridden, onChange = {
+//                                    viewModel.updateOverrides(param.configPath, it, Float.serializer())
+//                                })
+//                            }
+//                        }
+//                    }
             }
         }
     }

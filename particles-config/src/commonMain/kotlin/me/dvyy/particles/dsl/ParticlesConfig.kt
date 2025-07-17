@@ -1,13 +1,12 @@
 package me.dvyy.particles.dsl
 
-import com.charleskorn.kaml.YamlNode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import me.dvyy.particles.dsl.pairwise.ParticlePair
 
-typealias InteractionConfig = Map<String, Parameter<YamlNode>>
-typealias Interactions = Map<String, InteractionConfig>
+internal typealias Parameters = Map<String, Float>
+internal typealias InteractionName = String
+internal typealias PairName = String
 
 @Serializable
 data class ParticlesConfig(
@@ -15,45 +14,26 @@ data class ParticlesConfig(
     val application: ApplicationConfiguration = ApplicationConfiguration(),
     @SerialName("particles")
     val nameToParticle: Map<String, Particle> = mapOf(),
-    val interactions: Map<String, Interactions> = mapOf(),
+    val interactions: Map<InteractionName, Map<PairName, Parameters>> = mapOf(),
 ) {
     @Transient
     val particles = nameToParticle.values.toList()
 
     @Transient
-    private var highestId = 0u
+    private var highestId = 0
 
     @Transient
     val particleIds: Map<String, ParticleId> = nameToParticle.mapValues { ParticleId(highestId++) }
 
-    @Transient
-    val pairwiseInteractions: Map<ParticlePair, Interactions> = interactions.mapNotNull { (name, interactions) ->
-        val pair = ParticlePair.fromString(name, particleIds) ?: return@mapNotNull null
-        pair to interactions
-    }.toMap()
-
-    @Transient
-    val individualInteractions = interactions.mapNotNull { (name, interactions) ->
-        val individual = particleIds[name] ?: return@mapNotNull null
-        individual to interactions
-    }.toMap()
 //    @Transient
-//    val pairwiseInteractions: List<PairwiseInteractions> = interactions.map { (name, interactions) ->
-//        val (first, second) = name.split("-")
-//        val pair = ParticlePair(particleIds[first]!!, particleIds[second]!!)
-//        PairwiseInteractions(
-//            pair,
-//            interactions.map { (name, params) ->
-//                FunctionWithParams(
-//                    uniformPrefix = pair.hash.toString(),
-//                    function = LennardJones,
-//                    params = params,
-//                )
-//            }
-//        )
-//    }
+//    val pairwiseInteractions: Map<InteractionName, Map<ParticlePair, Parameters>> = interactions.mapNotNull { (name, interactions) ->
+//        val pair = ParticlePair.fromString(name, particleIds) ?: return@mapNotNull null
+//        pair to interactions
+//    }.toMap()
 //
 //    @Transient
-//    val configurableUniforms: List<UniformParameter<*>> = pairwiseInteractions
-//        .flatMap { it.uniforms }
+//    val individualInteractions: Map<ParticleId, Map<PairName, Parameters>> = interactions.mapNotNull { (name, interactions) ->
+//        val individual = particleIds[name] ?: return@mapNotNull null
+//        individual to interactions
+//    }.toMap()
 }

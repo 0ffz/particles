@@ -2,15 +2,15 @@ package me.dvyy.particles.compute.simulation
 
 import de.fabmax.kool.pipeline.ComputePass
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.config.UniformParameters
 
 class FieldsMultiPasses(
     val buffers: ParticleBuffers,
-    val uniforms: UniformParameters,
     val configRepo: ConfigRepository,
-    val halfStep : VerletHalfStepShader,
-    val fields : FieldsShader,
+    val halfStep: VerletHalfStepShader,
+    val fields: FieldsShader,
+    val forcesDefinition: ForcesDefinition
 ) {
     private fun initBuffers() {
         fields.gridSize = configRepo.gridSize
@@ -57,9 +57,11 @@ class FieldsMultiPasses(
                             fields.count = count
                             setNumGroupsByInvocations(count)
                         }
-                        //TODO move up to whenDirty
-                        uniforms.uniformParams.value.forEach { uniform ->
-                            uniform.setUniform(shader)
+                        //TODO whenDirty
+                        with(shader) {
+                            forcesDefinition.forces.forEach {
+                                it.uploadParameters()
+                            }
                         }
                     }
                 }

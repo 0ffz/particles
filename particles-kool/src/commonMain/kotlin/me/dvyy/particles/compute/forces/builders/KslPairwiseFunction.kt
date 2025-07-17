@@ -1,20 +1,11 @@
 package me.dvyy.particles.compute.forces.builders
 
-import de.fabmax.kool.modules.ksl.lang.KslComputeStage
-import de.fabmax.kool.modules.ksl.lang.KslExpression
-import de.fabmax.kool.modules.ksl.lang.KslFloat1
-import de.fabmax.kool.modules.ksl.lang.KslFloat3
-import de.fabmax.kool.modules.ksl.lang.KslFunction
-import de.fabmax.kool.modules.ksl.lang.KslScopeBuilder
-import de.fabmax.kool.modules.ksl.lang.functionFloat1
-import de.fabmax.kool.modules.ksl.lang.functionFloat2
-import de.fabmax.kool.modules.ksl.lang.functionFloat3
+import de.fabmax.kool.modules.ksl.lang.*
 import kotlin.jvm.JvmName
 
 abstract class KslForceFocuntion(
     stage: KslComputeStage,
     name: String,
-
 ) {
     internal abstract val function: KslFunction<*>
 
@@ -23,6 +14,7 @@ abstract class KslForceFocuntion(
     @JvmName("asShaderParamInt")
     fun FunctionParameter<Int>.asShaderParam() = function.paramInt1(name)
 }
+
 class KslIndividualForceFunction(
     stage: KslComputeStage,
     name: String,

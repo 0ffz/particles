@@ -24,8 +24,8 @@ particles:
 #    radius: 1.5
 #    distribution: 1
 interactions:
-  ligand-ligand:
-    tersoff_simple:
+  tersoff_simple:
+    ligand-ligand:
       beta: !param;max=1 0.33675
       n: !param;max=30 22.956
       A: !param;max=5000 3264.7

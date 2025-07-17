@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.powerassert)
     alias(libs.plugins.kotlinx.serialization)
 }
 
@@ -79,6 +80,11 @@ kotlin {
         jsMain {
             dependencies {
                 // add additional js-specific dependencies here...
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
             }
         }
     }

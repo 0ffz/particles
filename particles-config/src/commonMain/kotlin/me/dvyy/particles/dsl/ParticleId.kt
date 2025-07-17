@@ -1,3 +1,3 @@
 package me.dvyy.particles.dsl
 
-class ParticleId(val id: UInt)
+class ParticleId(val id: Int)

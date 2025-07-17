@@ -4,26 +4,27 @@ import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.pairwise.ParticlePair
 
 class ForcesDefinition(
-    val forces: List<Force>,
-    val config: ParticlesConfig,
+    val forceTypes: List<Force>,
+    private val config: ParticlesConfig,
 ) {
-    val pairwiseForces = forces.filterIsInstance<PairwiseForce>()
-    val individualForces = forces.filterIsInstance<IndividualForce>()
-
-    val pairwiseInteractions: Map<ParticlePair, List<ConfiguredFunction>> =
-        config.pairwiseInteractions.map { (pair, interactions) ->
-            val forces = interactions.map { (name, config) ->
-                val function = pairwiseForces.find { it.name == name } ?: error("Unknown pairwise interaction: $name")
-                ConfiguredFunction(function, config)
+    val particleTypeCount = config.particles.size
+    val forces: List<ForceWithParameters<*>> = config.interactions.map { (name, params) ->
+        val force = forceTypes.find { it.name == name } ?: error("Unknown force: $name")
+        ForceWithParameters(force, particleTypeCount).apply {
+            params.forEach { (key, values) ->
+                val hash = when(force) {
+                    is PairwiseForce -> ParticlePair.fromString(key, config.particleIds, particleTypeCount)?.hash ?: error("Unknown particle pair: $key")
+                    is IndividualForce -> config.particleIds[key]?.id ?: error("Unknown particle: $key")
+                    else -> error("Invalid force type")
+                }
+                put(hash, force.parseParameters(values))
             }
-            pair to forces
-        }.toMap()
-
-    val individualInteractions = config.individualInteractions.map { (particle, interactions) ->
-        //TODO repeated code
-        val forces = interactions.map { (name, config) ->
-            ConfiguredFunction(individualForces.find { it.name == name }!!, config)
         }
-        particle to forces
-    }.toMap()
+    }
+
+    val pairwiseForces: List<ForceWithParameters<PairwiseForce>> = forces
+        .filter { it.force is PairwiseForce } as List<ForceWithParameters<PairwiseForce>>
+//    val individualForces: List<ForceWithParameters<IndividualForce>> =
+//        TODO() //forces.filterIsInstance<IndividualForce>()
+
 }

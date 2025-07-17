@@ -6,13 +6,13 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.forces.ForcesDefinition
+import me.dvyy.particles.compute.forces.PairwiseForce
+import me.dvyy.particles.compute.forces.get
+import me.dvyy.particles.compute.helpers.KslFloat
 import me.dvyy.particles.compute.helpers.cellId
 import me.dvyy.particles.compute.helpers.forNearbyGridCells
-import me.dvyy.particles.compute.helpers.pairwiseFunctionCalls
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.dsl.pairwise.ParticlePair
-
 
 class FieldsShader(
     val configRepo: ConfigRepository,
@@ -38,9 +38,12 @@ class FieldsShader(
 
             val particleTypes = storage<KslInt1>("particleTypes")
 
-            // Define all force functions
-            forcesDef.forces.forEach {
+            // Define all force functions, create uniforms for their parameters
+            forcesDef.forceTypes.forEach {
                 it.createFunction(this)
+            }
+            forcesDef.forces.forEach {
+                it.kslUniformBuffer
             }
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
@@ -49,7 +52,6 @@ class FieldsShader(
             main {
                 // Get the particle id from the global invocation (using only x as in GLSL)
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
-
                 // Load current particle properties
                 // Extract the 2D position from the stored vec4
                 val position = float3Var(positions[id].xyz) //p(t + dt); since half step runs before this
@@ -71,28 +73,28 @@ class FieldsShader(
                     val localCellId = int1Var(cellId(grid.x + x, grid.y + y, grid.z + z))
                     val startIndex = int1Var(cellOffsets[localCellId])
 
-                    // Individual forces
-                    val individualForceInvocations =
-                        forcesDef.individualInteractions.map { (particle, forces) ->
-                            val key = ParticlePair(particle, particle)
-                            val invocations = forces.map {
-                                val kslFunction = functions[it.function.name] as? KslFunctionFloat3
-                                    ?: error("Function ${it.function.name} not registered")
-                                // TODO apply maxForce to individual forces
-                                kslFunction.invoke(
-                                    position,
-                                    *it.getParameters(this, this@KslComputeShader, key)
-                                )
-                            }
-                            invocations to key.hash
-                        }
-
-                    individualForceInvocations.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
-                        acc.elseIf(particleType eq hash.const) {
-                            // Sum all functions, add this to the net force
-                            nextForce += invocations.reduce { acc, curr -> acc + curr }
-                        }
-                    }
+                    // TODO Individual forces
+//                    val individualForceInvocations =
+//                        forcesDef.individualInteractions.map { (particle, forces) ->
+//                            val key = ParticlePair(particle, particle)
+//                            val invocations = forces.map {
+//                                val kslFunction = functions[it.function.name] as? KslFunctionFloat3
+//                                    ?: error("Function ${it.function.name} not registered")
+//                                // TODO apply maxForce to individual forces
+//                                kslFunction.invoke(
+//                                    position,
+//                                    *it.getParameters(this, this@KslComputeShader, key)
+//                                )
+//                            }
+//                            invocations to key.hash
+//                        }
+//
+//                    individualForceInvocations.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
+//                        acc.elseIf(particleType eq hash.const) {
+//                            // Sum all functions, add this to the net force
+//                            nextForce += invocations.reduce { acc, curr -> acc + curr }
+//                        }
+//                    }
 
                     // TODO move into preprocess step for pairwise forces
                     // Calculate local neighbours (as in tersoff)
@@ -120,6 +122,8 @@ class FieldsShader(
                         localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
                     }
 
+                    fun KslFloat.clampMaxForce() = min(this, params.maxForce.ksl)
+
                     // Pairwise forces
                     fori(startIndex, count) { i ->
                         `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
@@ -130,26 +134,20 @@ class FieldsShader(
                         `if`(dist gt gridSize) { `continue`() }
                         val forceBetweenParticles = float1Var(0f.const)
                         val otherType = int1Var(particleTypes[i])
+
                         // Compute a hash based on the particle types
-                        val particleHash =
-                            int1Var((otherType xor particleType) shl 16.const) or (otherType or particleType)
+                        val pairHash = PairwiseForce.pairHash(particleType, otherType, forcesDef.particleTypeCount)
 
-                        val functionCalls = pairwiseFunctionCalls(forcesDef, dist, localCount)
-
-                        // Add to pairwise force based on particle interaction hash
-                        // TODO replace with a switch statement if added to KSL
-                        functionCalls.fold(`if`(false.const) {}) { acc, (invocations, hash) ->
-                            acc.elseIf(particleHash eq hash.const) {
-                                // Sum all functions, add this to the net force
-                                forceBetweenParticles += min(
-                                    invocations.reduce { acc, curr -> acc + curr },
-                                    params.maxForce.ksl
-                                )
-                            }
+                        // Call invoke each pairwise force function with extracted parameters
+                        forcesDef.pairwiseForces.forEach {
+                            val functionRef = it.force.kslReference
+                            val paramsMat = mat4Var(it.kslUniformBuffer[pairHash])
+                            val functionParams = it.extractParameters(paramsMat)
+                            // For pairs without an interaction paramsMat[0][0] is 0
+                            forceBetweenParticles += paramsMat[0][0] *
+                                    functionRef.invoke(dist, localCount, *functionParams).clampMaxForce()
                         }
 
-                        // (Insert your force calculation logic here which should modify forceBetweenParticles)
-                        // Accumulate force (direction normalized multiplied by the calculated force)
                         nextForce += normalize(direction) * forceBetweenParticles
                     }
                 }

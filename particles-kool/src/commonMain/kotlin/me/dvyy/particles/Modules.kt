@@ -12,7 +12,6 @@ import me.dvyy.particles.compute.simulation.VerletHalfStepShader
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
-import me.dvyy.particles.config.UniformParameters
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
 import me.dvyy.particles.ui.AppUI
@@ -29,7 +28,6 @@ fun persistentModule(ctx: KoolContext) = module {
 }
 
 fun dataModule() = module {
-    singleOf(::UniformParameters)
     singleOf(::ParticleBuffers)
     singleOf(::CameraManager)
     singleOf(::ParticlesViewModel)

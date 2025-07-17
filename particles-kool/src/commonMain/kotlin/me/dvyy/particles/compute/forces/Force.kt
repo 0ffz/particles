@@ -10,7 +10,7 @@ abstract class Force(val name: String) {
     @PublishedApi
     internal val parameters = mutableListOf<FunctionParameter<*>>()
 
-    inline fun <reified T> param(
+    protected inline fun <reified T> param(
         name: String,
         serializer: KSerializer<T> = serializer<T>(),
     ): FunctionParameter<T> {
@@ -19,6 +19,11 @@ abstract class Force(val name: String) {
         return param
     }
 
+    fun parseParameters(config: Map<String, Float>): FloatArray = parameters
+        .map { config[it.name] ?: error("Missing parameter ${it.name}") }
+        .toFloatArray()
+
+    /** The GPU shader code that defines this force. May require input parameters. */
     abstract fun createFunction(stage: KslComputeStage): KslForceFocuntion
 }
 

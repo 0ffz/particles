@@ -20,26 +20,15 @@ particles:
     color: ff0000
     radius: 1.5
     distribution: 1
-    #convertTo:
-      # type: ligand
-      # chance: 0.01
+      #convertTo:
+    # type: ligand
+    # chance: 0.01
 #  hidden:
 #    color: 000000
 #    radius: 0
 #    distribution : 1
 interactions:
-  ligand-monomer:
-    morse:
-      De: !param;max=10 5.0
-      a: !param;max=500 5.0
-      re: !param;max=10 1.0
-  ligand-ligand:
-    morse:
-      De: !param;max=10 5.0
-      a: !param;max=500 5.0
-      re: !param;max=10 1.0
-  monomer-monomer:
-    morse:
-      De: !param;max=10 5.0
-      a: !param;max=500 5.0
-      re: !param;max=10 1.0
+  morse:
+    ligand-monomer: { De: 5.0, a: 5.0, re: 1.0 }
+    ligand-ligand: { De: 5.0, a: 5.0, re: 1.0 }
+    monomer-monomer: { De: 5.0, a: 5.0, re: 1.0 }

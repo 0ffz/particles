@@ -40,7 +40,7 @@ class FieldsMultiPasses(
                     onBeforeDispatch {
                         configRepo.whenDirty {
                             halfStep.dT = simulation.dT.toFloat()
-                            val count = simulation.targetCount
+                            val count = simulation.count
                             setNumGroupsByInvocations(count)
                         }
                     }
@@ -53,7 +53,7 @@ class FieldsMultiPasses(
                                 maxVelocity.set(simulation.maxVelocity.toFloat())
                                 maxForce.set(simulation.maxForce.toFloat())
                             }
-                            val count = simulation.targetCount
+                            val count = simulation.count
                             fields.count = count
                             setNumGroupsByInvocations(count)
                         }

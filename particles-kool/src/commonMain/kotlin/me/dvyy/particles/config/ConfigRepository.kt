@@ -20,7 +20,7 @@ class ConfigRepository(
     val settings: AppSettings,
 ) {
     private val _config = MutableStateFlow(
-        ParticlesConfig(simulation = Simulation(targetCount = 1000, maxVelocity = 1.0),nameToParticle = mapOf("argon" to Particle(color = "ff0000", radius = 2.0)))
+        ParticlesConfig(simulation = Simulation(count = 1000, maxVelocity = 1.0),nameToParticle = mapOf("argon" to Particle(color = "ff0000", radius = 2.0)))
     )
     private val _configLines = MutableStateFlow(YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value))
     private val _currentFile = MutableStateFlow<PlatformFile?>(null)
@@ -30,8 +30,8 @@ class ConfigRepository(
 
     var isDirty: Boolean = true
 
-    val count get() = (_config.value.simulation.targetCount / WORK_GROUP_SIZE) * WORK_GROUP_SIZE
-    val numGroups get() = Vec3i(count / WORK_GROUP_SIZE, 1, 1)
+    val count get() = _config.value.simulation.count
+    val numGroups get() = Vec3i(count / WORK_GROUP_SIZE + 1, 1, 1)
 
     private val desiredSize: Vec3i
         get() = run {
@@ -46,7 +46,7 @@ class ConfigRepository(
             val rows = (desiredSize.y / smallestSize).toInt()
             val depths = if (desiredSize.z == 0) 1 else (desiredSize.z / smallestSize).toInt()
             if (rows * cols * depths > count) {
-                sqrt((desiredSize.x.toFloat() * desiredSize.y.toFloat() * (desiredSize.z.coerceAtLeast(1)).toFloat()) / count) + 1.0
+                sqrt((desiredSize.x.toFloat() * desiredSize.y.toFloat() * (desiredSize.z.coerceAtLeast(1)).toFloat()) / count)
             } else smallestSize
         }.toFloat()
 

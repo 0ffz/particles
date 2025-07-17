@@ -16,32 +16,6 @@ particles:
     color: ffffff
     radius: 1
     distribution: 2
-      #  oxygen:
-      #    color: ff0000
-      #    radius: 1.5
-      #    distribution: 1
-      #convertTo:
-    # type: hydrogen
-    # chance: 0.01
-#  hidden:
-#    color: 000000
-#    radius: 0
-#    distribution : 1
 interactions:
-  argon-argon:
-    morse:
-      De: !param;max=10 3.405
-      a: !param;max=500 1
-      re: !param;max=500 5
-#  hydrogen-oxygen:
-#    lennardJones:
-#      sigma: !param;max=10 5.0
-#      epsilon: !param;max=500 5.0
-#  hydrogen-hydrogen:
-#    lennardJones:
-#      sigma: !param;max=10 5.0
-#      epsilon: !param;max=500 5.0
-#  oxygen-oxygen:
-#    lennardJones:
-#      sigma: !param;max=10 10.0
-#      epsilon: !param;max=500 5.0
+  morse:
+    argon-argon: { De: 3.405, a: 1, re: 5 }

@@ -31,7 +31,7 @@ class ParticlesMesh(
 
     init {
         scope.launch {
-            configRepository.config.map { it.simulation.targetCount }.distinctUntilChanged().collectLatest {
+            configRepository.config.map { it.simulation.count }.distinctUntilChanged().collectLatest {
                 instances.numInstances = configRepository.count
             }
         }

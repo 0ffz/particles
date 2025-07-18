@@ -53,6 +53,7 @@ fun UiScope.MenuTextInput(
     precision: Int = 2,
     txtFormat: (Float) -> String = { it.toString(precision) },
     onChange: (Float) -> Unit,
+    block: TextFieldScope.() -> Unit = {}
 ) {
     val tempValue = remember { mutableStateOf(txtFormat(value)) }
     val prevValue = remember { mutableStateOf(value) }
@@ -81,6 +82,7 @@ fun UiScope.MenuTextInput(
             .align(yAlignment = AlignmentY.Center)
             .padding(vertical = sizes.smallGap * 0.5f)
             .scrollable()
+        block()
     }
 }
 fun UiScope.MenuSlider2(
@@ -91,7 +93,8 @@ fun UiScope.MenuSlider2(
     precision: Int = 2,
     txtFormat: (Float) -> String = { it.toString(precision) },
     onChange: (Float) -> Unit,
-    sliderShown: Boolean = true,
+    block: SliderScope.() -> Unit = {},
+//    sliderShown: Boolean = true,
 ) {
     val round = 10.0.pow(precision)
     fun boundedChange(value: Float) {
@@ -103,16 +106,17 @@ fun UiScope.MenuSlider2(
         boundedChange(value + multiplier * (0.1f).pow(precision) * it.pointer.scroll.y)
     }
 
+//    MenuRow {
+//        Text(label) { labelStyle(Grow.Std) }
+//        MenuTextInput(value, min, max, precision, txtFormat, onChange)
+//    }
     MenuRow {
-        Text(label) { labelStyle(Grow.Std) }
-        MenuTextInput(value, min, max, precision, txtFormat, onChange)
-    }
-    if (sliderShown) MenuRow {
         Slider(value, min, max) {
             modifier
                 .width(Grow.Std)
                 .alignY(AlignmentY.Center)
                 .onChange { boundedChange(it) }
+            block()
         }
         modifier.scrollable()
     }

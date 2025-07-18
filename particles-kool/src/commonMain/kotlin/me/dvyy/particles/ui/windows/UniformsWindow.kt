@@ -1,5 +1,7 @@
 package me.dvyy.particles.ui.windows
 
+import de.fabmax.kool.input.PointerInput
+import de.fabmax.kool.math.Vec2f
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +17,10 @@ import me.dvyy.particles.ui.helpers.*
 import me.dvyy.particles.ui.nodes.LineGraphNode
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.log10
+import kotlin.math.pow
 
 class UniformsWindow(
     ui: AppUI,
@@ -42,8 +48,10 @@ class UniformsWindow(
         Column(Grow.Std, Grow.Std) {
             Category("Simulation") {
                 val state = viewModel.uiState.use()
-                state.forEach {
-                    with(it) { draw() }
+                Column(Grow.Std) {
+                    state.forEach {
+                        with(it) { draw() }
+                    }
                 }
                 SimulationButtons(viewModel, paramsChanged = overrides.use().isNotEmpty())
             }
@@ -83,14 +91,14 @@ class UniformsWindow(
                                                 if (row % 2 == 0) Color.WHITE.withAlpha(0.1f) else Color.TRANSPARENT
                                             modifier.padding(horizontal = 8.dp).backgroundColor(bg)
                                             val parameter = interaction.parameters[i]
-                                            ParameterTextInput(parameter, onChange = { new ->
+                                            TextInputWithTooltip(parameter, { new ->
                                                 forceParametersViewModel.updateParameter(
                                                     force = force.name,
                                                     interaction = interaction.set,
                                                     name = parameter.name,
                                                     value = new
                                                 )
-                                            })
+                                            }, width = Grow.MinFit)
                                         }
                                     }
                                 }
@@ -116,6 +124,78 @@ class UniformsWindow(
     }
 }
 
+
+fun UiScope.TextInputWithTooltip(
+    parameter: UniformParameter,
+    onChange: (Float) -> Unit,
+    width: Dimension = FitContent
+) {
+    ParameterTextInput(parameter, onChange = { onChange(it) }) {
+        val position = remember(Vec2f.ZERO)
+        val height = remember(20f)
+        val shown = remember(false)
+        modifier
+            .width(width)
+            .onPositioned { if (!shown.value) position.set(Vec2f(it.leftPx, it.topPx)) }
+            .onMeasured { height.set(it.heightPx) }
+        if (isFocused.use()) shown.set(true)
+        if (shown.use()) {
+            val position = position.use()
+            val height = height.use()
+            Popup(
+                position.x.coerceAtMost(uiNode.surface.viewport.widthPx - 200.dp.px).coerceAtLeast(0f),
+                if (position.y + 2 * height < uiNode.surface.viewport.heightPx)
+                    position.y + height
+                else position.y - height,
+                width = 200.dp,
+                height = FitContent
+            ) {
+                modifier.padding(4.dp).background(
+                    RoundRectBackground(
+                        surface.colors.background,
+                        6.dp
+                    )
+                )
+                fun calculateMax(): Float {
+                    val log = log10(parameter.value).coerceAtLeast(-3f)
+                    val power = if (abs(log - ceil(log)) < 0.01f)
+                        log + 1
+                    else log
+                    return 10f.pow(ceil(power))
+                }
+
+                val maxRange = remember { mutableStateOf(calculateMax()) }
+                MenuSlider2(
+                    "",
+                    parameter.value,
+                    min = parameter.range.start.toFloat(),
+                    max = maxRange.use(),
+                    precision = parameter.precision,
+                    onChange = { onChange(it) },
+                ) {
+                    val clickedInBounds = remember(false)
+                    // Logic for hiding the slider once we've clicked off of it
+                    surface.onEachFrame {
+                        val ptr = PointerInput.primaryPointer
+                        if (ptr.isAnyButtonDown && !clickedInBounds.value) {
+                            if (uiNode.isInBounds(ptr.pos))
+                                clickedInBounds.set(true)
+                            else shown.set(false)
+                        }
+                        if (ptr.isAnyButtonReleased && !uiNode.isInBounds(ptr.pos) && !clickedInBounds.value) {
+                            shown.set(false)
+                        }
+                        if (ptr.isAnyButtonReleased) {
+                            maxRange.set(calculateMax())
+                            clickedInBounds.set(false)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 private fun UiScope.ParameterGraph(graph: LineGraphNode) {
     Box(Grow.Std, 400.dp) {
         modifier.background(graph)
@@ -136,7 +216,6 @@ private fun UiScope.ParameterSlider(
                 min = param.range.start.toFloat(),
                 max = param.range.endInclusive.toFloat(),
                 onChange = { onChange(it) },
-                sliderShown = showSlider.use(),
             )
         }
         ToggleButton(showSlider.use(), small = true) {
@@ -145,9 +224,10 @@ private fun UiScope.ParameterSlider(
     }
 }
 
-private fun UiScope.ParameterTextInput(
+fun UiScope.ParameterTextInput(
     param: UniformParameter,
     onChange: (Float) -> Unit,
+    block: TextFieldScope.() -> Unit = {},
 ) {
     MenuTextInput(
         value = param.value,
@@ -155,6 +235,7 @@ private fun UiScope.ParameterTextInput(
         max = param.range.endInclusive.toFloat(),
         precision = param.precision,
         onChange = onChange,
+        block = block,
     )
 }
 

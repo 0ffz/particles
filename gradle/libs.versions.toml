@@ -4,8 +4,6 @@ kool = "0.17.0"
 lwjgl = "3.3.5"
 coroutines = "1.8.0"
 kaml = "0.67.0"
-lets-plot-kotlin = "4.10.0"
-lets-plot-image-export = "4.6.1"
 multiplatform-settings = "1.3.0"
 filekit = "0.10.0-beta01"
 
@@ -21,10 +19,6 @@ kool-core = { group = "de.fabmax.kool", name = "kool-core", version.ref = "kool"
 
 # KAML
 kaml = { group = "com.charleskorn.kaml", name = "kaml", version.ref = "kaml" }
-
-# Lets-Plot
-lets-plot-kotlin = { group = "org.jetbrains.lets-plot", name = "lets-plot-kotlin", version.ref = "lets-plot-kotlin" }
-lets-plot-image-export = { group = "org.jetbrains.lets-plot", name = "lets-plot-image-export", version.ref = "lets-plot-image-export" }
 
 # Multiplatform Settings
 multiplatform-settings = { group = "com.russhwolf", name = "multiplatform-settings", version.ref = "multiplatform-settings" }

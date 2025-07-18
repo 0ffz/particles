@@ -51,8 +51,6 @@ kotlin {
                 api(libs.kotlinx.coroutines.core)
                 api(libs.koin.core)
                 api(libs.kaml)
-                implementation(libs.lets.plot.kotlin)
-                implementation(libs.lets.plot.image.export)
                 implementation(libs.multiplatform.settings)
                 implementation(libs.multiplatform.settings.make.observable)
                 implementation(libs.multiplatform.settings.coroutines)

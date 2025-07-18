@@ -27,6 +27,7 @@ class SceneManager(
     val forces: List<Force>
 ) {
     private var loadedScenes: List<Scene> = listOf()
+    val mainScene get() = loadedScenes.first()
     val globalApplication = koinApplication { modules(baseModule) }
 
     suspend fun reload() {

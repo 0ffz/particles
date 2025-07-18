@@ -2,12 +2,14 @@ package me.dvyy.particles.compute.forces
 
 import de.fabmax.kool.math.Mat4f
 import de.fabmax.kool.math.MutableMat4f
+import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputeShader
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import me.dvyy.particles.compute.helpers.KslFloat
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.pairwise.ParticleSet
 
 
@@ -85,6 +87,25 @@ class ForceWithParameters<T : Force>(
     context(program: KslProgram, scope: KslScopeBuilder)
     fun extractParameters(mat: KslVarMatrix<KslMat4, KslFloat4>): Array<KslFloat> = with(scope) {
         Array(numParameters) { i -> mat[(i + 1) / 4][(i + 1) % 4] }
+    }
+
+    fun createPairwiseForceComputeShader() = KslComputeShader("force-one-shot") {
+        computeStage(WORK_GROUP_SIZE) {
+            val localNeighbors = uniformFloat1("localNeighbors")
+            val lastIndex = uniformInt1("lastIndex")
+            val distances = storage<KslFloat1>("distances")
+            val output = storage<KslFloat1>("outputBuffer")
+            val params = kslUniformBuffer
+
+            val function = (force as PairwiseForce).createFunction()
+            main {
+                val id = int1Var(inGlobalInvocationId.x.toInt1())
+                `if`(id le lastIndex) {
+                    val extractedParams = extractParameters(mat4Var(params[0]))
+                    output[id] = function.function.invoke(distances[id], localNeighbors, *extractedParams)
+                }
+            }
+        }
     }
 
     companion object {

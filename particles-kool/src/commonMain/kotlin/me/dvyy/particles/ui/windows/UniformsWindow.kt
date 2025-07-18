@@ -12,6 +12,7 @@ import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.ui.components.IconButton
 import me.dvyy.particles.ui.helpers.*
+import me.dvyy.particles.ui.nodes.LineGraphNode
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
@@ -50,6 +51,7 @@ class UniformsWindow(
                 forceStates.use().forEach { force ->
                     40.dp
                     Subcategory(force.name) {
+//                        ParameterGraph(forceParametersViewModel.graph)
                         Row(Grow.Std) {
                             Column(width = Grow.Std) {
                                 Text("Pair") { }
@@ -114,16 +116,11 @@ class UniformsWindow(
     }
 }
 
-//private fun UiScope.ParameterGraph() {
-//    val graph = remember {
-//        LineGraphNode().apply {
-//            launchOnMainThread { renderGpuFunction(scene, TestForce) }
-//        }
-//    }
-//    Box(Grow.Std, 400.dp) {
-//        modifier.background(graph)
-//    }
-//}
+private fun UiScope.ParameterGraph(graph: LineGraphNode) {
+    Box(Grow.Std, 400.dp) {
+        modifier.background(graph)
+    }
+}
 
 private fun UiScope.ParameterSlider(
     param: UniformParameter,

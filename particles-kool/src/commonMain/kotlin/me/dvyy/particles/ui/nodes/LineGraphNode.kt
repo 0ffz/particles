@@ -19,6 +19,7 @@ import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import me.dvyy.particles.compute.forces.ForceWithParameters
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
@@ -43,18 +44,21 @@ class LineGraphNode : UiRenderer<UiNode> {
         )
     }
 
-    suspend fun renderGpuFunction(scene: Scene, force: PairwiseForce) {
+    suspend fun renderGpuFunction(scene: Scene, force: ForceWithParameters<PairwiseForce>) {
         val valuesX = FloatArray(256) { it.toFloat() / 256 }
         val valuesY = getOneShotResultsFor(scene, force).await()
         render(valuesX, valuesY)
     }
 
-    fun getOneShotResultsFor(scene: Scene, force: PairwiseForce): Deferred<FloatArray> {
+    fun getOneShotResultsFor(scene: Scene, force: ForceWithParameters<PairwiseForce>): Deferred<FloatArray> {
         val computePass = ComputePass("single-shot")
         val resolution = 256
-        val shader = force.createForceComputeShader()
-        shader.uniform1f("localNeighbors", 1f)
+        val shader = force.createPairwiseForceComputeShader()
+        shader.uniform1f("localNeighbors", 0f)
         shader.uniform1i("lastIndex", resolution)
+        with(shader) {
+            force.uploadParameters()
+        }
         shader.storage("distances", StorageBuffer(GpuType.Float1, size = resolution).apply {
             uploadData(Float32Buffer(resolution).apply {
                 repeat(resolution) {

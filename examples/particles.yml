@@ -14,7 +14,7 @@ simulation:
 particles:
   ligand:
     color: ffffff
-    radius: 1.0
+    radius: 1.5
     distribution: 2
   monomer:
     color: ff0000
@@ -29,6 +29,6 @@ particles:
 #    distribution : 1
 interactions:
   morse:
-    ligand-monomer: { De: 5.0, a: 5.0, re: 1.0 }
-    ligand-ligand: { De: 5.0, a: 5.0, re: 1.0 }
-    monomer-monomer: { De: 5.0, a: 5.0, re: 1.0 }
+    ligand-monomer: { De: 5.0, a: 1.0, re: 3.0 }
+    ligand-ligand: { De: 5.0, a: 1.0, re: 5.0 }
+    monomer-monomer: { De: 5.0, a: 1.0, re: 5.0 }

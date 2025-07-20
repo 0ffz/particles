@@ -22,8 +22,12 @@ class VerletHalfStepShader {
                 // Verlet integration with half-step eliminated p(t + dt) = p(t) + v(t)dT + 1/2 a(t)dT^2
                 val nextPosition = float3Var(position + (velocity * dT) + ((force * dT * dT) / 2f.const))
 
-                // Ensure particles are in bounds
-                nextPosition set clamp(nextPosition, 1f.const3, boxMax - 1f.const3)
+                // Ensure particles are in bounds (periodic boundary)
+                nextPosition set clamp(
+                    nextPosition - (boxMax * floor(nextPosition / boxMax)), // modulo box size
+                    0f.const3, boxMax, // clamp in box boundary for the case where boxMax has a dimension with size 0
+                )
+//                nextPosition set clamp(nextPosition, 0f.const3, boxMax)
                 positions[id] = float4Value(nextPosition, 0f.const)
             }
         }

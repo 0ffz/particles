@@ -1,5 +1,6 @@
 package me.dvyy.particles.render
 
+import de.fabmax.kool.math.Vec2f
 import de.fabmax.kool.math.Vec3d
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.spatial.BoundingBoxF
@@ -19,6 +20,7 @@ class CameraManager(
     val scope: CoroutineScope,
 ) {
     private val lineMesh = mutableStateOf<LineMesh?>(null)
+    private val gridMesh = mutableStateOf<LineMesh?>(null)
 
     fun manageCameraFor(scene: Scene) {
         scope.launch {
@@ -28,6 +30,30 @@ class CameraManager(
         }
     }
 
+    fun Scene.updateGridMesh() {
+        gridMesh.set(addLineMesh {
+            generate {
+                color = Color.GRAY
+                val cells = configRepo.gridCells
+                val gridSize = configRepo.gridSize
+                repeat(cells.y) {
+                    val height = -it * gridSize
+                    val max = cells.x * gridSize
+                    line(Vec2f(0f, height), Vec2f(max, height), 0f)
+                }
+                repeat(cells.x) {
+                    val height = it * gridSize
+                    val max = cells.y * gridSize
+                    line(Vec2f(height, 0f), Vec2f(height, -max), 0f)
+                }
+//                line(Vec2f(0f, 0f), Vec2f(boxMax.x, 0f), 1f)
+            }
+//            shader = KslUnlitShader {
+//                color { constColor(Color.RED) }
+//            }
+        })
+    }
+
     fun updateCamera(scene: Scene, config: ParticlesConfig) {
         val boxMax = configRepo.boxSize
         val bb = BoundingBoxF(Vec3f.ZERO, boxMax.times(Vec3f(1f, -1f, 1f)))
@@ -35,6 +61,7 @@ class CameraManager(
         lineMesh.set(scene.addLineMesh {
             addBoundingBox(bb, Color.WHITE)
         })
+        scene.updateGridMesh()
         scene.clearColor = ClearColorFill(Color("444444"))
         scene.orbitCamera {
             maxZoom = boxMax.length().toDouble()

@@ -1,14 +1,14 @@
 package me.dvyy.particles.compute.forces
 
-import de.fabmax.kool.math.Mat4f
-import de.fabmax.kool.math.MutableMat4f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputeShader
+import de.fabmax.kool.util.MemoryLayout
+import de.fabmax.kool.util.Struct
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import me.dvyy.particles.compute.helpers.KslFloat
+import me.dvyy.particles.compute.helpers.KslInt
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.pairwise.ParticleSet
 
@@ -24,7 +24,7 @@ class ForceWithParameters<T : Force>(
     }
 
     private val uniformName = "${force.name}_parameters"
-    private val parameterMatrices = mutableMapOf<ParticleSet, Mat4f>()
+    private val parameterMatrices = mutableMapOf<ParticleSet, FloatArray>()
     val parameterNames = force.parameters.map { it.name }
     private val numParameters = force.parameters.size
 
@@ -35,59 +35,66 @@ class ForceWithParameters<T : Force>(
     val changes = _changes.asSharedFlow()
 
     fun put(set: ParticleSet, values: FloatArray) {
-        parameterMatrices[set] = toStorage(values)
+        parameterMatrices[set] = values
         _changes.tryEmit(Unit)
     }
 
     fun update(set: ParticleSet, param: String, value: Float) {
-        put(set, toArray(get(set)!!, numParameters).apply { set(parameterNames.indexOf(param), value) })
+        put(set, get(set)!!.apply { set(parameterNames.indexOf(param), value) })
     }
 
-    fun get(pair: ParticleSet): Mat4f? = parameterMatrices[pair]
+    fun get(pair: ParticleSet): FloatArray? = parameterMatrices[pair]
 
-    fun getAll(): Map<ParticleSet, FloatArray> = parameterMatrices.mapValues { (_, mat) ->
-        toArray(mat, numParameters)
-    }
+    fun getAll(): Map<ParticleSet, FloatArray> = parameterMatrices
 
     /** Creates a UBO representing the parameters */
     context(program: KslProgram)
-    val kslUniformBuffer get() = program.uniformMat4Array(uniformName, hashCount)
+    val kslForcesStruct get() = program.uniformStruct(uniformName, provider = ::ForceParametersStruct)
 
+    context(scope: KslScopeBuilder, program: KslProgram)
+    fun interactionFor(hash: KslInt) =
+        kslForcesStruct.struct.interactions.ksl[hash]
 
     /** Updates bound UBO with parameters on CPU. */
     context(shader: ComputeShader)
     fun uploadParameters() {
-        val ubo = shader.uniformMat4fv(uniformName, hashCount)
+        val ubo = shader.uniformStruct(uniformName, ::ForceParametersStruct)
         // Clear all data (zero matrix represents skipping parameters)
-        repeat(hashCount) { i ->
-            ubo[i] = Mat4f.ZERO
+        ubo.set {
+            repeat(interactions.arraySize) { i ->
+                interactions[i].enabled.set(0f)
+                interactions[i].parameters.forEach { it.set(0f) }
+            }
+            parameterMatrices.forEach { (set, params) ->
+                interactions[set.hash].enabled.set(1f)
+                interactions[set.hash].parameters.forEachIndexed { i, param ->
+                    param.set(params[i])
+                }
+            }
         }
-        parameterMatrices.forEach { (set, params) ->
-            ubo[set.hash] = params
-        }
     }
-
-    //TODO update to use a struct once kool supports uniform struct arrays
-    /**
-     * Encodes given values into a 4x4 matrix to be used on the gpu
-     *
-     * The first byte is 0f for hashes that should be ignored,
-     * 1f if a calculation should occur followed by its parameters, then zeroes.
-     */
-    private fun toStorage(values: FloatArray): Mat4f {
-        val matrix = MutableMat4f()
-        val encoded = FloatArray(16) { 0f }
-        encoded[0] = 1f
-        values.forEachIndexed { i, value -> encoded[i + 1] = value }
-        matrix.set(encoded)
-        return matrix
-    }
-
-
-    context(program: KslProgram, scope: KslScopeBuilder)
-    fun extractParameters(mat: KslVarMatrix<KslMat4, KslFloat4>): Array<KslFloat> = with(scope) {
-        Array(numParameters) { i -> mat[(i + 1) / 4][(i + 1) % 4] }
-    }
+//
+//    //TODO update to use a struct once kool supports uniform struct arrays
+//    /**
+//     * Encodes given values into a 4x4 matrix to be used on the gpu
+//     *
+//     * The first byte is 0f for hashes that should be ignored,
+//     * 1f if a calculation should occur followed by its parameters, then zeroes.
+//     */
+//    private fun toStorage(values: FloatArray): Mat4f {
+//        val matrix = MutableMat4f()
+//        val encoded = FloatArray(16) { 0f }
+//        encoded[0] = 1f
+//        values.forEachIndexed { i, value -> encoded[i + 1] = value }
+//        matrix.set(encoded)
+//        return matrix
+//    }
+//
+//
+//    context(program: KslProgram, scope: KslScopeBuilder)
+//    fun extractParameters(mat: KslVarStruct<ForceParametersStruct>): Array<KslFloat> = with(scope) {
+//        Array(numParameters) { i -> mat[(i + 1) / 4][(i + 1) % 4] }
+//    }
 
     fun createPairwiseForceComputeShader() = KslComputeShader("force-one-shot") {
         computeStage(WORK_GROUP_SIZE) {
@@ -95,23 +102,28 @@ class ForceWithParameters<T : Force>(
             val lastIndex = uniformInt1("lastIndex")
             val distances = storage<KslFloat1>("distances")
             val output = storage<KslFloat1>("outputBuffer")
-            val params = kslUniformBuffer
+            kslForcesStruct
 
             val function = (force as PairwiseForce).createFunction()
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 `if`(id le lastIndex) {
-                    val extractedParams = extractParameters(mat4Var(params[0]))
-                    output[id] = function.function.invoke(distances[id], localNeighbors, *extractedParams)
+                    val extractedParams = structVar(interactionFor(0.const)).struct
+                    output[id] = function.function.invoke(distances[id], localNeighbors, *extractedParams.parametersAsArray())
                 }
             }
         }
     }
 
-    companion object {
-        fun toArray(mat: Mat4f, numParameters: Int): FloatArray {
-            return FloatArray(numParameters) { i -> mat[(i + 1) % 4, (i + 1) / 4] }
-        }
+    inner class InteractionStruct : Struct("InteractionStruct", MemoryLayout.Std140) {
+        val enabled = float1("enabled")
+        val parameters = (0..<numParameters).map { float1() }
+
+        fun parametersAsArray() = parameters.map { it.ksl }.toTypedArray()
+    }
+
+    inner class ForceParametersStruct : Struct("ForceParametersStruct", MemoryLayout.Std140) {
+        val interactions = structArray(hashCount, "interactions", structProvider = ::InteractionStruct)
     }
 }
 

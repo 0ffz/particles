@@ -26,6 +26,7 @@ class ParticlesScene(
     val cameraManager: CameraManager,
     val particlesMesh: ParticlesMesh,
     val offsetsShader: OffsetsShader,
+//    val reorderBuffersShader: ReorderBuffersShader,
     val convertShader: ConvertParticlesShader,
     val fieldsShader: FieldsMultiPasses,
     val settings: AppSettings,

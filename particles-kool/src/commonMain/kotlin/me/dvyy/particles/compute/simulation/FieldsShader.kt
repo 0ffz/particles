@@ -7,7 +7,6 @@ import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.compute.forces.PairwiseForce
-import me.dvyy.particles.compute.forces.get
 import me.dvyy.particles.compute.helpers.KslFloat
 import me.dvyy.particles.compute.helpers.cellId
 import me.dvyy.particles.compute.helpers.forNearbyGridCells
@@ -43,7 +42,7 @@ class FieldsShader(
                 it.createFunction()
             }
             forcesDef.forces.forEach {
-                it.kslUniformBuffer
+                it.kslForcesStruct
             }
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
@@ -79,9 +78,11 @@ class FieldsShader(
                     // TODO apply maxForce to individual forces
                     forcesDef.individualForces.forEach {
                         val functionRef = it.force.kslReference
-                        val paramsMat = mat4Var(it.kslUniformBuffer[particleType])
-                        val functionParams = it.extractParameters(paramsMat)
-                        nextForce += paramsMat[0][0] * functionRef.invoke(position, *functionParams)
+                        val interaction = structVar(it.interactionFor(particleType)).struct
+                        nextForce += interaction.enabled.ksl * functionRef.invoke(
+                            position,
+                            *interaction.parametersAsArray()
+                        )
                     }
 
                     // TODO move into preprocess step for pairwise forces
@@ -127,11 +128,11 @@ class FieldsShader(
                         // Call invoke each pairwise force function with extracted parameters
                         forcesDef.pairwiseForces.forEach {
                             val functionRef = it.force.kslReference
-                            val paramsMat = mat4Var(it.kslUniformBuffer[pairHash])
-                            val functionParams = it.extractParameters(paramsMat)
+                            val interaction = structVar(it.interactionFor(pairHash)).struct
                             // For pairs without an interaction paramsMat[0][0] is 0
-                            forceBetweenParticles += paramsMat[0][0] *
-                                    functionRef.invoke(dist, localCount, *functionParams).clampMaxForce()
+                            forceBetweenParticles += interaction.enabled.ksl *
+                                    functionRef.invoke(dist, localCount, *interaction.parametersAsArray())
+                                        .clampMaxForce()
                         }
 
                         nextForce += normalize(direction) * forceBetweenParticles
@@ -144,16 +145,16 @@ class FieldsShader(
                 // Define simulation box boundaries
                 // Wall repulsion
                 //TODO make configurable, since lennardJones might not be provided
-                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-                    .invoke(dist, 1f.const, 5f.const, 0.2f.const)
-                nextForce.x += lJ(position.x - 0f.const + 1f.const)
-                nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
-                nextForce.y += lJ(position.y - 0f.const + 1f.const)
-                nextForce.y -= lJ(boxMax.y - position.y + 1f.const)
-                `if`(boxMax.z ne 0f.const) {
-                    nextForce.z += lJ(position.z - 0f.const + 1f.const)
-                    nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
-                }
+//                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
+//                    .invoke(dist, 1f.const, 5f.const, 0.2f.const)
+//                nextForce.x += lJ(position.x - 0f.const + 1f.const)
+//                nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
+//                nextForce.y += lJ(position.y - 0f.const + 1f.const)
+//                nextForce.y -= lJ(boxMax.y - position.y + 1f.const)
+//                `if`(boxMax.z ne 0f.const) {
+//                    nextForce.z += lJ(position.z - 0f.const + 1f.const)
+//                    nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
+//                }
                 // Cap force
                 `if`(length(nextForce) gt params.maxForce.ksl) {
                     nextForce set normalize(nextForce) * params.maxForce.ksl

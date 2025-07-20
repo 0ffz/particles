@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.helpers.KslInt
 import me.dvyy.particles.compute.simulation.SimulationParametersStruct
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
@@ -61,10 +62,13 @@ class ParticlesMesh(
             val interClusterId = interStageInt1("interClusterId")
             val interColorType = interStageInt1("interColorType")
             val interMaxVelocity = interStageFloat1("maxVelocity")
+            val interIndex = interStageInt1("interIndex")
 
             vertexStage {
                 main {
                     val camData = cameraData()
+                    val indexes = storage<KslInt1>("indexesBuffer")
+                    val cellIds = storage<KslInt1>("cellIdsBuffer")
                     val positionsBuffer = storage<KslFloat4>("positionsBuffer")
                     val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
                     val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
@@ -101,6 +105,7 @@ class ParticlesMesh(
                     interColorType.input set colorType
                     interVelocity.input set length(velocitiesBuffer[offset])
                     interMaxVelocity.input set simulationParams.struct.maxVelocity.ksl
+                    interIndex.input set indexes[cellIds[offset]]
                 }
             }
             fragmentStage {
@@ -120,21 +125,28 @@ class ParticlesMesh(
 
                     // Choose color based on specified option
                     val baseColor = float4Var(interColor.output)
-                    `if`(interColorType.output eq ParticleColor.CLUSTER.ordinal.const) {
-                        val cluster = interClusterId.output
+                    fun randomColor(hash: KslInt): KslVarVector<KslFloat4, KslFloat1> {
                         fun hash(int: KslExpression<KslInt1>) =
                             fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
 
-                        `if`(cluster eq (-1).const) {
-                            baseColor set float4Value(0.1f, 0.1f, 0.1f, 1f)
+                        val color = float4Var(1f.const4)
+                        `if`(hash eq (-1).const) {
+                            color set float4Value(0.1f, 0.1f, 0.1f, 1f)
                         }.`else` {
-                            val r = hash(cluster)
-                            val g = hash(cluster + 1.const)
-                            val b = hash(cluster + 2.const)
-                            baseColor set float4Value(r, g, b, 1f.const)
+                            val r = hash(hash)
+                            val g = hash(hash + 1.const)
+                            val b = hash(hash + 2.const)
+                            color set float4Value(r, g, b, 1f.const)
                         }
+                        return color
+                    }
+                    `if`(interColorType.output eq ParticleColor.CLUSTER.ordinal.const) {
+                        val cluster = interClusterId.output
+                        baseColor set randomColor(cluster)
                     }.elseIf(interColorType.output eq ParticleColor.VELOCITY.ordinal.const) {
                         baseColor set float4Value(pow(interVelocity.output / (interMaxVelocity.output + 1f.const), 1.5f.const), 0f.const, 0f.const, 1f.const)
+                    }.elseIf(interColorType.output eq ParticleColor.INDEX.ordinal.const) {
+                        baseColor set randomColor(interIndex.output)//float4Value(interIndex.output.toFloat1() / 10f.const, 0f.const, 0f.const, 1f.const)
                     }
 
                     // TODO FORCE color
@@ -171,6 +183,8 @@ class ParticlesMesh(
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
             storage("clusterBuffer", buffers.clustersBuffer)
+            storage("cellIdsBuffer", buffers.particleGridCellKeys)
+            storage("indexesBuffer", buffers.offsetsBuffer)
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

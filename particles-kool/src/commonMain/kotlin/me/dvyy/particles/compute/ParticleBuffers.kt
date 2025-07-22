@@ -87,7 +87,7 @@ class ParticleBuffers(
 /**
  * Struct representing data for a single particle
  */
-class ParticleStruct : Struct("ParticleStruct", MemoryLayout.Std430) {
+class ParticleStruct : Struct("ParticleStruct", MemoryLayout.Std140) {
     val position = float3("position")
     val velocity = float3("velocity")
     val force = float3("force")
@@ -98,7 +98,7 @@ class ParticleStruct : Struct("ParticleStruct", MemoryLayout.Std430) {
 /**
  * Struct representing a type of particle and its appearance.
  */
-class ParticleTypeStruct : Struct("ParticleTypeStruct", MemoryLayout.Std430) {
+class ParticleTypeStruct : Struct("ParticleTypeStruct", MemoryLayout.Std140) {
     val color = float4("color")
     val radius = float1("radius")
 }

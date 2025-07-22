@@ -36,9 +36,9 @@ class GPUSort(
                 val idx = int1Var(inGlobalInvocationId.x.toInt1())
                 val particleVar = structVar(particles[idx])
                 val particle = particleVar.struct
-//                val grid = int3Var((particle.position.ksl / gridSize).toInt3())
-//                val cellId = int1Var(cellId(grid.x, grid.y, grid.z))
-                particle.gridCellId.ksl set particle.gridCellId.ksl + 1.const
+                val grid = int3Var((particle.position.ksl / gridSize).toInt3())
+                val cellId = int1Var(cellId(grid.x, grid.y, grid.z))
+                particle.gridCellId.ksl set cellId
                 particles[idx] = particleVar
             }
         }

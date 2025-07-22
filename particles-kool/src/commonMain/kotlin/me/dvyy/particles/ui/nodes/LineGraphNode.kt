@@ -7,6 +7,7 @@ import de.fabmax.kool.modules.ui2.Ui2Shader
 import de.fabmax.kool.modules.ui2.UiNode
 import de.fabmax.kool.modules.ui2.UiRenderer
 import de.fabmax.kool.pipeline.ComputePass
+import de.fabmax.kool.pipeline.ComputeShader
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
 import de.fabmax.kool.scene.Mesh
@@ -51,43 +52,30 @@ class LineGraphNode : UiRenderer<UiNode> {
     }
 
     fun getOneShotResultsFor(scene: Scene, force: ForceWithParameters<PairwiseForce>): Deferred<FloatArray> {
-        val computePass = ComputePass("single-shot")
         val resolution = 256
-        val shader = force.createPairwiseForceComputeShader()
-        shader.uniform1f("localNeighbors", 0f)
-        shader.uniform1i("lastIndex", resolution)
-        with(shader) {
-            force.uploadParameters()
-        }
-        shader.storage("distances", StorageBuffer(GpuType.Float1, size = resolution).apply {
-            uploadData(Float32Buffer(resolution).apply {
-                repeat(resolution) {
-                    put(5f * it.toFloat() / resolution)
-                }
-            })
-        })
         val outputBuffer = StorageBuffer(GpuType.Float1, size = resolution)
-        shader.storage("outputBuffer", outputBuffer)
-        val task = computePass.addTask(shader, Vec3i((resolution + WORK_GROUP_SIZE) / WORK_GROUP_SIZE, 1, 1))
-        scene.addComputePass(computePass)
-
-        val deferred = CompletableDeferred<FloatArray>()
-        task.onAfterDispatch {
-            task.isEnabled = false
-            try {
-                launchOnMainThread {
-                    val result = Float32Buffer(resolution)
-                    outputBuffer.downloadData(result)
-                    deferred.complete(result.toArray())
-                }
-            } catch (e: Exception) {
-                println(e.stackTraceToString())
-            } finally {
-                scene.removeComputePass(computePass)
-            }
+        val shader = force.createPairwiseForceComputeShader().apply {
+            uniform1f("localNeighbors", 0f)
+            uniform1i("lastIndex", resolution)
+            force.uploadParameters()
+            storage("distances", StorageBuffer(GpuType.Float1, size = resolution).apply {
+                uploadData(Float32Buffer(resolution).apply {
+                    repeat(resolution) {
+                        put(5f * it.toFloat() / resolution)
+                    }
+                })
+            })
+            storage("outputBuffer", outputBuffer)
         }
-
-        return deferred
+        return execShader(
+            scene,
+            shader,
+            numGroups = Vec3i((resolution + WORK_GROUP_SIZE) / WORK_GROUP_SIZE, 1, 1)
+        ) {
+            val result = Float32Buffer(resolution)
+            outputBuffer.downloadData(result)
+            result.toArray()
+        }
     }
 
     fun renderFunction(
@@ -160,4 +148,43 @@ class LineGraphNode : UiRenderer<UiNode> {
         }
         node.surface.getMeshLayer(node.modifier.zLayer - 1).addCustomLayer("dt-graph") { graphMesh }
     }
+}
+
+inline fun <T> execManyShaders(
+    scene: Scene,
+    setup: (ComputePass) -> Unit,
+    crossinline read: suspend () -> T,
+): Deferred<T> {
+    val computePass = ComputePass("single-shot")
+    setup(computePass)
+    scene.addComputePass(computePass)
+
+    val deferred = CompletableDeferred<T>()
+
+    computePass.onAfterPass {
+        computePass.isEnabled = false
+        launchOnMainThread {
+            try {
+                deferred.complete(read())
+            } catch (e: Exception) {
+                deferred.completeExceptionally(e)
+            } finally {
+                scene.removeComputePass(computePass)
+            }
+        }
+    }
+
+    return deferred
+
+}
+
+inline fun <T> execShader(
+    scene: Scene,
+    shader: ComputeShader,
+    numGroups: Vec3i = Vec3i.ONES,
+    crossinline read: suspend () -> T,
+): Deferred<T> {
+    return execManyShaders(scene, setup = {
+        it.addTask(shader, numGroups)
+    }, read)
 }

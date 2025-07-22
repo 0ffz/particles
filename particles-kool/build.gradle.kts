@@ -14,6 +14,9 @@ kotlin {
     }
     jvm {
         withJava()
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+        }
     }
     jvmToolchain(21)
 
@@ -80,9 +83,10 @@ kotlin {
                 // add additional js-specific dependencies here...
             }
         }
-        commonTest {
+        jvmTest {
             dependencies {
-                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(kotlin("test-junit5"))
             }
         }
     }

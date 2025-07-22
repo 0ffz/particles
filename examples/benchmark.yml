@@ -6,7 +6,7 @@ simulation:
   maxVelocity: 1
   maxForce: 100000.0
   threeDimensions: false
-  passesPerFrame: 50
+  passesPerFrame: 1
   size:
     width: 100
     height: 50

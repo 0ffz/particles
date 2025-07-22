@@ -65,10 +65,10 @@ class FieldsShader(
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
                 forNearbyGridCells(configRepo.config.value.simulation.threeDimensions) { x, y, z ->
-                    // Calculate the neighboring cell id as an integer
-                    `if`(any(grid lt 0.const3) or any(grid gt gridCells)) {
+                    `if`(any(grid + int3Value(x, y ,z) lt 0.const3) or any(grid + int3Value(x, y ,z) gt gridCells)) {
                         `continue`()
                     }
+                    // Calculate the neighboring cell id as an integer
                     val localCellId = int1Var(cellId(grid.x + x, grid.y + y, grid.z + z))
                     val startIndex = int1Var(cellOffsets[localCellId])
 

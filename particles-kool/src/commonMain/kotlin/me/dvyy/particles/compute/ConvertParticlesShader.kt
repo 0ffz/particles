@@ -62,7 +62,7 @@ class ConvertParticlesShader(
             }
             convertTo = Buffers.integers(config.particles.size).apply { uploadData(conversionBuffer) }
             convertChances = Buffers.floats(config.particles.size).apply { uploadData(conversionChances) }
-            particleTypes = buffers.particleTypesBuffer
+            particleTypes = TODO("Reimplement conversion")//buffers.particleTypesBuffer
             onBeforeDispatch {
                 val count = configRepo.count
                 val conversionRate = configRepo.config.value.simulation.conversionRate

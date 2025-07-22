@@ -25,10 +25,8 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
-import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
 
 class ParticlesViewModel(
@@ -80,9 +78,6 @@ class ParticlesViewModel(
     }
 
     fun resetPositions() = scope.launch {
-        buffers.positionBuffer.initFloat4 {
-            Buffers.randomPosition(configRepo.boxSize)
-        }
         buffers.initializeParticlesBuffer()
     }
 

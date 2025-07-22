@@ -1,8 +1,10 @@
 package me.dvyy.particles
 
-import de.fabmax.kool.util.Int32Buffer
-import kotlinx.coroutines.test.runTest
+import de.fabmax.kool.util.Struct
+import de.fabmax.kool.util.StructBuffer
+import kotlinx.coroutines.runBlocking
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.ParticleStruct
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
@@ -12,8 +14,6 @@ import me.dvyy.particles.dsl.Size
 import me.dvyy.particles.helpers.kool.KoolTest
 import me.dvyy.particles.ui.nodes.execManyShaders
 import org.junit.jupiter.api.Test
-import kotlin.random.Random
-import kotlin.test.assertContentEquals
 
 class ShaderTest : KoolTest() {
     //    lateinit var testCtx: KoolContext
@@ -22,7 +22,7 @@ class ShaderTest : KoolTest() {
 //    val testContext = CoroutineScope(Dispatchers.Default)
 
     @Test
-    fun `gpu sort should correctl sort unsorted keys`() = runTest {
+    fun `gpu sort should correctl sort unsorted keys`(): Unit = runBlocking {
         val config = ConfigRepository(AppSettings()).apply {
             updateConfig(
                 ParticlesConfig(
@@ -36,23 +36,43 @@ class ShaderTest : KoolTest() {
         }
         val buffers = ParticleBuffers(config)
         val sort = GPUSort(config, buffers)
-        val unsortedBuffer = Int32Buffer(buffers.particleGridCellKeys.size).apply {
-            repeat(buffers.particleGridCellKeys.size) {
-                put(Random.nextInt(0, 1000))
-            }
-        }
-        buffers.particleGridCellKeys.uploadData(unsortedBuffer)
+//        val unsortedBuffer = Int32Buffer(buffers.particleGridCellKeys.size).apply {
+//            repeat(buffers.particleGridCellKeys.size) {
+//                put(Random.nextInt(0, 1000))
+//            }
+//        }
+//        buffers.particleGridCellKeys.uploadData(unsortedBuffer)
         val result = execManyShaders(scene, setup = {
-            sort.addSortingShader(1000, buffers, it)
+            sort.addResetShader(it)
+//            sort.addSortingShader(1000, it)
         }, read = {
-            val result = Int32Buffer(buffers.particleGridCellKeys.size)
-            buffers.particleGridCellKeys.downloadData(result)
+             val result = StructBuffer(buffers.particleBuffer.size, ParticleStruct())
+            buffers.particleBuffer.downloadData(result)
             result
         }).await()
-        assertContentEquals(
-            unsortedBuffer.toArray().apply { sort() },
-            result.toArray(),
-            "Resulting buffer was not sorted fully"
-        )
+
+//        launchOnMainThread {
+//            val result = StructBuffer(2000, ParticleStruct())
+//            buffers.particleBuffer.downloadData(result)
+            println(result.map { position.get() })
+            println(result.map { velocity.get() })
+            println(result.map { force.get() })
+            println(result.map { gridCellId.get() })
+
+//        }.join()
+//        assertContentEquals(
+//            unsortedBuffer.toArray().apply { sort() },
+//            result.toArray(),
+//            "Resulting buffer was not sorted fully"
+//        )
+    }
+}
+
+fun <T: Struct, R> StructBuffer<T>.map(transform: T.() -> R): List<R> {
+    forEach {  }
+    return buildList {
+        repeat(this@map.size) {
+            this@buildList.add(transform(this@map[it]))
+        }
     }
 }

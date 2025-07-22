@@ -162,7 +162,8 @@ inline fun <T> execManyShaders(
     val deferred = CompletableDeferred<T>()
 
     computePass.onAfterPass {
-        computePass.isEnabled = false
+        println("Dispatched compute pass ${computePass.tasks}")
+        computePass.tasks.toList().forEach { computePass.removeAndReleaseTask(it) }
         launchOnMainThread {
             try {
                 deferred.complete(read())

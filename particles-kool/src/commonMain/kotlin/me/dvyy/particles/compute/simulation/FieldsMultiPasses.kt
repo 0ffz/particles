@@ -16,17 +16,12 @@ class FieldsMultiPasses(
         fields.gridSize = configRepo.gridSize
         fields.gridCells = configRepo.gridCells
         fields.count = configRepo.count
-        fields.particleTypes = buffers.particleTypesBuffer
+        fields.particles = buffers.particleBuffer
         fields.cellOffsets = buffers.offsetsBuffer
-        fields.particle2CellKey = buffers.particleGridCellKeys
-        fields.positions = buffers.positionBuffer
-        fields.velocities = buffers.velocitiesBuffer
-        fields.forces = buffers.forcesBuffer
+//        fields.particle2CellKey = buffers.particleGridCellKeys
         fields.boxMax = configRepo.boxSize
 
-        halfStep.positions = buffers.positionBuffer
-        halfStep.velocities = buffers.velocitiesBuffer
-        halfStep.forces = buffers.forcesBuffer
+        halfStep.particles = buffers.particleBuffer
         halfStep.boxMax = configRepo.boxSize
     }
 

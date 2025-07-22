@@ -30,7 +30,7 @@ object KoolTestExtension : BeforeAllCallback, AfterAllCallback {
     fun createKoolContext(): KoolContext = runBlocking {
         val context = CompletableDeferred<KoolContext>()
         CoroutineScope(Dispatchers.Default).launch {
-            KoolApplication(KoolConfigJvm(renderBackend = KoolConfigJvm.Backend.OPEN_GL)) {
+            KoolApplication(KoolConfigJvm(renderBackend = KoolConfigJvm.Backend.VULKAN)) {
                 context.complete(ctx)
             }
         }

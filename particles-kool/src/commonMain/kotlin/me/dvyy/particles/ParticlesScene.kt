@@ -41,10 +41,10 @@ class ParticlesScene(
         val computePass = ComputePass("Particles Compute")
 
         gpuSort.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
-        gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
+        gpuSort.addSortingShader(configRepo.count, computePass = computePass) // Sort by grid cells
         offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)
         val fieldsPasses = fieldsShader.addTo(computePass) // Run force computations based on particle interactions
-        convertShader.addTo(computePass) // Convert particles to different types as needed
+//        convertShader.addTo(computePass) // Convert particles to different types as needed
 
         addComputePass(computePass)
 

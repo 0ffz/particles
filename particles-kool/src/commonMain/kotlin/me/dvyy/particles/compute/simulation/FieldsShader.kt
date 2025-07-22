@@ -5,6 +5,7 @@ import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.ParticleStruct
 import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.compute.helpers.KslFloat
@@ -29,13 +30,15 @@ class FieldsShader(
             val boxMax = uniformFloat3("boxMax")
 
             // Storage buffers
-            val particle2CellKey = storage<KslInt1>("particle2CellKey")
+//            val particle2CellKey = storage<KslInt1>("particle2CellKey")
             val cellOffsets = storage<KslInt1>("cellOffsets")
-            val positions = storage<KslFloat4>("positions")
-            val velocities = storage<KslFloat4>("velocities")
-            val forces = storage<KslFloat4>("forces")
+//            val positions = storage<KslFloat4>("positions")
+//            val velocities = storage<KslFloat4>("velocities")
+//            val forces = storage<KslFloat4>("forces")
+            val particleStruct = struct { ParticleStruct() }
+            val particles = storage("particles", particleStruct)
 
-            val particleTypes = storage<KslInt1>("particleTypes")
+//            val particleTypes = storage<KslInt1>("particleTypes")
 
             // Define all force functions, create uniforms for their parameters
             forcesDef.forceTypes.forEach {
@@ -53,8 +56,10 @@ class FieldsShader(
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 // Load current particle properties
                 // Extract the 2D position from the stored vec4
-                val position = float3Var(positions[id].xyz) //p(t + dt); since half step runs before this
-                val particleType = int1Var(particleTypes[id])
+                val particleVar = structVar(particles[id])
+                val particle = particleVar.struct
+                val position = float3Var(particle.position.ksl) //p(t + dt); since half step runs before this
+                val particleType = int1Var(particle.particleType.ksl)
                 val params = params.struct
 
                 // Compute grid indices based on the particle position
@@ -65,7 +70,7 @@ class FieldsShader(
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
                 forNearbyGridCells(configRepo.config.value.simulation.threeDimensions) { x, y, z ->
-                    `if`(any(grid + int3Value(x, y ,z) lt 0.const3) or any(grid + int3Value(x, y ,z) gt gridCells)) {
+                    `if`(any(grid + int3Value(x, y, z) lt 0.const3) or any(grid + int3Value(x, y, z) gt gridCells)) {
                         `continue`()
                     }
                     // Calculate the neighboring cell id as an integer
@@ -102,8 +107,8 @@ class FieldsShader(
 
                     //TODO duplicate code
                     fori(startIndex, count) { i ->
-                        `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
-                        val otherPos = float3Var(positions[i].xyz)
+                        `if`(int1Var(particles[i].struct.gridCellId.ksl) ne localCellId) { `break`() }
+                        val otherPos = float3Var(particles[i].struct.position.ksl)
                         `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))
@@ -113,14 +118,14 @@ class FieldsShader(
 
                     // Pairwise forces
                     fori(startIndex, count) { i ->
-                        `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
-                        val otherPos = float3Var(positions[i].xyz)
+                        `if`(int1Var(particles[i].struct.gridCellId.ksl) ne localCellId) { `break`() }
+                        val otherPos = float3Var(particles[i].struct.position.ksl)
                         `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))
                         `if`(dist gt gridSize) { `continue`() }
                         val forceBetweenParticles = float1Var(0f.const)
-                        val otherType = int1Var(particleTypes[i])
+                        val otherType = int1Var(particles[i].struct.particleType.ksl)
 
                         // Compute a hash based on the particle types
                         val pairHash = PairwiseForce.pairHash(particleType, otherType, forcesDef.particleTypeCount)
@@ -139,7 +144,7 @@ class FieldsShader(
                     }
                 }
 
-                val velocity = float3Var(velocities[id].xyz) //v(t + dt/2)
+                val velocity = float3Var(particle.velocity.ksl) //v(t + dt/2)
 
                 // --- Begin wall repulsion snippet ---
                 // Define simulation box boundaries
@@ -161,15 +166,16 @@ class FieldsShader(
                 }
 
                 // Compute next velocity with Verlet integration
-                val currForce = float3Var(forces[id].xyz)
+                val currForce = float3Var(particle.force.ksl)
                 val nextVelocity = float3Var(velocity + ((currForce + nextForce) * dT / 2f.const))
                 // Cap velocity and net force to their maximum values
                 `if`(length(nextVelocity) gt params.maxVelocity.ksl) {
                     nextVelocity set normalize(nextVelocity) * params.maxVelocity.ksl
                 }
 
-                forces[id] = float4Value(nextForce, 0f)
-                velocities[id] = float4Value(nextVelocity, 0f)
+                particle.force.ksl set nextForce
+                particle.velocity.ksl set nextVelocity
+                particles[id] = particleVar
             }
         }
 
@@ -184,10 +190,6 @@ class FieldsShader(
     var params = shader.uniformStruct("params", ::SimulationParametersStruct)
 
     // Storage buffers
-    var particle2CellKey by shader.storage("particle2CellKey")
     var cellOffsets by shader.storage("cellOffsets")
-    var positions by shader.storage("positions")
-    var velocities by shader.storage("velocities")
-    var forces by shader.storage("forces")
-    var particleTypes by shader.storage("particleTypes")
+    var particles by shader.storage("particles")
 }

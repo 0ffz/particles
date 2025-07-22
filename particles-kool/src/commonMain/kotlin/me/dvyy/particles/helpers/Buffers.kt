@@ -7,30 +7,27 @@ import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
 import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.Int32Buffer
+import de.fabmax.kool.util.Struct
+import de.fabmax.kool.util.StructBuffer
 import kotlin.random.Random
 
 object Buffers {
     // TODO 3d float buffers aren't supported, consider swapping to structs
-    fun positions(count: Int, size: Vec3f) = StorageBuffer(GpuType.Float4, count).initFloat4 {
-        randomPosition(size)
-    }
+//    fun positions(count: Int, size: Vec3f) = StorageBuffer(GpuType.Float4, count).initFloat4 {
+//        randomPosition(size)
+//    }
 
-    fun randomPosition(size: Vec3f) = Vec4f(
+    fun randomPosition(size: Vec3f) = Vec3f(
         Random.Default.nextDouble(size.x.toDouble()).toFloat(),
         Random.Default.nextDouble(size.y.toDouble()).toFloat(),
         if (size.z == 0f) 0f else Random.Default.nextDouble(size.z.toDouble()).toFloat(),
-        0f
     )
 
-    fun velocities(count: Int, threeDimensional: Boolean, maxVelocity: Double) =
-        StorageBuffer(GpuType.Float4, count).initFloat4 {
-            Vec4f(
-                Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
-                Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
-                if (threeDimensional) Random.nextDouble(-maxVelocity, maxVelocity).toFloat() else 0f,
-                0f,
-            )
-        }
+    fun randomVelocity(threeDimensional: Boolean, maxVelocity: Double) = Vec3f(
+        Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
+        Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
+        if (threeDimensional) Random.nextDouble(-maxVelocity, maxVelocity).toFloat() else 0f,
+    )
 
     fun integers(count: Int) = StorageBuffer(GpuType.Int1, count)
 
@@ -41,6 +38,15 @@ object Buffers {
             }
         })
     }
+}
+
+fun <T : Struct> StructBuffer<T>.init(init: T.(index: Int) -> Unit): StructBuffer<T> {
+    repeat(size) {
+        set(it) {
+            init(it)
+        }
+    }
+    return this
 }
 
 inline fun GpuBuffer.initFloat3(set: (Int) -> Vec3f) = apply {

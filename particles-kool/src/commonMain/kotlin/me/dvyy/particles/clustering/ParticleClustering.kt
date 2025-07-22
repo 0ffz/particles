@@ -21,8 +21,9 @@ class ParticleClustering(
     fun calculateClusters(options: ClusterOptions) = launchOnMainThread {
         val positions = Float32Buffer(configRepo.count * 4)
         val types = Int32Buffer(configRepo.count)
-        buffers.positionBuffer.downloadData(positions)
-        buffers.particleTypesBuffer.downloadData(types)
+        //TODO convert to struct access
+//        buffers.positionBuffer.downloadData(positions)
+//        buffers.particleTypesBuffer.downloadData(types)
         val allowedTypes = intArrayOf(configRepo.config.value.particleIds["monomer"]!!.id.toInt())
 
         val data = mutableListOf<DoubleArray>()

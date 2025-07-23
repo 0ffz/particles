@@ -5,6 +5,7 @@ import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.pipeline.GpuBuffer
+import de.fabmax.kool.pipeline.GpuType
 
 /**
  * Given the resulting positions of an indices array that was 0..n before sorting,
@@ -33,14 +34,16 @@ class ReorderBuffersShader(
     val shader = KslComputeShader("Reorder buffers") {
         val numValues = uniformInt1("numValues")
         val postSortIndices = storage<KslInt1>("indices")
-        val storageToSort = buffersToSort.mapIndexed { id, _ -> storage<KslNumericType>("storage_$id") }
-        val outputs = buffersToSort.mapIndexed { id, _ -> storage<KslNumericType>("output_$id") }
+        val storageToSort = buffersToSort.mapIndexed { id, buffer ->
+            storage(buffer, "storage_$id")
+        }
+        val outputs = buffersToSort.mapIndexed { id, buffer -> storage(buffer, "output_$id") }
 
         computeStage(WORK_GROUP_SIZE) {
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 val destId = int1Var(postSortIndices[id])
-                `if`((id lt numValues)) {
+                `if`((id lt numValues) and (destId ne  id)) {
                     storageToSort.zip(outputs).forEach { (input, output) ->
                         output[id] = input[destId]
                     }
@@ -51,12 +54,18 @@ class ReorderBuffersShader(
 
     val copyBack = KslComputeShader("Copy back") {
         val numValues = uniformInt1("numValues")
-        val inputs = buffersToSort.mapIndexed { id, _ -> storage<KslNumericType>("storage_$id") }
-        val outputs = buffersToSort.mapIndexed { id, _ -> storage<KslNumericType>("output_$id") }
+        val postSortIndices = storage<KslInt1>("indices")
+        val inputs = buffersToSort.mapIndexed { id, buffer ->
+            storage(buffer, "storage_$id")
+        }
+        val outputs = buffersToSort.mapIndexed { id, buffer ->
+            storage(buffer, "output_$id")
+        }
         computeStage(WORK_GROUP_SIZE) {
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
-                `if`((id lt numValues)) {
+                val destId = int1Var(postSortIndices[id])
+                `if`((id lt numValues) and (destId ne id)) {
                     inputs.zip(outputs).forEach { (input, output) ->
                         input[id] = output[id]
                     }
@@ -65,19 +74,15 @@ class ReorderBuffersShader(
         }
     }
 
-//    var output by shader.storage("outputBuffer")
-
-    fun bindStorage() {
-    }
-
     fun addTo(
         stage: ComputePass,
         indices: GpuBuffer,
         numValues: Int,
-        numGroups: Vec3i
+        numGroups: Vec3i,
     ) = stage.apply {
         shader.uniform1i("numValues", numValues)
         shader.storage("indices", indices)
+        copyBack.storage("indices", indices)
         copyBack.uniform1i("numValues", numValues)
         buffersToSort.forEachIndexed { id, buffer ->
             shader.storage("storage_$id", buffer)
@@ -88,4 +93,14 @@ class ReorderBuffersShader(
         stage.addTask(shader, numGroups)
         stage.addTask(copyBack, numGroups)
     }
+}
+
+fun KslProgram.storage(buffer: GpuBuffer, name: String): KslPrimitiveStorage<KslPrimitiveStorageType<KslNumericType>> {
+    return when (buffer.type) {
+        GpuType.Int4 -> storage<KslInt4>(name)
+        GpuType.Float4 -> storage<KslFloat4>(name)
+        GpuType.Int1 -> storage<KslInt1>(name)
+        GpuType.Float1 -> storage<KslFloat1>(name)
+        else -> throw IllegalArgumentException("Unsupported buffer type: ${buffer.type}")
+    } as KslPrimitiveStorage<KslPrimitiveStorageType<KslNumericType>>
 }

@@ -24,11 +24,12 @@ import kotlin.test.assertEquals
 class ShaderTest : KoolTest() {
     @Test
     fun `gpu sort should correctly sort unsorted keys`() = runTest {
+        val count = 1280
         val config = ConfigRepository(AppSettings()).apply {
             updateConfig(
                 ParticlesConfig(
                     simulation = Simulation(
-                        count = 1280,
+                        count = count,
                         size = Size(1000, 1000),
                         minGridSize = 5.0
                     )
@@ -44,7 +45,7 @@ class ShaderTest : KoolTest() {
         }
         buffers.particleGridCellKeys.uploadData(unsortedBuffer)
         val result = execManyShaders(scene, setup = {
-            sort.addSortingShader(1280, buffers, it)
+            sort.addSortingShader(count, buffers, it)
         }, read = {
             val result = Int32Buffer(buffers.particleGridCellKeys.size)
             buffers.particleGridCellKeys.downloadData(result)

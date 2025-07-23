@@ -105,6 +105,7 @@ class FieldsShader(
                     //TODO duplicate code
                     fori(startIndex, endIndexExclusive) { i ->
                         val otherPos = float3Var(positions[i].xyz)
+                        `if`(all(otherPos eq position)) { `continue`() }
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))
                         localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
@@ -114,6 +115,10 @@ class FieldsShader(
                     fori(startIndex, endIndexExclusive) { i ->
                         val otherPos = (positions[i].xyz)
                         val otherType = (particleTypes[i])
+                        // TODO this branch slows down perf measurably.
+                        //  On AMD it's not necessary as multiplication by zero wins, but on NVIDIA/Intel it causes an infinity
+                        //  Decide on best way to optimize this out.
+                        `if`(all(otherPos eq position)) { `continue`() }
 
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))

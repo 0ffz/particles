@@ -13,6 +13,20 @@ class OffsetsShader(
     val configRepo: ConfigRepository,
     val buffers: ParticleBuffers,
 ) {
+    val reset = KslComputeShader("Offset Reset") {
+        computeStage(WORK_GROUP_SIZE) {
+            val offsetsBuffer = storage<KslInt1>("offsets")
+            val numValues = uniformInt1("numValues")
+
+            main {
+                val id = int1Var(inGlobalInvocationId.x.toInt1())
+                `if`(id lt numValues) {
+                    offsetsBuffer[id] = numValues
+                }
+            }
+        }
+    }
+
     val shader = KslComputeShader("Offset Compute") {
         computeStage(WORK_GROUP_SIZE) {
             val numValues = uniformInt1("numValues")
@@ -52,6 +66,9 @@ class OffsetsShader(
         keys = buffers.particleGridCellKeys
         offsets = buffers.offsetsBuffer
         offsetsEnd = buffers.offsetsEndBuffer
+        reset.storage("offsets").set(buffers.offsetsBuffer)
+        reset.uniform1i("numValues").set(configRepo.count)
+        pass.addTask(reset, numGroups = configRepo.numGroups)
         pass.addTask(shader, numGroups = configRepo.numGroups)
     }
 }

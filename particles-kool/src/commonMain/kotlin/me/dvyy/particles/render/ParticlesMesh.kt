@@ -184,7 +184,7 @@ class ParticlesMesh(
             storage("typesBuffer", buffers.particleTypesBuffer)
             storage("clusterBuffer", buffers.clustersBuffer)
             storage("cellIdsBuffer", buffers.particleGridCellKeys)
-            storage("indexesBuffer", buffers.offsetsBuffer)
+            storage("indexesBuffer", buffers.particleGridCellKeys)
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

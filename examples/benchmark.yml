@@ -1,7 +1,7 @@
 simulation:
-  count: 16
+  count: 64
   minGridSize: 10.0
-  dT: 0.001
+  dT: 0.01
   conversionRate: 50
   maxVelocity: 1
   maxForce: 100000.0

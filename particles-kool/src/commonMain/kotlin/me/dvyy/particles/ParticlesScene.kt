@@ -10,6 +10,7 @@ import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.OffsetsShader
+import me.dvyy.particles.compute.partitioning.ReorderBuffersShader
 import me.dvyy.particles.compute.simulation.FieldsMultiPasses
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
@@ -42,6 +43,16 @@ class ParticlesScene(
 
         gpuSort.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
         gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
+        ReorderBuffersShader(
+            listOf(
+                buffers.positionBuffer,
+                buffers.velocitiesBuffer,
+                buffers.forcesBuffer,
+                buffers.particleTypesBuffer,
+                buffers.clustersBuffer
+//                buffers.particleGridCellKeys,
+            )
+        ).addTo(computePass, buffers.sortIndices, configRepo.count, configRepo.numGroups)
         offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)
         val fieldsPasses = fieldsShader.addTo(computePass) // Run force computations based on particle interactions
         convertShader.addTo(computePass) // Convert particles to different types as needed

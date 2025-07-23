@@ -87,6 +87,7 @@ kotlin {
             dependencies {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(kotlin("test-junit5"))
+                implementation("io.kotest:kotest-assertions-core:6.0.0.M5")
             }
         }
     }

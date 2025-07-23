@@ -61,7 +61,7 @@ class CameraManager(
         lineMesh.set(scene.addLineMesh {
             addBoundingBox(bb, Color.WHITE)
         })
-        scene.updateGridMesh()
+//        scene.updateGridMesh()
         scene.clearColor = ClearColorFill(Color("444444"))
         scene.orbitCamera {
             maxZoom = boxMax.length().toDouble()

@@ -143,16 +143,16 @@ class FieldsShader(
                 // Define simulation box boundaries
                 // Wall repulsion
                 //TODO make configurable, since lennardJones might not be provided
-//                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
-//                    .invoke(dist, 1f.const, 5f.const, 0.2f.const)
-//                nextForce.x += lJ(position.x - 0f.const + 1f.const)
-//                nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
-//                nextForce.y += lJ(position.y - 0f.const + 1f.const)
-//                nextForce.y -= lJ(boxMax.y - position.y + 1f.const)
-//                `if`(boxMax.z ne 0f.const) {
-//                    nextForce.z += lJ(position.z - 0f.const + 1f.const)
-//                    nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
-//                }
+                fun lJ(dist: KslExpression<KslFloat1>) = (functions["lennardJones"] as KslFunctionFloat1)
+                    .invoke(dist, 1f.const, 3f.const, 0.002f.const)
+                nextForce.x += lJ(position.x - 0f.const + 1f.const)
+                nextForce.x -= lJ(boxMax.x - position.x + 1f.const)
+                nextForce.y += lJ(position.y - 0f.const + 1f.const)
+                nextForce.y -= lJ(boxMax.y - position.y + 1f.const)
+                `if`(boxMax.z ne 0f.const) {
+                    nextForce.z += lJ(position.z - 0f.const + 1f.const)
+                    nextForce.z -= lJ(boxMax.z - position.z + 1f.const)
+                }
                 // Cap force
                 `if`(length(nextForce) gt params.maxForce.ksl) {
                     nextForce set normalize(nextForce) * params.maxForce.ksl

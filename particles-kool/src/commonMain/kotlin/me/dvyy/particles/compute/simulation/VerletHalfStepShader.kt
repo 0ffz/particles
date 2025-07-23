@@ -24,7 +24,7 @@ class VerletHalfStepShader {
 
                 // Ensure particles are in bounds (periodic boundary)
                 nextPosition set clamp(
-                    nextPosition - (boxMax * floor(nextPosition / boxMax)), // modulo box size
+                    nextPosition,// - (boxMax * floor(nextPosition / boxMax)), // modulo box size
                     0f.const3, boxMax, // clamp in box boundary for the case where boxMax has a dimension with size 0
                 )
 //                nextPosition set clamp(nextPosition, 0f.const3, boxMax)

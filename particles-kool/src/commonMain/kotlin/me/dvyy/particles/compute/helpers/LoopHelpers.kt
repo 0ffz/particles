@@ -1,6 +1,7 @@
 package me.dvyy.particles.compute.helpers
 
 import de.fabmax.kool.modules.ksl.lang.KslScopeBuilder
+import de.fabmax.kool.modules.ksl.lang.KslValueInt3
 
 /** Loops over a third z value if config is set to threeDimensions */
 internal fun KslScopeBuilder.forZIf3d(
@@ -17,12 +18,12 @@ internal fun KslScopeBuilder.forZIf3d(
  */
 internal fun KslScopeBuilder.forNearbyGridCells(
     isThreeDimensions: Boolean,
-    block: KslScopeBuilder.(x: KslInt, y: KslInt, z: KslInt) -> Unit
+    block: KslScopeBuilder.(offset: KslValueInt3) -> Unit
 ) {
     fori((-1).const, 2.const) { x ->
         fori((-1).const, 2.const) { y ->
             forZIf3d(isThreeDimensions) { z -> // A third loop if set to 3-dimensions
-                block(x, y, z)
+                block(int3Value(x, y, z))
             }
         }
     }

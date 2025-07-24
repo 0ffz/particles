@@ -36,7 +36,7 @@ class OffsetsShader(
                         keyNext set keysBuffer[id + 1.const]
                     }
                     `if`(key ne keyPrev) { offsetsBuffer[key] = id }
-                    `if`(key ne keyNext) { offsetsEndBuffer[key] = id }
+                    `if`(key ne keyNext) { offsetsEndBuffer[key] = id + 1.const }
                 }
             }
         }

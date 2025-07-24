@@ -64,14 +64,15 @@ class FieldsShader(
                 val nextForce = float3Var(Vec3f.ZERO.const)
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
-                forNearbyGridCells(configRepo.config.value.simulation.threeDimensions) { x, y, z ->
-                    `if`(any(grid + int3Value(x, y ,z) lt 0.const3) or any(grid + int3Value(x, y ,z) gt gridCells)) {
+                val is3d = configRepo.config.value.simulation.threeDimensions
+                forNearbyGridCells(is3d) { offset ->
+                    `if`(any(grid + offset lt 0.const3) or if (is3d) any(((grid + offset) ge gridCells)) else any(((grid + offset).xy ge gridCells.xy))) {
                         `continue`()
                     }
                     // Calculate the neighboring cell id as an integer
-                    val localCellId = int1Var(cellId(grid + int3Value(x, y, z), gridCells))
+                    val localCellId = int1Var(cellId(grid + offset, gridCells))
                     val startIndex = int1Var(cellOffsets[localCellId])
-                    val endIndexInclusive = int1Var(cellOffsetsEnd[localCellId])
+                    val endIndexExclusive = int1Var(cellOffsetsEnd[localCellId])
 
                     fun KslFloat.clampMaxForce() = min(this, params.maxForce.ksl)
 
@@ -102,25 +103,20 @@ class FieldsShader(
                     }
 
                     //TODO duplicate code
-//                    fori(startIndex, endIndexInclusive + 1.const) { i ->
-//                        val otherPos = float3Var(positions[i].xyz)
-//                        `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
-//                        val direction = float3Var(position - otherPos)
-//                        val dist = float1Var(length(direction))
-//                        `if`(dist gt 5f.const) { `continue`() }
-//                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
-//                    }
+                    fori(startIndex, endIndexExclusive) { i ->
+                        val otherPos = float3Var(positions[i].xyz)
+                        val direction = float3Var(position - otherPos)
+                        val dist = float1Var(length(direction))
+                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
+                    }
 
                     // Pairwise forces
-                    fori(startIndex, endIndexInclusive + 1.const) { i ->
-                        val otherPos = float3Var(positions[i].xyz)
-                        val otherType = int1Var(particleTypes[i])
+                    fori(startIndex, endIndexExclusive) { i ->
+                        val otherPos = (positions[i].xyz)
+                        val otherType = (particleTypes[i])
 
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))
-                        // TODO
-//                        `if`(all(otherPos eq position)) { `continue`() }
-//                        `if`(dist gt gridSize) { `continue`() }
                         val forceBetweenParticles = float1Var(0f.const)
 
                         // Compute a hash based on the particle types
@@ -129,19 +125,13 @@ class FieldsShader(
                         // Call invoke each pairwise force function with extracted parameters
                         forcesDef.pairwiseForces.forEach {
                             val functionRef = it.force.kslReference
-//                            val interaction = structVar(it.interactionFor(pairHash)).struct
+                            //NOTE necessary for OPENGL to compile
+                            //TODO this buffer access adds a good amount of overhead
+                            val interaction = structVar(it.interactionFor(pairHash)).struct
                             // For pairs without an interaction paramsMat[0][0] is 0
-                            forceBetweenParticles += functionRef.invoke(
-                                dist,
-                                localCount,
-                                3.4f.const,
-                                1f.const,
-                                5f.const
-                            )
-                                .clampMaxForce()
-//                            forceBetweenParticles += interaction.enabled.ksl *
-//                                    functionRef.invoke(dist, localCount, *interaction.parametersAsArray())
-//                                        .clampMaxForce()
+                            forceBetweenParticles += interaction.enabled.ksl *
+                                    functionRef.invoke(dist, 0f.const, *interaction.parametersAsArray())
+                                        .clampMaxForce()
                         }
 
                         nextForce += normalize(direction) * forceBetweenParticles

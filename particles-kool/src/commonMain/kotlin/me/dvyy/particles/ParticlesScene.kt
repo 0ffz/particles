@@ -61,7 +61,7 @@ class ParticlesScene(
 
         // === RENDERING ===
         cameraManager.manageCameraFor(this)
-        addNode(particlesMesh.mesh) // Render particles as instanced mesh
+        //addNode(particlesMesh.mesh) // Render particles as instanced mesh
 
         // === DEBUGGING ===
         var iterations = 0

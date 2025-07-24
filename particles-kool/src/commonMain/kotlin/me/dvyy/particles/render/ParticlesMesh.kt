@@ -53,16 +53,11 @@ class ParticlesMesh(
 
     val mesh = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
         val do3dShading = true
-        val tintFarAway = buffers.configRepo.boxSize.z > 400f
+        val tintFarAway = configRepository.boxSize.z > 400f
         shader = KslShader("test") {
             val interColor = interStageFloat4()
             val fragPos = interStageFloat4("fragPos")
-            val interVelocity = interStageFloat1("interVelocity")
             val interCenter = interStageFloat3("interCenter")
-            val interClusterId = interStageInt1("interClusterId")
-            val interColorType = interStageInt1("interColorType")
-            val interMaxVelocity = interStageFloat1("maxVelocity")
-            val interIndex = interStageInt1("interIndex")
 
             vertexStage {
                 main {
@@ -98,63 +93,34 @@ class ParticlesMesh(
                         Vec3f(1f, -1f, 1f).const
                     ) + (cameraRight * position.x * radius) + (cameraUp * position.y * radius)
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
-                    interColor.input set float4Var(typeColorsBuffer[type])
                     fragPos.input set outPosition
                     interCenter.input set position
-                    interClusterId.input set clusterId
-                    interColorType.input set colorType
-                    interVelocity.input set length(velocitiesBuffer[offset])
-                    interMaxVelocity.input set simulationParams.struct.maxVelocity.ksl
-                    interIndex.input set cellIds[offset]
+                    val maxVelocity = simulationParams.struct.maxVelocity.ksl
+
+                    val baseColor = float4Var(typeColorsBuffer[typesBuffer[offset]])
+                    `if`(colorType eq ParticleColor.CLUSTER.ordinal.const) {
+                        val clusterId = int1Var(clusterBuffer[offset])
+                        baseColor set randomColor(clusterId)
+                    }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
+                        val velocity = float1Var(length(velocitiesBuffer[offset]))
+                        baseColor set float4Value(
+                            pow(
+                                velocity / maxVelocity,
+                                1.5f.const
+                            ), 0f.const, 0f.const, 1f.const
+                        )
+                    }/*.elseIf(interColorType.output eq ParticleColor.INDEX.ordinal.const) {
+                        baseColor set randomColor()//float4Value(interIndex.output.toFloat1() / 10f.const, 0f.const, 0f.const, 1f.const)
+                    }*/
+                    interColor.input set baseColor
                 }
             }
             fragmentStage {
                 main {
                     val uv = float2Var(interCenter.output.xy + 0.5.const)
-//                    val screenPosition = float3Var(fragPos.output.xyz / fragPos.output.w * 0.5.const + 0.5.const)
-//                    val texCoordBlock = vertexStage?.findBlock<TexCoordAttributeBlock>()!!
-
-//                    val splatCoords = float2Var( * SPLAT_MAP_SCALE.const)
-                    val centerOffset = float2Var((uv - 0.5f.const) * 2f.const)
-                    val sqrDst = dot(centerOffset, centerOffset)
-//                    `if`(sqrDst gt 1f.const) { discard() }
-//                    `if`(texCoordsBlock.getTextureCoords().x gt 0.1f.const) {
-//                        discard()
-//                    }
-//                    float4Value(texCoordBlock.getTextureCoords(), 1f, 1f))//
 
                     // Choose color based on specified option
                     val baseColor = float4Var(interColor.output)
-                    fun randomColor(hash: KslInt): KslVarVector<KslFloat4, KslFloat1> {
-                        fun hash(int: KslExpression<KslInt1>) =
-                            fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
-
-                        val color = float4Var(1f.const4)
-                        `if`(hash eq (-1).const) {
-                            color set float4Value(0.1f, 0.1f, 0.1f, 1f)
-                        }.`else` {
-                            val r = hash(hash)
-                            val g = hash(hash + 1.const)
-                            val b = hash(hash + 2.const)
-                            color set float4Value(r, g, b, 1f.const)
-                        }
-                        return color
-                    }
-                    `if`(interColorType.output eq ParticleColor.CLUSTER.ordinal.const) {
-                        val cluster = interClusterId.output
-                        baseColor set randomColor(cluster)
-                    }.elseIf(interColorType.output eq ParticleColor.VELOCITY.ordinal.const) {
-                        baseColor set float4Value(pow(interVelocity.output / (interMaxVelocity.output + 1f.const), 1.5f.const), 0f.const, 0f.const, 1f.const)
-                    }.elseIf(interColorType.output eq ParticleColor.INDEX.ordinal.const) {
-                        baseColor set randomColor(interIndex.output)//float4Value(interIndex.output.toFloat1() / 10f.const, 0f.const, 0f.const, 1f.const)
-                    }
-
-                    // TODO FORCE color
-                    // Update the color buffer based on the magnitude of the net force
-//                    colors[id] = float4Value(
-//                        log(length(nextForce)) / (2f.const * log(1000f.const)),
-//                        0f.const, 0f.const, 1f.const
-//                    )
 
                     // Tint color in 3d and apply sphere-like shadow
                     val color = baseColor.run {
@@ -202,5 +168,21 @@ class ParticlesMesh(
             points.add(Vec3f(x, y, 0f))
         }
         return points
+    }
+
+    fun KslScopeBuilder.randomColor(hash: KslInt): KslVarVector<KslFloat4, KslFloat1> {
+        fun hash(int: KslExpression<KslInt1>) =
+            fract(sin(int.toFloat1() * 78.233.const) * 43758.5453.const)
+
+        val color = float4Var(1f.const4)
+        `if`(hash eq (-1).const) {
+            color set float4Value(0.1f, 0.1f, 0.1f, 1f)
+        }.`else` {
+            val r = hash(hash)
+            val g = hash(hash + 1.const)
+            val b = hash(hash + 2.const)
+            color set float4Value(r, g, b, 1f.const)
+        }
+        return color
     }
 }

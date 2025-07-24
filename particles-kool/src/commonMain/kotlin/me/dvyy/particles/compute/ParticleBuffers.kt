@@ -21,6 +21,7 @@ class ParticleBuffers(
     val particleGridCellKeys = Buffers.integers(count)
     val sortIndices = Buffers.integers(count)
     val offsetsBuffer = Buffers.integers(count)
+    val offsetsEndBuffer = Buffers.integers(count)
     val colorsBuffer = StorageBuffer(GpuType.Float4, count)
 
     val particleTypesBuffer = Buffers.integers(count)

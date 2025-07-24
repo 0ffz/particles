@@ -1,15 +1,15 @@
 simulation:
-  count: 64
+  count: 100000
   minGridSize: 10.0
   dT: 0.01
   conversionRate: 50
   maxVelocity: 1
   maxForce: 100000.0
   threeDimensions: false
-  passesPerFrame: 1
+  passesPerFrame: 50
   size:
-    width: 100
-    height: 50
+    width: 1000
+    height: 1000
 particles:
   argon:
     color: ffffff

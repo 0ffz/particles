@@ -29,16 +29,16 @@ class GPUSort(
 
             // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
 
-            val cellId = cellId(gridCells)
 
             main {
                 // get global invocation id
                 val idx = int1Var(inGlobalInvocationId.x.toInt1())
-                val position = positions[idx]
-                val xGrid = int1Var((position.x / gridSize).toInt1())
-                val yGrid = int1Var((position.y / gridSize).toInt1())
-                val zGrid = int1Var((position.z / gridSize).toInt1())
-                val cellId = int1Var(cellId(xGrid, yGrid, zGrid))
+                val position = positions[idx].xyz
+                val grid = int3Var((position / gridSize).toInt3())
+//                val xGrid = int1Var((position.x / gridSize).toInt1())
+//                val yGrid = int1Var((position.y / gridSize).toInt1())
+//                val zGrid = int1Var((position.z / gridSize).toInt1())
+                val cellId = int1Var(cellId(grid, gridCells))
                 cellIdKeys[idx] = cellId
                 indices[idx] = idx
             }

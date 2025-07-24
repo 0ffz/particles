@@ -31,6 +31,7 @@ class FieldsShader(
             // Storage buffers
             val particle2CellKey = storage<KslInt1>("particle2CellKey")
             val cellOffsets = storage<KslInt1>("cellOffsets")
+            val cellOffsetsEnd = storage<KslInt1>("cellOffsetsEnd")
             val positions = storage<KslFloat4>("positions")
             val velocities = storage<KslFloat4>("velocities")
             val forces = storage<KslFloat4>("forces")
@@ -45,17 +46,16 @@ class FieldsShader(
                 it.kslForcesStruct
             }
 
-            // Helper: compute cell id from grid coordinates (cell id = x + y * gridCols)
-            val cellId = cellId(gridCells)
-
             main {
                 // Get the particle id from the global invocation (using only x as in GLSL)
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 // Load current particle properties
                 // Extract the 2D position from the stored vec4
                 val position = float3Var(positions[id].xyz) //p(t + dt); since half step runs before this
+                val velocity = float3Var(velocities[id].xyz) //v(t + dt/2)
+                val currForce = float3Var(forces[id].xyz)
                 val particleType = int1Var(particleTypes[id])
-                val params = params.struct
+                val params = structVar(params).struct
 
                 // Compute grid indices based on the particle position
                 val grid = int3Var((position / gridSize).toInt3())
@@ -69,8 +69,9 @@ class FieldsShader(
                         `continue`()
                     }
                     // Calculate the neighboring cell id as an integer
-                    val localCellId = int1Var(cellId(grid.x + x, grid.y + y, grid.z + z))
+                    val localCellId = int1Var(cellId(grid + int3Value(x, y, z), gridCells))
                     val startIndex = int1Var(cellOffsets[localCellId])
+                    val endIndexInclusive = int1Var(cellOffsetsEnd[localCellId])
 
                     fun KslFloat.clampMaxForce() = min(this, params.maxForce.ksl)
 
@@ -101,26 +102,26 @@ class FieldsShader(
                     }
 
                     //TODO duplicate code
-                    fori(startIndex, count) { i ->
-                        `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
-                        val otherPos = float3Var(positions[i].xyz)
-                        `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
-                        val direction = float3Var(position - otherPos)
-                        val dist = float1Var(length(direction))
-                        `if`(dist gt 5f.const) { `continue`() }
-                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
-                    }
+//                    fori(startIndex, endIndexInclusive + 1.const) { i ->
+//                        val otherPos = float3Var(positions[i].xyz)
+//                        `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
+//                        val direction = float3Var(position - otherPos)
+//                        val dist = float1Var(length(direction))
+//                        `if`(dist gt 5f.const) { `continue`() }
+//                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
+//                    }
 
                     // Pairwise forces
-                    fori(startIndex, count) { i ->
-                        `if`(int1Var(particle2CellKey[i]) ne localCellId) { `break`() }
+                    fori(startIndex, endIndexInclusive + 1.const) { i ->
                         val otherPos = float3Var(positions[i].xyz)
-                        `if`((otherPos.x eq position.x) and (otherPos.y eq position.y) and (otherPos.z eq position.z)) { `continue`() }
+                        val otherType = int1Var(particleTypes[i])
+
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))
-                        `if`(dist gt gridSize) { `continue`() }
+                        // TODO
+//                        `if`(all(otherPos eq position)) { `continue`() }
+//                        `if`(dist gt gridSize) { `continue`() }
                         val forceBetweenParticles = float1Var(0f.const)
-                        val otherType = int1Var(particleTypes[i])
 
                         // Compute a hash based on the particle types
                         val pairHash = PairwiseForce.pairHash(particleType, otherType, forcesDef.particleTypeCount)
@@ -128,18 +129,25 @@ class FieldsShader(
                         // Call invoke each pairwise force function with extracted parameters
                         forcesDef.pairwiseForces.forEach {
                             val functionRef = it.force.kslReference
-                            val interaction = structVar(it.interactionFor(pairHash)).struct
+//                            val interaction = structVar(it.interactionFor(pairHash)).struct
                             // For pairs without an interaction paramsMat[0][0] is 0
-                            forceBetweenParticles += interaction.enabled.ksl *
-                                    functionRef.invoke(dist, localCount, *interaction.parametersAsArray())
-                                        .clampMaxForce()
+                            forceBetweenParticles += functionRef.invoke(
+                                dist,
+                                localCount,
+                                3.4f.const,
+                                1f.const,
+                                5f.const
+                            )
+                                .clampMaxForce()
+//                            forceBetweenParticles += interaction.enabled.ksl *
+//                                    functionRef.invoke(dist, localCount, *interaction.parametersAsArray())
+//                                        .clampMaxForce()
                         }
 
                         nextForce += normalize(direction) * forceBetweenParticles
                     }
                 }
 
-                val velocity = float3Var(velocities[id].xyz) //v(t + dt/2)
 
                 // --- Begin wall repulsion snippet ---
                 // Define simulation box boundaries
@@ -161,7 +169,6 @@ class FieldsShader(
                 }
 
                 // Compute next velocity with Verlet integration
-                val currForce = float3Var(forces[id].xyz)
                 val nextVelocity = float3Var(velocity + ((currForce + nextForce) * dT / 2f.const))
                 // Cap velocity and net force to their maximum values
                 `if`(length(nextVelocity) gt params.maxVelocity.ksl) {
@@ -186,8 +193,16 @@ class FieldsShader(
     // Storage buffers
     var particle2CellKey by shader.storage("particle2CellKey")
     var cellOffsets by shader.storage("cellOffsets")
+    var cellOffsetsEnd by shader.storage("cellOffsetsEnd")
     var positions by shader.storage("positions")
     var velocities by shader.storage("velocities")
     var forces by shader.storage("forces")
     var particleTypes by shader.storage("particleTypes")
 }
+//
+//context(scope: KslScopeBuilder)
+//fun clampVector(vector: KslExprFloat3, maxLength: KslExprInt1): KslExprFloat3 = with(scope) {
+//    val vectorLength = length(vector)
+//    val scale = float1Var(maxLength.toFloat1() / max(vectorLength, maxLength.toFloat1()))
+//    vector * scale
+//}

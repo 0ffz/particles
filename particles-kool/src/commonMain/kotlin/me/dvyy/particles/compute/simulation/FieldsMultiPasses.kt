@@ -18,6 +18,7 @@ class FieldsMultiPasses(
         fields.count = configRepo.count
         fields.particleTypes = buffers.particleTypesBuffer
         fields.cellOffsets = buffers.offsetsBuffer
+        fields.cellOffsetsEnd = buffers.offsetsEndBuffer
         fields.particle2CellKey = buffers.particleGridCellKeys
         fields.positions = buffers.positionBuffer
         fields.velocities = buffers.velocitiesBuffer

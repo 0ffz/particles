@@ -42,6 +42,11 @@ class ParticlesMesh(
             }
         }
         scope.launch {
+            settings.ui.recolorGradient.collectLatest {
+                mesh.shader?.uniform1i("recolorGradient")?.set(it.ordinal)
+            }
+        }
+        scope.launch {
             configRepository.config.map { it.simulation }.distinctUntilChanged().collectLatest {
                 mesh.shader?.uniformStruct("params", ::SimulationParametersStruct)?.set {
                     maxVelocity.set(it.maxVelocity.toFloat())
@@ -62,15 +67,17 @@ class ParticlesMesh(
             vertexStage {
                 main {
                     val camData = cameraData()
-                    val indexes = storage<KslInt1>("indexesBuffer")
-                    val cellIds = storage<KslInt1>("cellIdsBuffer")
+                    val colorType = uniformInt1("colorType")
+                    val recolorGradient = uniformInt1("recolorGradient")
                     val positionsBuffer = storage<KslFloat4>("positionsBuffer")
                     val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
+                    val forcesBuffer = storage<KslFloat4>("forcesBuffer")
                     val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
+                    val colorsBuffer = storage<KslFloat4>("colorsBuffer")
                     val clusterBuffer = storage<KslInt1>("clusterBuffer")
                     val typesBuffer = storage<KslInt1>("typesBuffer")
+                    val localNeighboursBuffer = storage<KslFloat1>("localNeighboursBuffer")
                     val radii = storage<KslFloat1>("radii")
-                    val colorType = uniformInt1("colorType")
                     val simulationParams = uniformStruct("params", provider = ::SimulationParametersStruct)
 
                     val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
@@ -95,24 +102,37 @@ class ParticlesMesh(
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
                     fragPos.input set outPosition
                     interCenter.input set position
-                    val maxVelocity = simulationParams.struct.maxVelocity.ksl
 
-                    val baseColor = float4Var(typeColorsBuffer[typesBuffer[offset]])
-                    `if`(colorType eq ParticleColor.CLUSTER.ordinal.const) {
-                        val clusterId = int1Var(clusterBuffer[offset])
-                        baseColor set randomColor(clusterId)
-                    }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
-                        val velocity = float1Var(length(velocitiesBuffer[offset]))
-                        baseColor set float4Value(
-                            pow(
-                                velocity / maxVelocity,
-                                1.5f.const
-                            ), 0f.const, 0f.const, 1f.const
-                        )
-                    }/*.elseIf(interColorType.output eq ParticleColor.INDEX.ordinal.const) {
-                        baseColor set randomColor()//float4Value(interIndex.output.toFloat1() / 10f.const, 0f.const, 0f.const, 1f.const)
-                    }*/
-                    interColor.input set baseColor
+                    val prevColor = float4Var(colorsBuffer[offset])
+                    val newColor = float4Var(typeColorsBuffer[typesBuffer[offset]]) // default to particle color
+                    val gradient = Gradients.HEAT
+                    fun KslScopeBuilder.particleColor(
+                        gradient: (KslExprFloat1) -> KslExprFloat4,
+                    ) {
+                        `if`(colorType eq ParticleColor.CLUSTER.ordinal.const) {
+                            val clusterId = int1Var(clusterBuffer[offset])
+                            newColor set randomColor(clusterId)
+                        }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
+                            val maxVelocity = simulationParams.struct.maxVelocity.ksl
+                            val velocity = float1Var(length(velocitiesBuffer[offset]))
+                            val input = clamp(velocity / maxVelocity, 0f.const, 1f.const)
+                            newColor set gradient(input)
+                        }.elseIf(colorType eq ParticleColor.FORCE.ordinal.const) {
+                            val maxForce = simulationParams.struct.maxForce.ksl
+                            val force = float1Var(length(forcesBuffer[offset]))
+                            val input = clamp(pow(force / log(maxForce), 0.5f.const), 0f.const, 1f.const)
+                            newColor set gradient(input)
+                        }.elseIf(colorType eq ParticleColor.NEIGHBOURS.ordinal.const) {
+                            newColor set gradient(clamp(localNeighboursBuffer[offset] / 2f.const, 0f.const, 1f.const))
+                        }
+                    }
+
+                    particleColor { gradient.recolor(it) }
+
+                    // mix old and new color such that transition happens more slowly, avoiding flickering
+                    val mix = mix(prevColor, newColor, 0.1f.const)
+                    colorsBuffer[offset] = mix
+                    interColor.input set mix
                 }
             }
             fragmentStage {
@@ -144,7 +164,9 @@ class ParticlesMesh(
         }.apply {
             storage("positionsBuffer", buffers.positionBuffer)
             storage("velocitiesBuffer", buffers.velocitiesBuffer)
+            storage("forcesBuffer", buffers.forcesBuffer)
             storage("colorsBuffer", buffers.colorsBuffer)
+            storage("localNeighboursBuffer", buffers.localNeighboursBuffer)
             storage("typeColorsBuffer", buffers.particleColors)
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
@@ -169,6 +191,7 @@ class ParticlesMesh(
         }
         return points
     }
+
 
     fun KslScopeBuilder.randomColor(hash: KslInt): KslVarVector<KslFloat4, KslFloat1> {
         fun hash(int: KslExpression<KslInt1>) =

@@ -49,7 +49,9 @@ class ParticlesScene(
                 buffers.velocitiesBuffer,
                 buffers.forcesBuffer,
                 buffers.particleTypesBuffer,
-                buffers.clustersBuffer
+                buffers.clustersBuffer,
+                buffers.colorsBuffer,
+                buffers.localNeighboursBuffer,
 //                buffers.particleGridCellKeys,
             )
         ).addTo(computePass, buffers.sortIndices, configRepo.count, configRepo.numGroups)

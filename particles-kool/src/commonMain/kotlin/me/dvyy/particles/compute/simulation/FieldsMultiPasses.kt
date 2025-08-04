@@ -22,6 +22,7 @@ class FieldsMultiPasses(
         fields.particle2CellKey = buffers.particleGridCellKeys
         fields.positions = buffers.positionBuffer
         fields.velocities = buffers.velocitiesBuffer
+        fields.localNeighbours = buffers.localNeighboursBuffer
         fields.forces = buffers.forcesBuffer
         fields.boxMax = configRepo.boxSize
 

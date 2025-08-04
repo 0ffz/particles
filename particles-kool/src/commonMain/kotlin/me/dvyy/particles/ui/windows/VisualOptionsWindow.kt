@@ -12,7 +12,6 @@ import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuRow
 import me.dvyy.particles.ui.helpers.labelStyle
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class VisualOptionsWindow(
     ui: AppUI,
@@ -21,6 +20,7 @@ class VisualOptionsWindow(
 ) : FieldsWindow("Visual options", ui, Icons.eye) {
     //    val sizeList = listOf(Sizes.small, Sizes.medium, Sizes.large)
     val coloring = settings.ui.coloring.asMutableState(scope)
+    val recolorGradient = settings.ui.recolorGradient.asMutableState(scope)
     val size = settings.ui.scale.asMutableState(scope)
     val shouldCalibrateFPS = settings.ui.shouldCalibrateFPS.asMutableState(scope)
     val targetFPS = settings.ui.targetFPS.asMutableState(scope)
@@ -83,6 +83,17 @@ class VisualOptionsWindow(
                             .onItemSelected { color -> settings.ui.coloring.update { ParticleColor.entries[color] } }
                     }
                 }
+//                MenuRow {
+//                    Text("Recolor Gradient") {
+//                        labelStyle()
+//                        modifier.width(Grow.Std)
+//                    }
+//                    ComboBox {
+//                        modifier.items(Gradients.entries.map { it.name.lowercase().capitalize() })
+//                            .selectedIndex(recolorGradient.use().ordinal)
+//                            .onItemSelected { color -> settings.ui.recolorGradient.update { Gradients.entries[color] } }
+//                    }
+//                }
             }
         }
     }

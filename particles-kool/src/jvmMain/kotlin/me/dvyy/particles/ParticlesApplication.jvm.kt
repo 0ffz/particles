@@ -3,7 +3,6 @@ package me.dvyy.particles
 import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJvm
 import de.fabmax.kool.KoolConfigJvm.Backend
-import de.fabmax.kool.NativeAssetLoader
 import de.fabmax.kool.math.Vec2i
 import me.dvyy.particles.compute.forces.Force
 
@@ -13,7 +12,7 @@ actual fun launchParticles(forces: List<Force>, args: Array<String>) {
             windowTitle = "Particles",
             isVsync = false,
             maxFrameRate = 500,
-            renderBackend = Backend.OPEN_GL,// else Backend.VULKAN,
+            renderBackend = Backend.VULKAN,// else Backend.VULKAN,
             windowSize = Vec2i(1920, 1080)
         )
     ) {

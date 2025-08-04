@@ -35,6 +35,7 @@ class FieldsShader(
             val positions = storage<KslFloat4>("positions")
             val velocities = storage<KslFloat4>("velocities")
             val forces = storage<KslFloat4>("forces")
+            val localNeighbours = storage<KslFloat1>("localNeighbours")
 
             val particleTypes = storage<KslInt1>("particleTypes")
 
@@ -65,6 +66,42 @@ class FieldsShader(
 
                 // Loop over neighboring grid cells (x and y offsets from -1 to 1)
                 val is3d = configRepo.config.value.simulation.threeDimensions
+
+                // TODO move into preprocess step for pairwise forces
+                // Calculate local neighbours (as in tersoff)
+                // Given distance between two particles, return a smoothed cutoff from 1 to 0
+                val localCount = float1Var(0f.const)
+
+                forNearbyGridCells(is3d) { offset ->
+                    `if`(any(grid + offset lt 0.const3) or if (is3d) any(((grid + offset) ge gridCells)) else any(((grid + offset).xy ge gridCells.xy))) {
+                        `continue`()
+                    }
+                    // Calculate the neighboring cell id as an integer
+                    val localCellId = int1Var(cellId(grid + offset, gridCells))
+                    val startIndex = int1Var(cellOffsets[localCellId])
+                    val endIndexExclusive = int1Var(cellOffsetsEnd[localCellId])
+
+
+                    fun cutoff(
+                        distance: KslScalarExpression<KslFloat1>,
+                        cutoffR: KslScalarExpression<KslFloat1>,
+                        cutoffD: KslScalarExpression<KslFloat1>,
+                    ): KslScalarExpression<KslFloat1> {
+                        // Clamp the distance to the transition range [lowerBound, upperBound].
+                        val clampedDistance = clamp(distance, cutoffR - cutoffD, cutoffR + cutoffD)
+                        return 0.5f.const - (0.5f.const * sin((PI_F / 2f).const * (clampedDistance - cutoffR) / cutoffD))
+                    }
+
+                    //TODO duplicate code
+                    fori(startIndex, endIndexExclusive) { i ->
+                        val otherPos = float3Var(positions[i].xyz)
+                        `if`(all(otherPos eq position)) { `continue`() }
+                        val direction = float3Var(position - otherPos)
+                        val dist = float1Var(length(direction))
+                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
+                    }
+                }
+
                 forNearbyGridCells(is3d) { offset ->
                     `if`(any(grid + offset lt 0.const3) or if (is3d) any(((grid + offset) ge gridCells)) else any(((grid + offset).xy ge gridCells.xy))) {
                         `continue`()
@@ -86,31 +123,6 @@ class FieldsShader(
                             *interaction.parametersAsArray()
                         )
                     }
-
-                    // TODO move into preprocess step for pairwise forces
-                    // Calculate local neighbours (as in tersoff)
-                    // Given distance between two particles, return a smoothed cutoff from 1 to 0
-                    val localCount = float1Var(0f.const)
-
-                    fun cutoff(
-                        distance: KslScalarExpression<KslFloat1>,
-                        cutoffR: KslScalarExpression<KslFloat1>,
-                        cutoffD: KslScalarExpression<KslFloat1>,
-                    ): KslScalarExpression<KslFloat1> {
-                        // Clamp the distance to the transition range [lowerBound, upperBound].
-                        val clampedDistance = clamp(distance, cutoffR - cutoffD, cutoffR + cutoffD)
-                        return 0.5f.const - (0.5f.const * sin((PI_F / 2f).const * (clampedDistance - cutoffR) / cutoffD))
-                    }
-
-                    //TODO duplicate code
-                    fori(startIndex, endIndexExclusive) { i ->
-                        val otherPos = float3Var(positions[i].xyz)
-                        `if`(all(otherPos eq position)) { `continue`() }
-                        val direction = float3Var(position - otherPos)
-                        val dist = float1Var(length(direction))
-                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
-                    }
-
                     // Pairwise forces
                     fori(startIndex, endIndexExclusive) { i ->
                         val otherPos = (positions[i].xyz)
@@ -172,6 +184,7 @@ class FieldsShader(
 
                 forces[id] = float4Value(nextForce, 0f)
                 velocities[id] = float4Value(nextVelocity, 0f)
+                localNeighbours[id] = localCount
             }
         }
 
@@ -191,6 +204,7 @@ class FieldsShader(
     var cellOffsetsEnd by shader.storage("cellOffsetsEnd")
     var positions by shader.storage("positions")
     var velocities by shader.storage("velocities")
+    var localNeighbours by shader.storage("localNeighbours")
     var forces by shader.storage("forces")
     var particleTypes by shader.storage("particleTypes")
 }

@@ -7,7 +7,7 @@ import com.russhwolf.settings.ObservableSettings
 import de.fabmax.kool.util.RenderLoop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.serialization.serializer
+import me.dvyy.particles.render.Gradients
 import me.dvyy.particles.render.ParticleColor
 import me.dvyy.particles.render.UiScale
 
@@ -30,6 +30,7 @@ class UiSettings(
     scope: CoroutineScope,
 ) {
     val coloring = settings.getFlow("coloring", ParticleColor.TYPE, scope)
+    val recolorGradient = settings.getFlow("recolorGradient", Gradients.HEAT, scope)
     val scale = settings.getFlow("scale", UiScale.LARGE, scope)
     val targetFPS = settings.getFlow("targetFPS", 60, scope)
     val shouldCalibrateFPS = settings.getFlow("shouldCalibrateFPS", false, scope)

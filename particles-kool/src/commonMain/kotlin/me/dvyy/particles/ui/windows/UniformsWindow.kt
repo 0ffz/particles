@@ -14,7 +14,7 @@ import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.ui.components.IconButton
 import me.dvyy.particles.ui.helpers.*
-import me.dvyy.particles.ui.nodes.LineGraphNode
+import me.dvyy.particles.ui.nodes.GraphNode
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.math.abs
@@ -196,7 +196,7 @@ fun UiScope.TextInputWithTooltip(
     }
 }
 
-private fun UiScope.ParameterGraph(graph: LineGraphNode) {
+fun UiScope.ParameterGraph(graph: GraphNode) {
     Box(Grow.Std, 400.dp) {
         modifier.background(graph)
     }

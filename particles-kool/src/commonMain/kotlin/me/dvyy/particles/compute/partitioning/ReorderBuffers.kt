@@ -35,15 +35,14 @@ class ReorderBuffersShader(
         val numValues = uniformInt1("numValues")
         val postSortIndices = storage<KslInt1>("indices")
         val storageToSort = buffersToSort.mapIndexed { id, buffer ->
-            storage(buffer, "storage_$id")
+            buffer.bindNumeric("storage_$id")
         }
-        val outputs = buffersToSort.mapIndexed { id, buffer -> storage(buffer, "output_$id") }
-
+        val outputs = buffersToSort.mapIndexed { id, buffer -> buffer.bindNumeric("output_$id") }
         computeStage(WORK_GROUP_SIZE) {
             main {
                 val id = int1Var(inGlobalInvocationId.x.toInt1())
                 val destId = int1Var(postSortIndices[id])
-                `if`((id lt numValues) and (destId ne  id)) {
+                `if`((id lt numValues) and (destId ne id)) {
                     storageToSort.zip(outputs).forEach { (input, output) ->
                         output[id] = input[destId]
                     }
@@ -56,10 +55,10 @@ class ReorderBuffersShader(
         val numValues = uniformInt1("numValues")
         val postSortIndices = storage<KslInt1>("indices")
         val inputs = buffersToSort.mapIndexed { id, buffer ->
-            storage(buffer, "storage_$id")
+            buffer.bindNumeric("storage_$id")
         }
         val outputs = buffersToSort.mapIndexed { id, buffer ->
-            storage(buffer, "output_$id")
+            buffer.bindNumeric("output_$id")
         }
         computeStage(WORK_GROUP_SIZE) {
             main {
@@ -95,12 +94,17 @@ class ReorderBuffersShader(
     }
 }
 
-fun KslProgram.storage(buffer: GpuBuffer, name: String): KslPrimitiveStorage<KslPrimitiveStorageType<KslNumericType>> {
-    return when (buffer.type) {
-        GpuType.Int4 -> storage<KslInt4>(name)
+context(program: KslProgram)
+fun GpuBuffer.bindNumeric(
+    name: String = "storage_${this.name}",
+): KslPrimitiveStorage<KslPrimitiveStorageType<KslNumericType>> = with(program) {
+    return when (type) {
+        GpuType.Int4 -> {
+            storage<KslInt4>(name)
+        }
         GpuType.Float4 -> storage<KslFloat4>(name)
         GpuType.Int1 -> storage<KslInt1>(name)
         GpuType.Float1 -> storage<KslFloat1>(name)
-        else -> throw IllegalArgumentException("Unsupported buffer type: ${buffer.type}")
+        else -> throw IllegalArgumentException("Unsupported buffer type: ${type}")
     } as KslPrimitiveStorage<KslPrimitiveStorageType<KslNumericType>>
 }

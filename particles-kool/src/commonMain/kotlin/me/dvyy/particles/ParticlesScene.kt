@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.data.VelocitiesDataShader
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.OffsetsShader
 import me.dvyy.particles.compute.partitioning.ReorderBuffersShader
@@ -27,6 +28,7 @@ class ParticlesScene(
     val cameraManager: CameraManager,
     val particlesMesh: ParticlesMesh,
     val offsetsShader: OffsetsShader,
+    val velocitiesDataShader: VelocitiesDataShader,
 //    val reorderBuffersShader: ReorderBuffersShader,
     val convertShader: ConvertParticlesShader,
     val fieldsShader: FieldsMultiPasses,
@@ -40,7 +42,6 @@ class ParticlesScene(
 
         // === COMPUTE ===
         val computePass = ComputePass("Particles Compute")
-
         gpuSort.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
         gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
         ReorderBuffersShader(
@@ -59,7 +60,11 @@ class ParticlesScene(
         val fieldsPasses = fieldsShader.addTo(computePass) // Run force computations based on particle interactions
         convertShader.addTo(computePass) // Convert particles to different types as needed
 
+        // == DATA COLLECTION ==
+        velocitiesDataShader.addTo(computePass)
+
         addComputePass(computePass)
+
 
         // === RENDERING ===
         cameraManager.manageCameraFor(this)

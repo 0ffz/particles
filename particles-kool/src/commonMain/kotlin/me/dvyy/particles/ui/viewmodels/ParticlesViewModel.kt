@@ -5,6 +5,7 @@ import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
+import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.FileKit
 import io.github.vinceglb.filekit.dialogs.FileKitType
@@ -20,6 +21,7 @@ import kotlinx.io.files.Path
 import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.data.VelocitiesDataShader
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
@@ -30,6 +32,8 @@ import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
+import me.dvyy.particles.ui.nodes.GraphNode
+import me.dvyy.particles.ui.nodes.GraphStyle
 
 class ParticlesViewModel(
     private val buffers: ParticleBuffers,
@@ -39,6 +43,7 @@ class ParticlesViewModel(
     private val sceneManager: SceneManager,
     private val paramOverrides: ParameterOverrides,
     private val scope: CoroutineScope,
+    private val velocitiesData: VelocitiesDataShader,
 ) {
     val passesPerFrame = MutableStateFlow(1)
     val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
@@ -63,6 +68,20 @@ class ParticlesViewModel(
         samplerSettings = SamplerSettings().nearest(),
         name = "plot"
     )
+
+    val velocitiesHistogram = GraphNode().apply {
+        style = GraphStyle.Bar(width = 5.0)
+    }
+
+    suspend fun updateVelocityHistogram() {
+        val buckets = Int32Buffer(velocitiesData.numBuckets)
+        velocitiesData.buckets.downloadData(buckets)
+        val bucketsArray = buckets.toArray()
+        velocitiesHistogram.render(
+            FloatArray(bucketsArray.size) { it.toFloat() },
+            bucketsArray.map { it.toFloat() }.toFloatArray()
+        )
+    }
 
     fun updateState(simulation: Simulation.() -> Simulation) = scope.launch {
         val config = configRepo.config.value

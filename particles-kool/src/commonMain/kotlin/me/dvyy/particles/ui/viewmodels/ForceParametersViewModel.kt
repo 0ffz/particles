@@ -10,7 +10,7 @@ import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameter
 import me.dvyy.particles.dsl.pairwise.ParticleSet
-import me.dvyy.particles.ui.nodes.LineGraphNode
+import me.dvyy.particles.ui.nodes.GraphNode
 
 data class ForceUiState(
     val name: String,
@@ -28,7 +28,7 @@ class ForceParametersViewModel(
     val config: ConfigRepository,
     val sceneManager: SceneManager,
 ) {
-    val graph = LineGraphNode()
+    val graph = GraphNode()
     val parameters = combine(forcesDefinition.forces.map { force ->
         force.changes.map {
             println("Changes made to $force!")

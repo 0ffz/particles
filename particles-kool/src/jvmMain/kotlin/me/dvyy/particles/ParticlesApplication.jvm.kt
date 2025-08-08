@@ -7,7 +7,7 @@ import de.fabmax.kool.pipeline.backend.vk.RenderBackendVk
 import me.dvyy.particles.compute.forces.Force
 import org.koin.core.module.Module
 
-actual fun launchParticles(forces: List<Force>, uiModule: Module, args: Array<String>) {
+actual fun launchParticles(forces: List<Force>, uiModule: () -> Module, args: Array<String>) {
     KoolApplication(
         config = KoolConfigJvm(
             windowTitle = "Particles",

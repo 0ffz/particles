@@ -24,7 +24,7 @@ class SceneManager(
     val ctx: KoolContext,
     /** Classes/data that persists across application reloads. */
     val baseModule: Module,
-    val uiModule: Module,
+    val uiModuleProvider: () -> Module,
     val forces: List<Force>
 ) {
     private var loadedScenes: List<Scene> = listOf()
@@ -51,7 +51,7 @@ class SceneManager(
                     single { ForcesDefinition(forces, get<ConfigRepository>().config.value) }
                 },
                 dataModule(),
-                uiModule,
+                uiModuleProvider(),
                 shadersModule(),
                 sceneModule(),
             )
@@ -64,13 +64,15 @@ class SceneManager(
                 ?.let { configRepo.openFile(it) }
         }
         configRepo.isDirty = true
-        val ui = application.get<Scene>(named("ui-scene"))
+        val ui = application.getOrNull<Scene>(named("ui-scene"))
         val scene = application.get<ParticlesScene>().scene
 
         scene.onRelease { sceneScope.cancel() }
         ctx.scenes.stageAdd(scene, index = 0)
-        ctx.scenes += ui
-        loadedScenes = listOf(scene, ui)
+        if(ui != null) {
+            ctx.scenes += ui
+        }
+        loadedScenes = listOfNotNull(scene, ui)
     }
 
     fun unload() {

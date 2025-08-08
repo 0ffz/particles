@@ -21,31 +21,6 @@ fun UiScope.MenuRow(vGap: Dp = UiSizes.vGap, block: UiScope.() -> Unit) {
     }
 }
 
-fun UiScope.MenuSlider(
-    value: Float,
-    min: Float,
-    max: Float,
-    txtFormat: (Float) -> String = { it.toString(2) },
-    txtWidth: Dp = UiSizes.baseSize,
-    onChangeEnd: ((Float) -> Unit)? = null,
-    onChange: (Float) -> Unit,
-) {
-    Slider(value, min, max) {
-        modifier
-            .width(Grow.Std)
-            .alignY(AlignmentY.Center)
-            .margin(horizontal = sizes.gap)
-            .onChange(onChange)
-        modifier.onChangeEnd = onChangeEnd
-    }
-    if (txtWidth.value > 0f) {
-        Text(txtFormat(value)) {
-            labelStyle()
-            modifier.width(txtWidth).textAlignX(AlignmentX.End)
-        }
-    }
-}
-
 fun UiScope.MenuTextInput(
     value: Float,
     min: Float = 0.0f,
@@ -122,26 +97,6 @@ fun UiScope.MenuSlider2(
     }
 }
 
-fun UiScope.LabeledRadioButton(label: String, toggleState: Boolean, indent: Dp = sizes.gap, onActivate: () -> Unit) {
-    MenuRow {
-        modifier.padding(start = indent)
-        RadioButton(toggleState) {
-            modifier
-                .alignY(AlignmentY.Center)
-                .margin(end = sizes.gap)
-                .onToggle {
-                    if (it) {
-                        onActivate()
-                    }
-                }
-        }
-        Text(label) {
-            labelStyle(Grow.Std)
-            modifier.onClick { onActivate() }
-        }
-    }
-}
-
 fun UiScope.LabeledSwitch(label: String, state: Boolean, onToggle: ((Boolean) -> Unit)) {
     MenuRow {
         Text(label) {
@@ -158,26 +113,6 @@ fun UiScope.LabeledSwitch(label: String, state: Boolean, onToggle: ((Boolean) ->
                 }
         }
     }
-}
-
-fun TextScope.sectionTitleStyle() {
-    modifier
-        .width(Grow.Std)
-//        .margin(vertical = UiSizes.hGap)    // hGap is intentional, since we want a little more spacing around titles
-        .padding(vertical = sizes.smallGap)
-        .textColor(colors.primary)
-        .font(sizes.largeText)
-        .textAlignX(AlignmentX.Center)
-}
-
-fun TextScope.sectionSubtitleStyle() {
-    modifier
-        .width(Grow.Std)
-        .padding(vertical = sizes.smallGap)
-        .textColor(colors.primary)
-        .font(sizes.normalText)
-        .textAlignX(AlignmentX.Center)
-
 }
 
 fun TextScope.labelStyle(width: Dimension = FitContent) {

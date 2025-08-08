@@ -1,4 +1,4 @@
-package me.dvyy.particles.ui.nodes
+package me.dvyy.particles.compute
 
 import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.pipeline.ComputePass

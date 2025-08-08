@@ -16,11 +16,12 @@ import de.fabmax.kool.scene.geometry.Usage
 import de.fabmax.kool.util.Color
 import de.fabmax.kool.util.Float32Buffer
 import kotlinx.coroutines.Deferred
+import me.dvyy.particles.compute.execShader
 import me.dvyy.particles.compute.forces.ForceWithParameters
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 
-class GraphNode : UiRenderer<UiNode> {
+class GraphState : UiRenderer<UiNode> {
     private val graphMesh: Mesh
     private val graphGeom = IndexedVertexList(Ui2Shader.UI_MESH_ATTRIBS)
     private val graphBuilder = MeshBuilder(graphGeom).apply { isInvertFaceOrientation = true }
@@ -157,24 +158,4 @@ class GraphNode : UiRenderer<UiNode> {
             }
         }
     }
-//
-//override fun renderUi(node: UiNode) {
-//        node.apply {
-//            getTextBuilder(sizes.normalText).configured(Color.WHITE) {
-//                text(TextProps(sizes.normalText).apply {
-//                    text = "Hello world"; scale = 2f; isYAxisUp = false
-//                    this.origin.set(0f, 70f, 0f)
-//                })
-//            }
-//        }
-//    if (node.clipBoundsPx != clipBounds || updated) {
-//        node.surface.getMeshLayer(node.modifier.zLayer + 1)
-//        clipBounds.set(node.clipBoundsPx)
-//        updated = false
-//        println("Ran render ui!")
-//        node.apply {
-//        }
-//        node.surface.getMeshLayer(node.modifier.zLayer - 1).addCustomLayer("dt-graph") { graphMesh }
-//    }
-//}
 }

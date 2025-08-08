@@ -11,10 +11,9 @@ import me.dvyy.particles.config.UniformParameter
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
-import me.dvyy.particles.ui.SimulationButtons
 import me.dvyy.particles.ui.components.IconButton
 import me.dvyy.particles.ui.helpers.*
-import me.dvyy.particles.ui.nodes.GraphNode
+import me.dvyy.particles.ui.nodes.GraphState
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.math.abs
@@ -53,11 +52,10 @@ class UniformsWindow(
                         with(it) { draw() }
                     }
                 }
-                SimulationButtons(viewModel, paramsChanged = overrides.use().isNotEmpty())
+                TODO("Remove")
             }
             Category("Interactions") {
                 forceStates.use().forEach { force ->
-                    40.dp
                     Subcategory(force.name) {
 //                        ParameterGraph(forceParametersViewModel.graph)
                         Row(Grow.Std) {
@@ -196,31 +194,9 @@ fun UiScope.TextInputWithTooltip(
     }
 }
 
-fun UiScope.ParameterGraph(graph: GraphNode) {
+fun UiScope.ParameterGraph(graph: GraphState) {
     Box(Grow.Std, 400.dp) {
         modifier.background(graph)
-    }
-}
-
-private fun UiScope.ParameterSlider(
-    param: UniformParameter,
-    isOverridden: Boolean,
-    onChange: (Float) -> Unit,
-) {
-    val showSlider = remember(false)
-    Row(width = Grow.Std) {
-        Column(width = Grow.Std) {
-            MenuSlider2(
-                if (isOverridden) param.name + "(*)" else param.name,
-                param.value,
-                min = param.range.start.toFloat(),
-                max = param.range.endInclusive.toFloat(),
-                onChange = { onChange(it) },
-            )
-        }
-        ToggleButton(showSlider.use(), small = true) {
-            showSlider.set(it)
-        }
     }
 }
 
@@ -240,21 +216,11 @@ fun UiScope.ParameterTextInput(
 }
 
 fun UiScope.Category(name: String, desc: String? = null, content: UiScope.() -> Unit) {
-    val toggled = remember(true)
-    Row(Grow.Std) {
-        modifier.backgroundColor(colors.primaryVariant.withAlpha(0.2f))
-            .onClick { toggled.set(!toggled.value) }
-        Text(name) {
-            sectionTitleStyle()
-        }
-        ToggleButton(toggled.use()) { toggled.set(it) }
-    }
-    if (toggled.use()) {
-        if (desc != null) Text("*$desc") {
-            modifier.padding(sizes.smallGap).textColor(colors.onBackgroundAlpha(0.5f)).isWrapText(true).width(Grow.Std)
-        }
-        content()
-    }
+    TODO("Remove")
+}
+
+fun UiScope.Subcategory(name: String, content: UiScope.() -> Unit) {
+    TODO("Remove")
 }
 
 fun UiScope.ToggleButton(
@@ -267,12 +233,4 @@ fun UiScope.ToggleButton(
     IconButton(icon, onClick = { onToggle(!toggled) }) {
         modifier.size(size, size)
     }
-}
-
-fun UiScope.Subcategory(name: String, content: UiScope.() -> Unit) {
-    Text(name) {
-        modifier.backgroundColor(colors.primaryVariant.withAlpha(0.1f))
-        sectionSubtitleStyle()
-    }
-    content()
 }

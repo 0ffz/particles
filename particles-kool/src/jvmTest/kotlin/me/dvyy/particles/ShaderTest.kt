@@ -4,6 +4,7 @@ import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.util.Int32Buffer
 import kotlinx.coroutines.test.runTest
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.execManyShaders
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.ReorderBuffersShader
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
@@ -15,7 +16,6 @@ import me.dvyy.particles.dsl.Size
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.initInt
 import me.dvyy.particles.helpers.kool.KoolTest
-import me.dvyy.particles.ui.nodes.execManyShaders
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 import kotlin.test.assertContentEquals

@@ -32,7 +32,7 @@ import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.helpers.initFloat4
 import me.dvyy.particles.ui.helpers.UiConfigurable
-import me.dvyy.particles.ui.nodes.GraphNode
+import me.dvyy.particles.ui.nodes.GraphState
 import me.dvyy.particles.ui.nodes.GraphStyle
 
 class ParticlesViewModel(
@@ -69,7 +69,7 @@ class ParticlesViewModel(
         name = "plot"
     )
 
-    val velocitiesHistogram = GraphNode().apply {
+    val velocitiesHistogram = GraphState().apply {
         style = GraphStyle.Bar(width = 5.0)
     }
 

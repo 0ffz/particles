@@ -10,8 +10,10 @@ import de.fabmax.kool.util.MdColor
 import me.dvyy.particles.ui.helpers.LocalKoinScope
 import me.dvyy.particles.ui.sidebar.Sidebar
 import me.dvyy.particles.ui.sidebar.WindowUiState
+import me.dvyy.particles.ui.windows.config_editor.ConfigEditorWindow
 import me.dvyy.particles.ui.windows.live_parameters.LiveParametersWindow
 import me.dvyy.particles.ui.windows.project_switcher.ProjectSwitcherWindow
+import me.dvyy.particles.ui.windows.visual_options.VisualOptionsWindow
 import org.koin.core.scope.Scope
 
 val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
@@ -28,15 +30,16 @@ class ParticlesUI(
         CompositionLocalProvider(LocalKoinScope provides application) {
             Sidebar(
                 listOf(
-                    WindowUiState(Icons.slidersHorizontal) { LiveParametersWindow() },
-                    WindowUiState(Icons.folderOpen) { ProjectSwitcherWindow() },
-                    WindowUiState(Icons.chartSpline) { StatisticsWindow() },
+                    WindowUiState("Live Parameters", Icons.slidersHorizontal) { LiveParametersWindow() },
+                    WindowUiState("Config Editor", Icons.fileCode) { ConfigEditorWindow() },
+                    WindowUiState("Project Chooser", Icons.folderOpen) { ProjectSwitcherWindow() },
                 ),
                 rightAligned = false
             )
             Sidebar(
                 listOf(
-//                    WindowUiState(Icons.chartSpline) { StatisticsWindow() }
+                    WindowUiState("Statistics", Icons.chartSpline) { StatisticsWindow() },
+                    WindowUiState("Visual Options", Icons.eye) { VisualOptionsWindow() },
                 ),
                 rightAligned = true
             )

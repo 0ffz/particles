@@ -1,7 +1,6 @@
 package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
-import de.fabmax.kool.toString
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
@@ -41,14 +40,7 @@ class SimulationStatisticsWindow(
         containerModifier = { it.background(null) }
     ) {
         modifier.width(Grow.Std)
-        surface.onEachFrame {
-            fps.set(it.fps)
-            simsPs.set(it.fps * viewModel.passesPerFrame.value)
-        }
         Column(Grow.Std, Grow.Std) {
-            Category("Stats") {
-                Text("Simulation speed: ${simsPs.use().toString(2)} sims/s") {}
-            }
 
             Category("Graphs") {
                 Subcategory("Velocity Histogram") {

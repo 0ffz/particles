@@ -3,6 +3,7 @@ package me.dvyy.particles.ui.composables
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import de.fabmax.kool.modules.compose.LocalUiSurface
 import de.fabmax.kool.modules.compose.composables.layout.Box
 import de.fabmax.kool.modules.compose.modifiers.Modifier
 import de.fabmax.kool.modules.compose.modifiers.background
@@ -24,11 +25,13 @@ fun Graph(
     refreshRate: Duration = 0.1.seconds,
     modifier: Modifier = Modifier,
 ) {
+    val surface = LocalUiSurface.current
     LaunchedEffect(graph) {
         withContext(Dispatchers.RenderLoop) {
             while (true) {
                 gatherData(graph)
                 delay(refreshRate)
+                surface.triggerUpdate()
             }
         }
     }

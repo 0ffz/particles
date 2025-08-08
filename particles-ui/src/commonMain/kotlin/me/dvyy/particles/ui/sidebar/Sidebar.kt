@@ -11,12 +11,14 @@ import de.fabmax.kool.modules.ui2.RowLayout
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Color
 import me.dvyy.particles.ui.sidebar.AppSizes.sidebarSize
+import me.dvyy.particles.ui.windows.Window
 
 object AppSizes {
     val sidebarSize = Dp(34f)
 }
 
 data class WindowUiState(
+    val title: String,
     val icon: Texture2d,
     val content: @Composable () -> Unit,
 )
@@ -47,6 +49,10 @@ fun Sidebar(
                 }, isSelected = selected == i, icon = window.icon)
             }
         }
-        state.getOrNull(selected)?.content?.invoke()
+        state.getOrNull(selected)?.let { window ->
+            Window(title = window.title, rightAligned = rightAligned) {
+                window.content()
+            }
+        }
     }
 }

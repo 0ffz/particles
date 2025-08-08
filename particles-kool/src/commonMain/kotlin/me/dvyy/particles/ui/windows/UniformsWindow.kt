@@ -1,6 +1,5 @@
 package me.dvyy.particles.ui.windows
 
-import de.fabmax.kool.input.PointerInput
 import de.fabmax.kool.math.Vec2f
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
@@ -11,15 +10,13 @@ import me.dvyy.particles.config.UniformParameter
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
-import me.dvyy.particles.ui.components.IconButton
-import me.dvyy.particles.ui.helpers.*
+import me.dvyy.particles.ui.helpers.FieldsWindow
+import me.dvyy.particles.ui.helpers.MenuTextInput
+import me.dvyy.particles.ui.helpers.TRANSPARENT
+import me.dvyy.particles.ui.helpers.labelStyle
 import me.dvyy.particles.ui.nodes.GraphState
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
-import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.log10
-import kotlin.math.pow
 
 class UniformsWindow(
     ui: AppUI,
@@ -148,47 +145,6 @@ fun UiScope.TextInputWithTooltip(
                 width = 200.dp,
                 height = FitContent
             ) {
-                modifier.padding(4.dp).background(
-                    RoundRectBackground(
-                        surface.colors.background,
-                        6.dp
-                    )
-                )
-                fun calculateMax(): Float {
-                    val log = log10(parameter.value).coerceAtLeast(-3f)
-                    val power = if (abs(log - ceil(log)) < 0.01f)
-                        log + 1
-                    else log
-                    return 10f.pow(ceil(power))
-                }
-
-                val maxRange = remember { mutableStateOf(calculateMax()) }
-                MenuSlider2(
-                    "",
-                    parameter.value,
-                    min = parameter.range.start.toFloat(),
-                    max = maxRange.use(),
-                    precision = parameter.precision,
-                    onChange = { onChange(it) },
-                ) {
-                    val clickedInBounds = remember(false)
-                    // Logic for hiding the slider once we've clicked off of it
-                    surface.onEachFrame {
-                        val ptr = PointerInput.primaryPointer
-                        if (ptr.isAnyButtonDown && !clickedInBounds.value) {
-                            if (uiNode.isInBounds(ptr.pos))
-                                clickedInBounds.set(true)
-                            else shown.set(false)
-                        }
-                        if (ptr.isAnyButtonReleased && !uiNode.isInBounds(ptr.pos) && !clickedInBounds.value) {
-                            shown.set(false)
-                        }
-                        if (ptr.isAnyButtonReleased) {
-                            maxRange.set(calculateMax())
-                            clickedInBounds.set(false)
-                        }
-                    }
-                }
             }
         }
     }
@@ -223,14 +179,3 @@ fun UiScope.Subcategory(name: String, content: UiScope.() -> Unit) {
     TODO("Remove")
 }
 
-fun UiScope.ToggleButton(
-    toggled: Boolean,
-    small: Boolean = false,
-    onToggle: (Boolean) -> Unit,
-) {
-    val size = if (small) 24.dp else 40.dp
-    val icon = if (toggled) Icons.chevronUp else Icons.chevronDown
-    IconButton(icon, onClick = { onToggle(!toggled) }) {
-        modifier.size(size, size)
-    }
-}

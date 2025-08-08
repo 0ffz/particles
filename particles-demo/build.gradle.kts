@@ -39,6 +39,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(project(":particles-kool"))
+                implementation(project(":particles-ui"))
             }
         }
     }

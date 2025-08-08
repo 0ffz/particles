@@ -16,9 +16,9 @@ object Buffers {
     }
 
     fun randomPosition(size: Vec3f) = Vec4f(
-        Random.Default.nextDouble(size.x.toDouble()).toFloat(),
-        Random.Default.nextDouble(size.y.toDouble()).toFloat(),
-        if (size.z == 0f) 0f else Random.Default.nextDouble(size.z.toDouble()).toFloat(),
+        Random.nextDouble(size.x.toDouble()).toFloat(),
+        Random.nextDouble(size.y.toDouble()).toFloat(),
+        if (size.z == 0f) 0f else Random.nextDouble(size.z.toDouble()).toFloat(),
         0f
     )
 

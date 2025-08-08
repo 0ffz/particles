@@ -6,7 +6,7 @@ allprojects {
     repositories {
         mavenCentral()
         google()
-//        mavenLocal()
+        mavenLocal()
         maven("https://oss.sonatype.org/content/repositories/snapshots")
     }
 }

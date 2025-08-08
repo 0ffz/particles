@@ -15,8 +15,8 @@ import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.FileSystemUtils
-import me.dvyy.particles.ui.AppUI
 import org.koin.core.module.Module
+import org.koin.core.qualifier.named
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 
@@ -24,6 +24,7 @@ class SceneManager(
     val ctx: KoolContext,
     /** Classes/data that persists across application reloads. */
     val baseModule: Module,
+    val uiModule: Module,
     val forces: List<Force>
 ) {
     private var loadedScenes: List<Scene> = listOf()
@@ -50,6 +51,7 @@ class SceneManager(
                     single { ForcesDefinition(forces, get<ConfigRepository>().config.value) }
                 },
                 dataModule(),
+                uiModule,
                 shadersModule(),
                 sceneModule(),
             )
@@ -62,7 +64,7 @@ class SceneManager(
                 ?.let { configRepo.openFile(it) }
         }
         configRepo.isDirty = true
-        val ui = application.get<AppUI>().ui
+        val ui = application.get<Scene>(named("ui-scene"))
         val scene = application.get<ParticlesScene>().scene
 
         scene.onRelease { sceneScope.cancel() }

@@ -16,7 +16,7 @@ import me.dvyy.particles.ui.windows.project_switcher.ProjectSwitcherWindow
 import me.dvyy.particles.ui.windows.visual_options.VisualOptionsWindow
 import org.koin.core.scope.Scope
 
-val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
+private val colors = Colors.singleColorDark(MdColor.LIGHT_BLUE).run {
     copy(background = background.withAlpha(0.9f))
 }
 

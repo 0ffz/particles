@@ -7,17 +7,14 @@ import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.render.ParticleColor
 import me.dvyy.particles.render.UiScale
-import me.dvyy.particles.ui.AppUI
-import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuRow
 import me.dvyy.particles.ui.helpers.labelStyle
 
 class VisualOptionsWindow(
-    ui: AppUI,
     private val settings: AppSettings,
     private val scope: CoroutineScope,
-) : FieldsWindow("Visual options", ui, Icons.eye) {
+) : FieldsWindow() {
     //    val sizeList = listOf(Sizes.small, Sizes.medium, Sizes.large)
     val coloring = settings.ui.coloring.asMutableState(scope)
     val recolorGradient = settings.ui.recolorGradient.asMutableState(scope)
@@ -32,10 +29,6 @@ class VisualOptionsWindow(
     ) {
         modifier.width(Grow.Std)
         Column(Grow.Std, Grow.Std) {
-            Category(
-                "FPS Calibration",
-                desc = "Adjust the number of simulation steps per frame to reach a target fps. This may decrease simulation speed in favor of a smooth view."
-            ) {
                 MenuRow {
                     Text("Enabled") {
                         labelStyle()
@@ -59,7 +52,6 @@ class VisualOptionsWindow(
                         }
                     }
                 }
-            }
             Category("UI") {
                 MenuRow {
                     Text("UI size") {

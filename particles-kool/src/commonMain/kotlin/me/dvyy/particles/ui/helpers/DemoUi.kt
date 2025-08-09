@@ -97,24 +97,6 @@ fun UiScope.MenuSlider2(
     }
 }
 
-fun UiScope.LabeledSwitch(label: String, state: Boolean, onToggle: ((Boolean) -> Unit)) {
-    MenuRow {
-        Text(label) {
-            labelStyle(Grow.Std)
-            modifier.onClick {
-                onToggle(!state)
-            }
-        }
-        Switch(state) {
-            modifier
-                .alignY(AlignmentY.Center)
-                .onToggle {
-                    onToggle(!state)
-                }
-        }
-    }
-}
-
 fun TextScope.labelStyle(width: Dimension = FitContent) {
     modifier
         .width(width)

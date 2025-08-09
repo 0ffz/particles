@@ -8,8 +8,6 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.UniformParameter
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.ui.AppUI
-import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.helpers.MenuTextInput
 import me.dvyy.particles.ui.helpers.TRANSPARENT
@@ -19,18 +17,12 @@ import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class UniformsWindow(
-    ui: AppUI,
     val viewModel: ParticlesViewModel,
     val configRepo: ConfigRepository,
     val scope: CoroutineScope,
     val forceParametersViewModel: ForceParametersViewModel,
     val paramOverrides: ParameterOverrides,
-) : FieldsWindow(
-    name = "Live Parameters",
-    ui = ui,
-    icon = Icons.slidersHorizontal,
-    preferredWidth = 300f,
-) {
+) : FieldsWindow() {
     //    val paramsState = uniforms.uniformParams.asMutableState(scope)
     val forceStates = forceParametersViewModel.parameters.asMutableState(scope, arrayOf())
     val overrides = paramOverrides.overrides.asMutableState(scope, mapOf())
@@ -42,19 +34,9 @@ class UniformsWindow(
     ) {
         modifier.width(Grow.Std).padding(end = 8.dp)
         Column(Grow.Std, Grow.Std) {
-            Category("Simulation") {
-                val state = viewModel.uiState.use()
-                Column(Grow.Std) {
-                    state.forEach {
-                        with(it) { draw() }
-                    }
-                }
-                TODO("Remove")
-            }
             Category("Interactions") {
                 forceStates.use().forEach { force ->
                     Subcategory(force.name) {
-//                        ParameterGraph(forceParametersViewModel.graph)
                         Row(Grow.Std) {
                             Column(width = Grow.Std) {
                                 Text("Pair") { }
@@ -101,24 +83,10 @@ class UniformsWindow(
                         }
                     }
                 }
-//                paramsState
-//                    .use()
-//                    .groupBy { it.configPath.substringBeforeLast(".").substringAfter(".") }
-//                    .forEach { (name, params) ->
-//                        Subcategory(name) {
-//                            params.forEach { param ->
-//                                val isOverridden = overrides.use().contains(param.configPath)
-//                                ParameterSlider(param, isOverridden, onChange = {
-//                                    viewModel.updateOverrides(param.configPath, it, Float.serializer())
-//                                })
-//                            }
-//                        }
-//                    }
             }
         }
     }
 }
-
 
 fun UiScope.TextInputWithTooltip(
     parameter: UniformParameter,

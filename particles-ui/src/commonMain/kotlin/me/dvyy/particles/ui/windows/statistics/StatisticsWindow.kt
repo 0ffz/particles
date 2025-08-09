@@ -5,6 +5,7 @@ import de.fabmax.kool.modules.compose.composables.rendering.Text
 import de.fabmax.kool.toString
 import me.dvyy.particles.ui.composables.Category
 import me.dvyy.particles.ui.composables.Graph
+import me.dvyy.particles.ui.composables.Subcategory
 import me.dvyy.particles.ui.helpers.koinInject
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import me.dvyy.particles.ui.windows.statistics.StatisticsViewModel
@@ -20,8 +21,10 @@ fun StatisticsWindow(
         Text("Simulation speed: ${simsPs.toString(2)} sims/s")
     }
     Category("Graphs") {
-        Graph(particles.velocitiesHistogram, gatherData = {
-            particles.updateVelocityHistogram()
-        })
+        Subcategory("Velocity Histogram") {
+            Graph(particles.velocitiesHistogram, gatherData = {
+                particles.updateVelocityHistogram()
+            })
+        }
     }
 }

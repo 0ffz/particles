@@ -7,9 +7,12 @@ import de.fabmax.kool.modules.compose.composables.layout.Box
 import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.rendering.Text
 import de.fabmax.kool.modules.compose.modifiers.*
+import de.fabmax.kool.modules.ui2.AlignmentX
 import de.fabmax.kool.modules.ui2.AlignmentX.Center
+import de.fabmax.kool.modules.ui2.AlignmentY
 import de.fabmax.kool.modules.ui2.Grow.Companion.MinFit
 import de.fabmax.kool.util.MsdfFont
+import me.dvyy.particles.ui.Icons
 
 @Composable
 fun Category(
@@ -28,9 +31,11 @@ fun Category(
                 .height(MinFit)
                 .backgroundColor(colors.primaryVariant.withAlpha(0.2f))
                 .padding(vertical = sizes.smallGap)
-                .clickable { expanded = !expanded }
+                .onClick { expanded = !expanded }
         ) {
-            Text(name, Modifier.alignX(Center), color = colors.primary, font = MsdfFont.DEFAULT_FONT, fontSize = 24f)
+            Text(name, Modifier.alignX(Center).alignY(AlignmentY.Center), color = colors.primary, font = MsdfFont.DEFAULT_FONT, fontSize = 24f)
+            val icon = if(expanded) Icons.chevronUp else Icons.chevronDown
+            IconButton(icon, modifier = Modifier.alignX(AlignmentX.End), onClick = { expanded = !expanded })
         }
         if (desc != null) Text(
             "*$desc",
@@ -41,7 +46,7 @@ fun Category(
 }
 
 @Composable
-fun SubCategory(
+fun Subcategory(
     name: String,
     content: @Composable () -> Unit,
 ) {

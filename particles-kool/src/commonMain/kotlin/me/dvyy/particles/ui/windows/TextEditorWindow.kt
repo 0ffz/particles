@@ -12,18 +12,15 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.ui.AppUI
-import me.dvyy.particles.ui.Icons
 import me.dvyy.particles.ui.helpers.FieldsWindow
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.time.Duration.Companion.seconds
 
 class TextEditorWindow(
-    ui: AppUI,
     val configRepository: ConfigRepository,
     val viewModel: ParticlesViewModel,
     val scope: CoroutineScope,
-) : FieldsWindow("Config file", ui, icon = Icons.fileCode) {
+) : FieldsWindow() {
     val consoleFont = MutableStateFlow(MsdfFont.DEFAULT_FONT)
     val consoleFontAsState = consoleFont.asMutableState(scope)
     val yamlKey = consoleFontAsState.map { TextAttributes(it, Color.ORANGE) }
@@ -82,7 +79,7 @@ class TextEditorWindow(
                 AppFonts.MONOSPACED.copy(sizePts = 20f)
             }
         }
-        windowDockable.setFloatingBounds(width = Dp(500f), height = Dp(800f))
+//        windowDockable.setFloatingBounds(width = Dp(500f), height = Dp(800f))
     }
 
     override fun UiScope.windowContent() {

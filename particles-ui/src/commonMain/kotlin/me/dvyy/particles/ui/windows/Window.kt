@@ -10,7 +10,6 @@ import de.fabmax.kool.modules.compose.composables.toolkit.ScrollArea
 import de.fabmax.kool.modules.compose.modifiers.*
 import de.fabmax.kool.modules.ui2.AlignmentX
 import de.fabmax.kool.modules.ui2.dp
-import de.fabmax.kool.util.Color
 import me.dvyy.particles.ui.composables.modifiers.hoverCursor
 
 @Composable
@@ -35,7 +34,7 @@ fun Window(
     ScrollArea(Modifier.fillMaxHeight()) {
         Column(
             Modifier
-                .backgroundColor(Color.BLACK.withAlpha(0.6f))
+                .backgroundColor(LocalColors.current.background)
                 .width(width)
                 .fillMaxHeight()
                 .then(modifier)
@@ -47,7 +46,8 @@ fun Window(
 
     // Resize handle
     Box(
-        Modifier.fillMaxHeight().width(4.dp)
+        Modifier.fillMaxHeight()
+            .width(4.dp)
             .alignX(if (rightAligned) AlignmentX.Start else AlignmentX.End)
             .hoverCursor(shape = RESIZE_EW)
             .onDrag {

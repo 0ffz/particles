@@ -14,10 +14,10 @@ import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Color
 
 @Composable
-fun IconButton(icon: Texture2d, onClick: () -> Unit) {
+fun IconButton(icon: Texture2d, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Image(
         icon,
-        modifier = Modifier.clickable(
+        modifier = modifier.clickable(
             hoverBackground = CircularBackground(Color.WHITE.withAlpha(0.2f))
         ) {
             onClick()

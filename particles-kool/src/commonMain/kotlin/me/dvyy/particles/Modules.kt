@@ -15,7 +15,6 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
-import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import org.koin.core.module.dsl.singleOf
@@ -34,7 +33,6 @@ fun dataModule() = module {
     singleOf(::CameraManager)
     singleOf(::ParticlesViewModel)
     singleOf(::ForceParametersViewModel)
-    singleOf(::AppUI)
     singleOf(::ParticlesMesh)
     singleOf(::ParticleClustering)
 }

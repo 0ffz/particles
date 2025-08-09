@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import de.fabmax.kool.modules.compose.LocalColors
 import de.fabmax.kool.modules.compose.LocalSizes
 import de.fabmax.kool.modules.compose.composables.layout.Box
+import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Popup
 import de.fabmax.kool.modules.compose.composables.layout.Row
 import de.fabmax.kool.modules.compose.composables.rendering.Text
@@ -11,11 +12,12 @@ import de.fabmax.kool.modules.compose.composables.toolkit.Button
 import de.fabmax.kool.modules.compose.composables.toolkit.Slider
 import de.fabmax.kool.modules.compose.composables.toolkit.TextField
 import de.fabmax.kool.modules.compose.modifiers.*
+import de.fabmax.kool.modules.ui2.AlignmentY
 import de.fabmax.kool.modules.ui2.RoundRectBackground
 import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.toString
 import me.dvyy.particles.ui.composables.Category
-import me.dvyy.particles.ui.composables.SubCategory
+import me.dvyy.particles.ui.composables.Subcategory
 import me.dvyy.particles.ui.graphing.ConfigViewModel
 import me.dvyy.particles.ui.helpers.koinInject
 import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
@@ -46,13 +48,23 @@ fun LiveParametersWindow(
 }
 
 @Composable
+fun MenuItem(
+    name: String,
+    content: @Composable () -> Unit,
+) {
+    Row(Modifier.fillMaxWidth()) {
+        Text(name, Modifier.fillMaxWidth().alignY(AlignmentY.Center))
+        content()
+    }
+}
+
+@Composable
 fun MenuNumber(
     name: String,
     value: Float,
     onValueChange: (Float) -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth()) {
-        Text(name, Modifier.fillMaxWidth())
+    MenuItem(name) {
         TextInputWithTooltip(value, onValueChange)
     }
 }
@@ -81,21 +93,23 @@ fun TextInputWithTooltip(
     remember { mutableStateOf(false) }
 
     var rangeMax by remember { mutableStateOf(calculateMax(value)) }
-    TextField(
-        valueText,
-        onValueChange = { valueText = it },
-        onSubmit = { it.toFloatOrNull()?.let { onValueChange(it) } },
-        onFocusChange = { if (it) shown = true },
-        modifier = Modifier.fillMaxWidth()
-    )
-    val colors = LocalColors.current
-    if (shown) Popup(relativeToParent = true) {
-        Box(
-            Modifier.padding(4.dp)
-                .background(RoundRectBackground(colors.background, 6.dp))
-        ) {
-            Slider(value, onValueChange = onValueChange, 0f..rangeMax, Modifier.width(100.dp))
-        }
+    // Column makes popup show up below the text field.
+    Column {
+        TextField(
+            valueText,
+            onValueChange = { valueText = it },
+            onSubmit = { it.toFloatOrNull()?.let { onValueChange(it) } },
+            onFocusChange = { if (it) shown = true },
+            modifier = Modifier.fillMaxWidth()
+        )
+        val colors = LocalColors.current
+        if (shown) Popup(relativeToParent = true) {
+            Box(
+                Modifier.padding(4.dp)
+                    .background(RoundRectBackground(colors.background, 6.dp))
+            ) {
+                Slider(value, onValueChange = onValueChange, 0f..rangeMax, Modifier.width(100.dp))
+            }
 
 //        LaunchedEffect(Unit) {
 //            withContext(Dispatchers.RenderLoop) {
@@ -117,6 +131,7 @@ fun TextInputWithTooltip(
 //                }
 //            }
 //        }
+        }
     }
 }
 
@@ -124,7 +139,7 @@ fun TextInputWithTooltip(
 private fun ResetSubcategory(
     viewModel: ParticlesViewModel = koinInject(),
     paramsChanged: Boolean = false,
-) = SubCategory("Reset") {
+) = Subcategory("Reset") {
     val sizes = LocalSizes.current
     Row(Modifier.fillMaxWidth().padding(sizes.smallGap)) {
         Button(onClick = { viewModel.resetPositions() }, Modifier.fillMaxWidth()) {

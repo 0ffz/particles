@@ -1,7 +1,6 @@
 package me.dvyy.particles.ui.viewmodels
 
 import com.charleskorn.kaml.YamlNode
-import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
@@ -13,8 +12,6 @@ import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
 import io.github.vinceglb.filekit.dialogs.openFilePicker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
@@ -29,9 +26,7 @@ import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.FileSystemUtils
-import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.helpers.initFloat4
-import me.dvyy.particles.ui.helpers.UiConfigurable
 import me.dvyy.particles.ui.nodes.GraphState
 import me.dvyy.particles.ui.nodes.GraphStyle
 
@@ -46,22 +41,22 @@ class ParticlesViewModel(
     private val velocitiesData: VelocitiesDataShader,
 ) {
     val passesPerFrame = MutableStateFlow(1)
-    val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
-        .distinctUntilChanged()
-        .map { state ->
-            listOf(
-                UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
-                    updateState { copy(dT = it.toDouble()) }
-                },
-                UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {
-                    updateState { copy(maxVelocity = it.toDouble()) }
-                },
-                UiConfigurable.Slider("Max Force", state.maxForce, 0f, 100_000f) {
-                    updateState { copy(maxForce = it.toDouble()) }
-                },
-            )
-        }
-        .asMutableState(mutableStateScope, default = listOf())
+//    val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
+//        .distinctUntilChanged()
+//        .map { state ->
+//            listOf(
+//                UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
+//                    updateState { copy(dT = it.toDouble()) }
+//                },
+//                UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {
+//                    updateState { copy(maxVelocity = it.toDouble()) }
+//                },
+//                UiConfigurable.Slider("Max Force", state.maxForce, 0f, 100_000f) {
+//                    updateState { copy(maxForce = it.toDouble()) }
+//                },
+//            )
+//        }
+//        .asMutableState(mutableStateScope, default = listOf())
 
     val plotTexture = Texture2d(
         mipMapping = MipMapping.Off,

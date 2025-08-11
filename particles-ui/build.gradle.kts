@@ -16,9 +16,7 @@ kotlin {
             "-Xcontext-sensitive-resolution"
         )
     }
-    jvm {
-        withJava()
-    }
+    jvm()
     jvmToolchain(21)
 
     js {

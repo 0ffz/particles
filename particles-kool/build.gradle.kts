@@ -13,7 +13,6 @@ kotlin {
         freeCompilerArgs.addAll("-Xexpect-actual-classes", "-Xcontext-parameters")
     }
     jvm {
-        withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }

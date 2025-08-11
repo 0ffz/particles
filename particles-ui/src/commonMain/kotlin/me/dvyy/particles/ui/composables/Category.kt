@@ -10,7 +10,9 @@ import de.fabmax.kool.modules.compose.modifiers.*
 import de.fabmax.kool.modules.ui2.AlignmentX
 import de.fabmax.kool.modules.ui2.AlignmentX.Center
 import de.fabmax.kool.modules.ui2.AlignmentY
+import de.fabmax.kool.modules.ui2.Grow
 import de.fabmax.kool.modules.ui2.Grow.Companion.MinFit
+import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.util.MsdfFont
 import me.dvyy.particles.ui.Icons
 
@@ -39,6 +41,8 @@ fun Category(
         }
         if (desc != null) Text(
             "*$desc",
+            softWrap = true,
+            modifier = Modifier.width(Grow.Std).padding(horizontal = 2.dp),
             color = colors.onBackgroundAlpha(0.5f),
         )
         if (expanded) content()

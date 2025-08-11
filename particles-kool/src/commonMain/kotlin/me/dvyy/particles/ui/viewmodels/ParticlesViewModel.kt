@@ -41,22 +41,6 @@ class ParticlesViewModel(
     private val velocitiesData: VelocitiesDataShader,
 ) {
     val passesPerFrame = MutableStateFlow(1)
-//    val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
-//        .distinctUntilChanged()
-//        .map { state ->
-//            listOf(
-//                UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
-//                    updateState { copy(dT = it.toDouble()) }
-//                },
-//                UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {
-//                    updateState { copy(maxVelocity = it.toDouble()) }
-//                },
-//                UiConfigurable.Slider("Max Force", state.maxForce, 0f, 100_000f) {
-//                    updateState { copy(maxForce = it.toDouble()) }
-//                },
-//            )
-//        }
-//        .asMutableState(mutableStateScope, default = listOf())
 
     val plotTexture = Texture2d(
         mipMapping = MipMapping.Off,

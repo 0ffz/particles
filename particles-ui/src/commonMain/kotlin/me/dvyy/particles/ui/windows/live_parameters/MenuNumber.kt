@@ -32,7 +32,7 @@ fun MenuNumber(
     onValueChange: (Number) -> Unit,
 ) {
     MenuItem(name) {
-        TextInputWithTooltip(value, onValueChange)
+        TextInputWithTooltip(value, onValueChange = onValueChange)
     }
 }
 

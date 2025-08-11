@@ -20,13 +20,22 @@ fun SidebarIcon(
     val background = if (isSelected)
         RoundRectBackground(Colors.primaryVariant, 6.dp)
     else RectBackground(Color.TRANSPARENT)
-    Box(
-        Modifier.padding(4.dp)
-            .background(background)
-            .clickable(hoverBackground = RoundRectBackground(Color.WHITE.withAlpha(0.2f), 6.dp)) {
-                onClick()
-            }
-    ) {
-        Image(icon, tint, modifier = Modifier.align(AlignmentX.Center, AlignmentY.Center))
+    Box(Modifier.size(AppSizes.sidebarSize)) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .padding(0.dp)
+                .margin(2.dp)
+                .background(background)
+                .clickable(hoverBackground = RoundRectBackground(Color.WHITE.withAlpha(0.2f), 6.dp)) {
+                    onClick()
+                }
+        ) {
+            Image(
+                icon,
+                tint,
+                modifier = Modifier.align(AlignmentX.Center, AlignmentY.Center)
+            )
+        }
     }
 }

@@ -13,7 +13,6 @@ import de.fabmax.kool.modules.ui2.AlignmentY
 import de.fabmax.kool.modules.ui2.Grow
 import de.fabmax.kool.modules.ui2.Grow.Companion.MinFit
 import de.fabmax.kool.modules.ui2.dp
-import de.fabmax.kool.util.MsdfFont
 import me.dvyy.particles.ui.Icons
 
 @Composable
@@ -35,8 +34,12 @@ fun Category(
                 .padding(vertical = sizes.smallGap)
                 .onClick { expanded = !expanded }
         ) {
-            Text(name, Modifier.alignX(Center).alignY(AlignmentY.Center), color = colors.primary, font = MsdfFont.DEFAULT_FONT, fontSize = 24f)
-            val icon = if(expanded) Icons.chevronUp else Icons.chevronDown
+            Text(
+                name, Modifier.alignX(Center).alignY(AlignmentY.Center),
+                color = colors.primary,
+                font = sizes.largeText,
+            )
+            val icon = if (expanded) Icons.chevronUp else Icons.chevronDown
             IconButton(icon, modifier = Modifier.alignX(AlignmentX.End), onClick = { expanded = !expanded })
         }
         if (desc != null) Text(

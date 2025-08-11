@@ -5,16 +5,16 @@ import de.fabmax.kool.modules.compose.composables.layout.Column
 import de.fabmax.kool.modules.compose.composables.layout.Row
 import de.fabmax.kool.modules.compose.modifiers.*
 import de.fabmax.kool.modules.ui2.AlignmentX
-import de.fabmax.kool.modules.ui2.Dp
 import de.fabmax.kool.modules.ui2.ReverseRowLayout
 import de.fabmax.kool.modules.ui2.RowLayout
+import de.fabmax.kool.modules.ui2.dp
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Color
 import me.dvyy.particles.ui.sidebar.AppSizes.sidebarSize
 import me.dvyy.particles.ui.windows.Window
 
 object AppSizes {
-    val sidebarSize = Dp(34f)
+    val sidebarSize = 32.dp
 }
 
 data class WindowUiState(
@@ -25,17 +25,21 @@ data class WindowUiState(
 
 @Composable
 fun Sidebar(
-    state: List<WindowUiState>,
+    tabs: List<WindowUiState>,
     rightAligned: Boolean = false,
 ) {
-    var selected by remember { mutableStateOf(-1) }
+    var state by remember { mutableStateOf(SidebarUiState(-1, 200.0)) }
 
-    fun selectOrClose(value: Int) = if (selected == value) selected = -1 else selected = value
+    fun selectOrClose(value: Int) {
+        state = if (state.selectedTab == value)
+            state.copy(selectedTab = -1)
+        else state.copy(selectedTab = value)
+    }
 
     Row(
         Modifier.fillMaxHeight()
             .layout(if (rightAligned) ReverseRowLayout else RowLayout)
-            .alignX(if(rightAligned) AlignmentX.End else AlignmentX.Start)
+            .alignX(if (rightAligned) AlignmentX.End else AlignmentX.Start)
     ) {
         Column(
             Modifier
@@ -43,14 +47,19 @@ fun Sidebar(
                 .width(sidebarSize)
                 .backgroundColor(Color.BLACK.withAlpha(0.7f))
         ) {
-            state.forEachIndexed { i, window ->
+            tabs.forEachIndexed { i, window ->
                 SidebarIcon(onClick = {
                     selectOrClose(i)
-                }, isSelected = selected == i, icon = window.icon)
+                }, isSelected = state.selectedTab == i, icon = window.icon)
             }
         }
-        state.getOrNull(selected)?.let { window ->
-            Window(title = window.title, rightAligned = rightAligned) {
+        tabs.getOrNull(state.selectedTab)?.let { window ->
+            Window(
+                title = window.title,
+                rightAligned = rightAligned,
+                onDeltaResize = { state = state.copy(windowSize = state.windowSize + it.value) },
+                modifier = Modifier.width(state.windowSize.dp)
+            ) {
                 window.content()
             }
         }

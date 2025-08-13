@@ -1,4 +1,4 @@
-package me.dvyy.particles.ui.viewmodels
+package me.dvyy.particles.ui.windows.live_parameters
 
 import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.flow.combine
@@ -10,7 +10,7 @@ import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.UniformParameter
 import me.dvyy.particles.dsl.pairwise.ParticleSet
-import me.dvyy.particles.ui.nodes.GraphState
+import me.dvyy.particles.ui.graphing.GraphState
 
 data class ForceUiState(
     val name: String,

@@ -1,4 +1,4 @@
-package me.dvyy.particles.ui
+package me.dvyy.particles.ui.app
 
 import de.fabmax.kool.ImageBitmapOptions
 import de.fabmax.kool.createImageBitmap

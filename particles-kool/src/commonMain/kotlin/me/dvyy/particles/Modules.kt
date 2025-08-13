@@ -15,13 +15,11 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
-import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 /** This module persists across application reloads (i.e. the reload button) */
-fun persistentModule(ctx: KoolContext) = module {
+fun persistentModule(ctx: KoolContext) = module(createdAtStart = true) {
     single<KoolContext> { ctx }
     singleOf(::AppSettings)
     singleOf(::ConfigRepository)
@@ -31,8 +29,6 @@ fun persistentModule(ctx: KoolContext) = module {
 fun dataModule() = module {
     singleOf(::ParticleBuffers)
     singleOf(::CameraManager)
-    singleOf(::ParticlesViewModel)
-    singleOf(::ForceParametersViewModel)
     singleOf(::ParticlesMesh)
     singleOf(::ParticleClustering)
 }

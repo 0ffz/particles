@@ -2,6 +2,7 @@ package me.dvyy.particles.helpers
 
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.toKotlinxIoPath
+import io.github.vinceglb.filekit.utils.toFile
 import kotlinx.io.files.Path
 import kotlin.io.path.*
 
@@ -15,6 +16,15 @@ actual object FileSystemUtils {
     actual fun write(path: String, content: String) {
         kotlin.io.path.Path(path).createParentDirectories()
             .also { if (it.notExists()) it.createFile() }.writeText(content)
+    }
+
+    actual fun walkPathOrNull(file: PlatformFile): List<PlatformFile> {
+        return file.toKotlinxIoPath()
+            .toFile()
+            .toPath()
+            .parent
+            .listDirectoryEntries()
+            .map { PlatformFile(it.toFile()) }
     }
 
     actual fun getPathOrNull(file: PlatformFile): Path? {

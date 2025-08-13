@@ -1,4 +1,4 @@
-package me.dvyy.particles.ui.nodes
+package me.dvyy.particles.ui.graphing
 
 import de.fabmax.kool.math.MutableVec4f
 import de.fabmax.kool.math.Vec2f

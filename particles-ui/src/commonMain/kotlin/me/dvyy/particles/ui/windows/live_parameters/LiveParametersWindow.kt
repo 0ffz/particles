@@ -17,7 +17,6 @@ import me.dvyy.particles.ui.composables.Subcategory
 import me.dvyy.particles.ui.graphing.ConfigViewModel
 import me.dvyy.particles.ui.helpers.TRANSPARENT
 import me.dvyy.particles.ui.helpers.koinInject
-import me.dvyy.particles.ui.viewmodels.ForceParametersViewModel
 
 @Composable
 fun LiveParametersWindow(

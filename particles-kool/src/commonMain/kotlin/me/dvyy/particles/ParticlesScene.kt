@@ -18,7 +18,6 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.helpers.launch
 import me.dvyy.particles.render.CameraManager
 import me.dvyy.particles.render.ParticlesMesh
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 class ParticlesScene(
     val buffers: ParticleBuffers,
@@ -33,7 +32,6 @@ class ParticlesScene(
     val convertShader: ConvertParticlesShader,
     val fieldsShader: FieldsMultiPasses,
     val settings: AppSettings,
-    val viewModel: ParticlesViewModel,
 ) {
     val config = configRepo.config.value
 
@@ -75,7 +73,7 @@ class ParticlesScene(
         var clearNextFrame = false
 
         /// === Calibrate FPS ===
-        var enabledPasses = viewModel.passesPerFrame
+        var enabledPasses = configRepo.passesPerFrame
         var iter = 0
 
         launch {

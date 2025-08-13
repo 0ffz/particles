@@ -12,13 +12,11 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.ui.helpers.FieldsWindow
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 import kotlin.time.Duration.Companion.seconds
 
 class TextEditorWindow(
     val configRepository: ConfigRepository,
-    val viewModel: ParticlesViewModel,
+//    val viewModel: ParticlesViewModel,
     val scope: CoroutineScope,
 ) : FieldsWindow() {
     val consoleFont = MutableStateFlow(MsdfFont.DEFAULT_FONT)
@@ -99,7 +97,8 @@ class TextEditorWindow(
                                 configRepository.saveConfigLines(lines.value.joinToString("\n"))
                                 configRepository.updateConfig(it)
                                 textChanged.set(false)
-                                viewModel.restartSimulation()
+                                TODO()
+//                                viewModel.restartSimulation()
                             }
                         }
                     }

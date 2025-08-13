@@ -14,7 +14,7 @@ import de.fabmax.kool.util.RenderLoop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import me.dvyy.particles.ui.nodes.GraphState
+import me.dvyy.particles.ui.graphing.GraphState
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 

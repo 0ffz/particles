@@ -3,6 +3,7 @@ package me.dvyy.particles.helpers.kool
 import de.fabmax.kool.KoolApplication
 import de.fabmax.kool.KoolConfigJvm
 import de.fabmax.kool.KoolContext
+import de.fabmax.kool.pipeline.backend.gl.RenderBackendGl
 import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.scene.scene
 import kotlinx.coroutines.*
@@ -30,7 +31,7 @@ object KoolTestExtension : BeforeAllCallback, AfterAllCallback {
     fun createKoolContext(): KoolContext = runBlocking {
         val context = CompletableDeferred<KoolContext>()
         CoroutineScope(Dispatchers.Default).launch {
-            KoolApplication(KoolConfigJvm(renderBackend = KoolConfigJvm.Backend.OPEN_GL)) {
+            KoolApplication(KoolConfigJvm(renderBackend = RenderBackendGl)) {
                 context.complete(ctx)
             }
         }

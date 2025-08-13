@@ -8,7 +8,6 @@ import kotlinx.coroutines.withContext
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.config.ClusterOptions
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 
 /**
  * Calculates the start indices in the full particles buffer for each grid cell (where cells are keys, and offsets
@@ -16,7 +15,6 @@ import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
 class ParticleClustering(
     val configRepo: ConfigRepository,
     val buffers: ParticleBuffers,
-    val viewModel: ParticlesViewModel,
 ) {
     fun calculateClusters(options: ClusterOptions) = launchOnMainThread {
         val positions = Float32Buffer(configRepo.count * 4)

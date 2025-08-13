@@ -1,5 +1,5 @@
 simulation:
-  count: 100000
+  count: 10000
   minGridSize: 10.0
   dT: 0.01
   conversionRate: 50

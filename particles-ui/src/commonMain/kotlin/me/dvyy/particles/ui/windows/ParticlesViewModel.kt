@@ -1,18 +1,20 @@
-package me.dvyy.particles.ui.viewmodels
+package me.dvyy.particles.ui.windows
 
 import com.charleskorn.kaml.YamlNode
+import de.fabmax.kool.KoolSystem
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
 import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.FileKit
+import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
 import io.github.vinceglb.filekit.dialogs.openFilePicker
+import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import kotlinx.serialization.KSerializer
@@ -23,12 +25,20 @@ import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.YamlHelpers
+import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.Simulation
 import me.dvyy.particles.helpers.Buffers
 import me.dvyy.particles.helpers.FileSystemUtils
 import me.dvyy.particles.helpers.initFloat4
-import me.dvyy.particles.ui.nodes.GraphState
-import me.dvyy.particles.ui.nodes.GraphStyle
+import me.dvyy.particles.ui.graphing.GraphState
+import me.dvyy.particles.ui.graphing.GraphStyle
+import kotlin.time.Duration.Companion.seconds
+
+sealed interface ConfigUiState {
+    data class Decoded(val config: ParticlesConfig) : ConfigUiState
+    data object Loading : ConfigUiState
+    data class Error(val throwable: Throwable) : ConfigUiState
+}
 
 class ParticlesViewModel(
     private val buffers: ParticleBuffers,
@@ -40,8 +50,6 @@ class ParticlesViewModel(
     private val scope: CoroutineScope,
     private val velocitiesData: VelocitiesDataShader,
 ) {
-    val passesPerFrame = MutableStateFlow(1)
-
     val plotTexture = Texture2d(
         mipMapping = MipMapping.Off,
         samplerSettings = SamplerSettings().nearest(),
@@ -50,6 +58,39 @@ class ParticlesViewModel(
 
     val velocitiesHistogram = GraphState().apply {
         style = GraphStyle.Bar(width = 5.0)
+    }
+
+    val configUiState: Flow<ConfigUiState> = configRepo.fileUpdates
+        .debounce(1.seconds)
+        .mapLatest<PlatformFile, ConfigUiState> {
+            val config = it.readString()
+            ConfigUiState.Decoded(YamlHelpers.yaml.decodeFromString(ParticlesConfig.serializer(), config))
+        }
+        .retryWhen { cause, attempt ->
+            emit(ConfigUiState.Error(cause))
+            true
+        }
+        .stateIn(scope, SharingStarted.Lazily, ConfigUiState.Loading)
+
+    private val windowFocus = MutableStateFlow(true)
+
+    init {
+        // Track window focus as state
+        KoolSystem.requireContext().onWindowFocusChanged.stageAdd({ new ->
+            windowFocus.update { new.isWindowFocused }
+        })
+
+        // Listen to config updates, only when window focus becomes true
+        scope.launch {
+            combine(configUiState, windowFocus) { configUiState, windowFocus ->
+                configUiState to windowFocus
+            }
+                .filter { it.second }
+                .distinctUntilChanged()
+                .collect {
+                    if(it.first is ConfigUiState.Decoded) reload()
+                }
+        }
     }
 
     suspend fun updateVelocityHistogram() {
@@ -100,8 +141,12 @@ class ParticlesViewModel(
     }
 
     fun openProject(path: String) = launchOnMainThread {
-        sceneManager.open(FileSystemUtils.toFileOrNull(Path(path)) ?: return@launchOnMainThread)
         settings.recentProjectPaths.update { listOf(path) + (it - path) }
+        sceneManager.open(FileSystemUtils.toFileOrNull(Path(path)) ?: return@launchOnMainThread)
+    }
+
+    fun reload() = launchOnMainThread {
+        sceneManager.reloadConfig()
     }
 
     fun removeProject(path: String) = launchOnMainThread {

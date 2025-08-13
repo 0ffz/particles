@@ -10,5 +10,7 @@ actual object FileSystemUtils {
 
     actual fun getPathOrNull(file: PlatformFile): Path? = null
 
+    actual fun walkPathOrNull(file: PlatformFile): List<PlatformFile> = listOf()
+
     actual fun toFileOrNull(path: Path): PlatformFile? = null
 }

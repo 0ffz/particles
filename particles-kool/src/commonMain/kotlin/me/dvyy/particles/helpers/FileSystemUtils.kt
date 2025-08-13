@@ -10,5 +10,7 @@ expect object FileSystemUtils {
 
     fun getPathOrNull(file: PlatformFile): Path?
 
+    fun walkPathOrNull(file: PlatformFile): List<PlatformFile>
+
     fun toFileOrNull(path: Path): PlatformFile?
 }

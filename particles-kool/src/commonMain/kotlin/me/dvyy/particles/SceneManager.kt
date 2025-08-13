@@ -39,10 +39,18 @@ class SceneManager(
 
     fun load() = launchOnMainThread {
         val sceneScope = CoroutineScope(Dispatchers.RenderLoop)
+        val configRepo = globalApplication.koin.get<ConfigRepository>()
+        val settings = globalApplication.koin.get<AppSettings>()
+        if(configRepo.currentFile.value == null) {
+            settings.recentProjectPaths.value.firstOrNull()
+                ?.let { FileSystemUtils.toFileOrNull(Path(it)) }
+                ?.let { configRepo.openFile(it) }
+        }
+        configRepo.isDirty = true
         // Create dependencies with koin
         val application = koinApplication {
             modules(
-                module {
+                module(createdAtStart = true) {
                     single { sceneScope }
                     single<SceneManager> { this@SceneManager }
                 },
@@ -56,14 +64,6 @@ class SceneManager(
                 sceneModule(),
             )
         }.koin
-        val configRepo = application.get<ConfigRepository>()
-        val settings = application.get<AppSettings>()
-        if(configRepo.currentFile.value == null) {
-            settings.recentProjectPaths.value.firstOrNull()
-                ?.let { FileSystemUtils.toFileOrNull(Path(it)) }
-                ?.let { configRepo.openFile(it) }
-        }
-        configRepo.isDirty = true
         val ui = application.getOrNull<Scene>(named("ui-scene"))
         val scene = application.get<ParticlesScene>().scene
 
@@ -86,6 +86,12 @@ class SceneManager(
     suspend fun open(file: PlatformFile) {
         val config = globalApplication.koin.get<ConfigRepository>()
         config.openFile(file)
+        reload()
+    }
+
+    suspend fun reloadConfig() {
+        val config = globalApplication.koin.get<ConfigRepository>()
+        config.reloadFile()
         reload()
     }
 }

@@ -5,9 +5,8 @@ import de.fabmax.kool.math.toVec3f
 import de.fabmax.kool.math.toVec3i
 import io.github.vinceglb.filekit.PlatformFile
 import io.github.vinceglb.filekit.readString
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.dsl.ParticlesConfig
@@ -28,6 +27,19 @@ class ConfigRepository(
     private val _configLines =
         MutableStateFlow(YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value))
     private val _currentFile = MutableStateFlow<PlatformFile?>(null)
+
+    /** Flow of latest file updates for the current file */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val fileUpdates: Flow<PlatformFile> = _currentFile
+        .map { file ->
+            file?.observeChanges()
+        }
+        .flatMapLatest { flow ->
+            flow ?: emptyFlow()
+        }
+
+    val passesPerFrame = MutableStateFlow(1)
+
     val config = _config.asStateFlow()
     val configLines = _configLines.asStateFlow()
     val currentFile = _currentFile.asStateFlow()
@@ -87,4 +99,6 @@ class ConfigRepository(
         _currentFile.update { file }
         loadConfig(file.readString())
     }
+
+    suspend fun reloadFile() = _currentFile.value?.let { loadConfig(it.readString()) }
 }

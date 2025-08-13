@@ -13,6 +13,7 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll(
             "-Xexpect-actual-classes",
+            "-Xcontext-parameters",
             "-Xcontext-sensitive-resolution"
         )
     }
@@ -42,6 +43,8 @@ kotlin {
             dependencies {
                 implementation(project(":particles-kool"))
                 implementation(libs.kool.compose.ui)
+                implementation(libs.filekit.core)
+                implementation(libs.filekit.dialogs)
             }
         }
     }

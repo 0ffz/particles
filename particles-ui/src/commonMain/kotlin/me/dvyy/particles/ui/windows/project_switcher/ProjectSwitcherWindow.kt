@@ -12,16 +12,19 @@ import de.fabmax.kool.modules.compose.modifiers.*
 import de.fabmax.kool.modules.ui2.RoundRectBackground
 import de.fabmax.kool.modules.ui2.dp
 import me.dvyy.particles.config.AppSettings
-import me.dvyy.particles.ui.Icons
+import me.dvyy.particles.ui.app.Icons
 import me.dvyy.particles.ui.composables.IconButton
+import me.dvyy.particles.ui.graphing.ConfigViewModel
 import me.dvyy.particles.ui.helpers.koinInject
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
+import me.dvyy.particles.ui.windows.ParticlesViewModel
 
 @Composable
 fun ProjectSwitcherWindow(
     viewModel: ParticlesViewModel = koinInject(),
     settings: AppSettings = koinInject(),
+    configViewModel: ConfigViewModel = koinInject(),
 ) {
+    ConfigReloading()
     Button(onClick = { viewModel.attemptOpenProject() }) {
         Text("Open project")
     }

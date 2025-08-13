@@ -58,7 +58,6 @@ kotlin {
                 implementation(libs.multiplatform.settings.coroutines)
                 implementation(libs.multiplatform.settings.serialization)
                 implementation(libs.filekit.core)
-                implementation(libs.filekit.dialogs)
             }
         }
 
@@ -87,6 +86,9 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(kotlin("test-junit5"))
                 implementation("io.kotest:kotest-assertions-core:6.0.0.M5")
+                implementation("io.github.smiley4:schema-kenerator-serialization:2.3.0")
+                implementation("io.github.smiley4:schema-kenerator-core:2.3.0")
+                implementation("io.github.smiley4:schema-kenerator-jsonschema:2.3.0")
             }
         }
     }

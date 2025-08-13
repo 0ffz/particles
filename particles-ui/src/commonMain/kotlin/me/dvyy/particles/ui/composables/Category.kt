@@ -13,7 +13,7 @@ import de.fabmax.kool.modules.ui2.AlignmentY
 import de.fabmax.kool.modules.ui2.Grow
 import de.fabmax.kool.modules.ui2.Grow.Companion.MinFit
 import de.fabmax.kool.modules.ui2.dp
-import me.dvyy.particles.ui.Icons
+import me.dvyy.particles.ui.app.Icons
 
 @Composable
 fun Category(

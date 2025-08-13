@@ -28,7 +28,7 @@ fun Sidebar(
     tabs: List<WindowUiState>,
     rightAligned: Boolean = false,
 ) {
-    var state by remember { mutableStateOf(SidebarUiState(-1, 200.0)) }
+    var state by remember { mutableStateOf(SidebarUiState(-1, 350.0)) }
 
     fun selectOrClose(value: Int) {
         state = if (state.selectedTab == value)

@@ -12,7 +12,7 @@ import de.fabmax.kool.modules.compose.modifiers.padding
 import de.fabmax.kool.modules.compose.modifiers.width
 import me.dvyy.particles.ui.composables.Subcategory
 import me.dvyy.particles.ui.helpers.koinInject
-import me.dvyy.particles.ui.viewmodels.ParticlesViewModel
+import me.dvyy.particles.ui.windows.ParticlesViewModel
 
 @Composable
 fun ResetSubcategory(

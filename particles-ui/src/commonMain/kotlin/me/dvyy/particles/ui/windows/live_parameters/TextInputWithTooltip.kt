@@ -35,7 +35,6 @@ fun TextInputWithTooltip(
             if (number != null) boundedChange(number)
             else onValueChange(value) // reset on invalid input
         },
-//        onFocusChange = { if (it) shown = true },
         modifier = Modifier.fillMaxWidth().onClick { shown = true }
             .onWheelY {
                 // Don't round on wheel y for smooth scrolling
@@ -51,25 +50,6 @@ fun TextInputWithTooltip(
     DropdownMenu(shown, onDismissRequest = { shown = false }) {
         Slider(value.toFloat(), onValueChange = { boundedChange(it.toDouble()) }, 0f..rangeMax, Modifier.width(100.dp))
     }
-//        LaunchedEffect(Unit) {
-//            withContext(Dispatchers.RenderLoop) {
-//                while(true) {
-//                    val ptr = PointerInput.primaryPointer
-//                    if (ptr.isAnyButtonDown && !clickedInBounds.value) {
-//                        if (uiNode.isInBounds(ptr.pos))
-//                            clickedInBounds.set(true)
-//                        else shown.set(false)
-//                    }
-//                    if (ptr.isAnyButtonReleased && !uiNode.isInBounds(ptr.pos) && !clickedInBounds.value) {
-//                        shown.set(false)
-//                    }
-//                    if (ptr.isAnyButtonReleased) {
-//                        maxRange.set(calculateMax())
-//                        clickedInBounds.set(false)
-//                    }
-//                    yield()
-//                }
-//            }
 }
 
 private fun calculatePrecision(value: Number): Int {

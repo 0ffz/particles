@@ -63,7 +63,7 @@ inline fun <reified T : Enum<T>> MenuEnum(
                     .background(RoundRectBackground(colors.backgroundVariant, 4.dp))
                     .border(RoundRectBorder(colors.primaryVariant, 4.dp, 1.dp))
                     .padding(horizontal = 6.dp, vertical = 4.dp)
-                    .clickable { expanded = true }
+                    .clickable { expanded = !expanded }
             )
 
             DropdownMenu(expanded, onDismissRequest = { expanded = false }) {

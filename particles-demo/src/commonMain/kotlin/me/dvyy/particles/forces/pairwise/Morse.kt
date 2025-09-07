@@ -23,7 +23,7 @@ object Morse : PairwiseForce("morse") {
         val re = re.asShaderParam()
 
         body {
-            val exponential = float1Var(exp(-a * (distance - re)))
+            val exponential = float1Var(exp(-a * (distance - re)), "exponential")
             (-2f).const * a * De * exponential * (1f.const - exponential)
         }
     }

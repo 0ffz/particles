@@ -49,11 +49,12 @@ class ParticlesScene(
                 buffers.positionBuffer,
                 buffers.velocitiesBuffer,
                 buffers.forcesBuffer,
-                buffers.particleTypesBuffer,
-                buffers.clustersBuffer,
-                buffers.colorsBuffer,
-                buffers.localNeighboursBuffer,
-//                buffers.particleGridCellKeys,
+                //FIXME web max 8 buffers per stage
+
+//                buffers.particleTypesBuffer,
+//                buffers.clustersBuffer,
+//                buffers.colorsBuffer,
+//                buffers.localNeighboursBuffer,
             )
         ).addTo(computePass, buffers.sortIndices, configRepo.count, configRepo.numGroups)
         offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)

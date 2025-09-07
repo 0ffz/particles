@@ -73,7 +73,8 @@ class ParticlesMesh(
                     val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
                     val forcesBuffer = storage<KslFloat4>("forcesBuffer")
                     val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
-                    val colorsBuffer = storage<KslFloat4>("colorsBuffer")
+                    //FIXME web max 8 buffers per stage
+//                    val colorsBuffer = storage<KslFloat4>("colorsBuffer")
                     val clusterBuffer = storage<KslInt1>("clusterBuffer")
                     val typesBuffer = storage<KslInt1>("typesBuffer")
                     val localNeighboursBuffer = storage<KslFloat1>("localNeighboursBuffer")
@@ -103,7 +104,7 @@ class ParticlesMesh(
                     fragPos.input set outPosition
                     interCenter.input set position
 
-                    val prevColor = float4Var(colorsBuffer[offset])
+//                    val prevColor = float4Var(colorsBuffer[offset])
                     val newColor = float4Var(typeColorsBuffer[typesBuffer[offset]]) // default to particle color
                     val gradient = Gradients.HEAT
                     fun KslScopeBuilder.particleColor(
@@ -130,8 +131,10 @@ class ParticlesMesh(
                     particleColor { gradient.recolor(it) }
 
                     // mix old and new color such that transition happens more slowly, avoiding flickering
-                    val mix = mix(prevColor, newColor, 0.1f.const)
-                    colorsBuffer[offset] = mix
+                    val mix = newColor
+                    //FIXME web cannot write to a storage buffer in vertex stage
+//                    val mix = mix(prevColor, newColor, 0.1f.const)
+//                    colorsBuffer[offset] = mix
                     interColor.input set mix
                 }
             }

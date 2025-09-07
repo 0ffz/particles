@@ -18,9 +18,9 @@ object LennardJones : PairwiseForce("lennardJones") {
         val epsilon = epsilon.asShaderParam()
 
         body {
-            val invR = float1Var(sigma / distance)
-            val invR6 = float1Var(invR * invR * invR * invR * invR * invR)
-            val invR12 = float1Var(invR6 * invR6)
+            val invR = float1Var(sigma / distance, "invR")
+            val invR6 = float1Var(invR * invR * invR * invR * invR * invR, "invR6")
+            val invR12 = float1Var(invR6 * invR6, "invR12")
             24f.const * epsilon * (2f.const * invR12 - invR6) / distance
         }
     }

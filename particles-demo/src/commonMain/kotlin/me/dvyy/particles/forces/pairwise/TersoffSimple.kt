@@ -80,7 +80,7 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
         beta: FloatParam,
         n: FloatParam,
     ): KslExpressionMathScalar<KslFloat1> {
-        val beta_n = float1Var(pow(beta, n))
+        val beta_n = float1Var(pow(beta, n), "betaN")
         return -(beta_n / 2f.const) * pow(
             1f.const + beta_n * pow(localCount, n),
             -(1f.const + 2f.const * n) / (2f.const * n)
@@ -112,14 +112,14 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
 //        val cutoffD = cutoffD.asShaderParam()
 
         body {
-            val cutoff = float1Var(cutoff(distance, 0.3f.const, 5f.const))
-            val d_cutoff = float1Var(d_cutoff(distance, 0.3f.const, 5f.const))
-            val repulsive = float1Var(force(A, lambda1, distance))
-            val attractive = float1Var(force(-B, lambda2, distance))
-            val d_repulsive = float1Var(d_force(A, lambda1, distance))
-            val d_attractive = float1Var(d_force(-B, lambda2, distance))
-            val b_ij = float1Var(b_ij(localCount, beta, n))
-            val `d(b_ij)` = float1Var(`d(b_ij)`(localCount, beta, n))
+            val cutoff = float1Var(cutoff(distance, 0.3f.const, 5f.const), "cutoff")
+            val d_cutoff = float1Var(d_cutoff(distance, 0.3f.const, 5f.const), "dCutoff")
+            val repulsive = float1Var(force(A, lambda1, distance), "repulsive")
+            val attractive = float1Var(force(-B, lambda2, distance), "attractive")
+            val d_repulsive = float1Var(d_force(A, lambda1, distance), "dRepulsive")
+            val d_attractive = float1Var(d_force(-B, lambda2, distance), "dAttractive")
+            val b_ij = float1Var(b_ij(localCount, beta, n), "bIJ")
+            val `d(b_ij)` = float1Var(`d(b_ij)`(localCount, beta, n), "dBIJ")
             val normalTerm = repulsive + b_ij * attractive
             val derivativeTerm = d_repulsive + (`d(b_ij)` * attractive) + (b_ij * d_attractive)
             -(d_cutoff * normalTerm + cutoff * derivativeTerm)

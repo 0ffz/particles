@@ -115,14 +115,14 @@ class ForceWithParameters<T : Force>(
         }
     }
 
-    inner class InteractionStruct() : Struct("InteractionStruct_${force.name}", MemoryLayout.Std140) {
+    inner class InteractionStruct() : Struct("InteractionStruct_${force.name}", MemoryLayout.Std430) {
         val enabled = float1("enabled")
         val parameters = (0..<numParameters).map { float1() }
 
         fun parametersAsArray() = parameters.map { it.ksl }.toTypedArray()
     }
 
-    inner class ForceParametersStruct() : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std140) {
+    inner class ForceParametersStruct() : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std430) {
         val interactions = structArray(hashCount, "interactions", structProvider = ::InteractionStruct)
     }
 }

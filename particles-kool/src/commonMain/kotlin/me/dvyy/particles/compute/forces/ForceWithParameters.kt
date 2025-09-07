@@ -1,5 +1,7 @@
 package me.dvyy.particles.compute.forces
 
+import de.fabmax.kool.KoolSystem
+import de.fabmax.kool.Platform
 import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.lang.*
 import de.fabmax.kool.pipeline.ComputeShader
@@ -115,14 +117,31 @@ class ForceWithParameters<T : Force>(
         }
     }
 
-    inner class InteractionStruct() : Struct("InteractionStruct_${force.name}", MemoryLayout.Std430) {
+    inner class InteractionStruct() : Struct("InteractionStruct_${force.name}", MemoryLayout.Std140) {
         val enabled = float1("enabled")
         val parameters = (0..<numParameters).map { float1() }
+
+        init {
+            // WebGPU requires a multiple of 16 bytes for uniforms
+            // Add padding to make the struct size a multiple of 32 bytes
+            // Size so far: 4 (enabled) + numParameters * 4 bytes
+            if (KoolSystem.platform == Platform.Javascript) {
+                val currentSize = 4 + numParameters * 4 // 4 bytes per float parameter
+                val remainder = currentSize % 16
+                if (remainder != 0) {
+                    val paddingSize = 16 - remainder
+                    val numPaddingElements = paddingSize / 4
+                    repeat(numPaddingElements) {
+                        float1() // Add padding elements
+                    }
+                }
+            }
+        }
 
         fun parametersAsArray() = parameters.map { it.ksl }.toTypedArray()
     }
 
-    inner class ForceParametersStruct() : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std430) {
+    inner class ForceParametersStruct() : Struct("ForceParametersStruct_${force.name}", MemoryLayout.Std140) {
         val interactions = structArray(hashCount, "interactions", structProvider = ::InteractionStruct)
     }
 }

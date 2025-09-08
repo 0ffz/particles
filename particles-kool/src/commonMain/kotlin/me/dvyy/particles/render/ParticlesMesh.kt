@@ -1,6 +1,7 @@
 package me.dvyy.particles.render
 
 import de.fabmax.kool.math.Vec3f
+import de.fabmax.kool.modules.ksl.KslComputeShader
 import de.fabmax.kool.modules.ksl.KslShader
 import de.fabmax.kool.modules.ksl.blocks.cameraData
 import de.fabmax.kool.modules.ksl.lang.*
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import me.dvyy.particles.compute.ParticleBuffers
 import me.dvyy.particles.compute.helpers.KslInt
+import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.compute.simulation.SimulationParametersStruct
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
@@ -38,22 +40,82 @@ class ParticlesMesh(
         }
         scope.launch {
             settings.ui.coloring.collectLatest {
-                mesh.shader?.uniform1i("colorType")?.set(it.ordinal)
+                colorShader.uniform1i("colorType").set(it.ordinal)
             }
         }
         scope.launch {
             settings.ui.recolorGradient.collectLatest {
-                mesh.shader?.uniform1i("recolorGradient")?.set(it.ordinal)
+                colorShader.uniform1i("recolorGradient").set(it.ordinal)
             }
         }
         scope.launch {
             configRepository.config.map { it.simulation }.distinctUntilChanged().collectLatest {
-                mesh.shader?.uniformStruct("params", ::SimulationParametersStruct)?.set {
+                colorShader.uniformStruct("params", ::SimulationParametersStruct).set {
                     maxVelocity.set(it.maxVelocity.toFloat())
                     maxForce.set(it.maxForce.toFloat())
                 }
             }
         }
+    }
+
+    val colorShader = KslComputeShader("Color particles") {
+        val simulationParams = uniformStruct("params", provider = ::SimulationParametersStruct)
+        val colorType = uniformInt1("colorType")
+        val recolorGradient = uniformInt1("recolorGradient")
+
+        // Web: Max 8 storage buffers, separate into one shader per coloring type (which get swapped as needed) if we ever need more
+        val forcesBuffer = storage<KslFloat4>("forcesBuffer")
+        val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
+        val colorsBuffer = storage<KslFloat4>("colorsBuffer")
+        val clusterBuffer = storage<KslInt1>("clusterBuffer")
+        val typesBuffer = storage<KslInt1>("typesBuffer")
+        val localNeighboursBuffer = storage<KslFloat1>("localNeighboursBuffer")
+        val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
+
+        computeStage(WORK_GROUP_SIZE) {
+            main {
+                val offset = int1Var(inGlobalInvocationId.x.toInt1())
+                val prevColor = float4Var(colorsBuffer[offset])
+                val newColor = float4Var(typeColorsBuffer[typesBuffer[offset]]) // default to particle color
+                val gradient = Gradients.HEAT
+                fun KslScopeBuilder.particleColor(
+                    gradient: (KslExprFloat1) -> KslExprFloat4,
+                ) {
+                    `if`(colorType eq ParticleColor.CLUSTER.ordinal.const) {
+                        val clusterId = int1Var(clusterBuffer[offset])
+                        newColor set randomColor(clusterId)
+                    }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
+                        val maxVelocity = simulationParams.struct.maxVelocity.ksl
+                        val velocity = float1Var(length(velocitiesBuffer[offset]))
+                        val input = clamp(velocity / maxVelocity, 0f.const, 1f.const)
+                        newColor set gradient(input)
+                    }.elseIf(colorType eq ParticleColor.FORCE.ordinal.const) {
+                        val maxForce = simulationParams.struct.maxForce.ksl
+                        val force = float1Var(length(forcesBuffer[offset]))
+                        val input = clamp(pow(force / log(maxForce), 0.5f.const), 0f.const, 1f.const)
+                        newColor set gradient(input)
+                    }.elseIf(colorType eq ParticleColor.NEIGHBOURS.ordinal.const) {
+                        newColor set gradient(clamp(localNeighboursBuffer[offset] / 2f.const, 0f.const, 1f.const))
+                    }
+                }
+
+                particleColor { gradient.recolor(it) }
+
+                // mix old and new color such that transition happens more slowly, avoiding flickering
+                val mix = mix(prevColor, newColor, 0.1f.const)
+                colorsBuffer[offset] = mix
+            }
+        }
+    }.apply {
+        storage("velocitiesBuffer", buffers.velocitiesBuffer)
+        storage("forcesBuffer", buffers.forcesBuffer)
+        storage("colorsBuffer", buffers.colorsBuffer)
+        storage("localNeighboursBuffer", buffers.localNeighboursBuffer)
+        storage("typeColorsBuffer", buffers.particleColors)
+        storage("radii", buffers.particleRadii)
+        storage("typesBuffer", buffers.particleTypesBuffer)
+        storage("clusterBuffer", buffers.clustersBuffer)
+        storage("cellIdsBuffer", buffers.particleGridCellKeys)
     }
 
     val mesh = Mesh(Attribute.POSITIONS, Attribute.NORMALS, Attribute.TEXTURE_COORDS, instances = instances).apply {
@@ -64,27 +126,18 @@ class ParticlesMesh(
             val fragPos = interStageFloat4("fragPos")
             val interCenter = interStageFloat3("interCenter")
 
+            val camData = cameraData()
+
+            val positionsBuffer = storage<KslFloat4>("positionsBuffer")
+            val typesBuffer = storage<KslInt1>("typesBuffer")
+            val radii = storage<KslFloat1>("radii")
+            val colorsBuffer = storage<KslFloat4>("colorsBuffer")
+
             vertexStage {
                 main {
-                    val camData = cameraData()
-                    val colorType = uniformInt1("colorType")
-                    val recolorGradient = uniformInt1("recolorGradient")
-                    val positionsBuffer = storage<KslFloat4>("positionsBuffer")
-                    val velocitiesBuffer = storage<KslFloat4>("velocitiesBuffer")
-                    val forcesBuffer = storage<KslFloat4>("forcesBuffer")
-                    val typeColorsBuffer = storage<KslFloat4>("typeColorsBuffer")
-                    //FIXME web max 8 buffers per stage
-//                    val colorsBuffer = storage<KslFloat4>("colorsBuffer")
-                    val clusterBuffer = storage<KslInt1>("clusterBuffer")
-                    val typesBuffer = storage<KslInt1>("typesBuffer")
-                    val localNeighboursBuffer = storage<KslFloat1>("localNeighboursBuffer")
-                    val radii = storage<KslFloat1>("radii")
-                    val simulationParams = uniformStruct("params", provider = ::SimulationParametersStruct)
-
-                    val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val offset = int1Var(inInstanceIndex.toInt1())
+                    val position = float3Var(vertexAttribFloat3(Attribute.POSITIONS))
                     val type = int1Var(typesBuffer[offset])
-                    val clusterId = int1Var(clusterBuffer[offset])
                     val positionOffset = positionsBuffer[offset].xyz
                     val radius = float1Var(radii[type])
 //                    texCoordsBlock = texCoordAttributeBlock()
@@ -103,41 +156,10 @@ class ParticlesMesh(
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
                     fragPos.input set outPosition
                     interCenter.input set position
-
-//                    val prevColor = float4Var(colorsBuffer[offset])
-                    val newColor = float4Var(typeColorsBuffer[typesBuffer[offset]]) // default to particle color
-                    val gradient = Gradients.HEAT
-                    fun KslScopeBuilder.particleColor(
-                        gradient: (KslExprFloat1) -> KslExprFloat4,
-                    ) {
-                        `if`(colorType eq ParticleColor.CLUSTER.ordinal.const) {
-                            val clusterId = int1Var(clusterBuffer[offset])
-                            newColor set randomColor(clusterId)
-                        }.elseIf(colorType eq ParticleColor.VELOCITY.ordinal.const) {
-                            val maxVelocity = simulationParams.struct.maxVelocity.ksl
-                            val velocity = float1Var(length(velocitiesBuffer[offset]))
-                            val input = clamp(velocity / maxVelocity, 0f.const, 1f.const)
-                            newColor set gradient(input)
-                        }.elseIf(colorType eq ParticleColor.FORCE.ordinal.const) {
-                            val maxForce = simulationParams.struct.maxForce.ksl
-                            val force = float1Var(length(forcesBuffer[offset]))
-                            val input = clamp(pow(force / log(maxForce), 0.5f.const), 0f.const, 1f.const)
-                            newColor set gradient(input)
-                        }.elseIf(colorType eq ParticleColor.NEIGHBOURS.ordinal.const) {
-                            newColor set gradient(clamp(localNeighboursBuffer[offset] / 2f.const, 0f.const, 1f.const))
-                        }
-                    }
-
-                    particleColor { gradient.recolor(it) }
-
-                    // mix old and new color such that transition happens more slowly, avoiding flickering
-                    val mix = newColor
-                    //FIXME web cannot write to a storage buffer in vertex stage
-//                    val mix = mix(prevColor, newColor, 0.1f.const)
-//                    colorsBuffer[offset] = mix
-                    interColor.input set mix
+                    interColor.input set colorsBuffer[offset]
                 }
             }
+
             fragmentStage {
                 main {
                     val uv = float2Var(interCenter.output.xy + 0.5.const)
@@ -166,16 +188,9 @@ class ParticlesMesh(
             }
         }.apply {
             storage("positionsBuffer", buffers.positionBuffer)
-            storage("velocitiesBuffer", buffers.velocitiesBuffer)
-            storage("forcesBuffer", buffers.forcesBuffer)
-            storage("colorsBuffer", buffers.colorsBuffer)
-            storage("localNeighboursBuffer", buffers.localNeighboursBuffer)
-            storage("typeColorsBuffer", buffers.particleColors)
             storage("radii", buffers.particleRadii)
             storage("typesBuffer", buffers.particleTypesBuffer)
-            storage("clusterBuffer", buffers.clustersBuffer)
-            storage("cellIdsBuffer", buffers.particleGridCellKeys)
-//            storage("indexesBuffer", buffers.particleGridCellKeys)
+            storage("colorsBuffer", buffers.colorsBuffer)
         }
         generate {
 //            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))

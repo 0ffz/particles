@@ -1,5 +1,7 @@
 package me.dvyy.particles
 
+import de.fabmax.kool.KoolSystem
+import de.fabmax.kool.Platform
 import de.fabmax.kool.pipeline.ComputePass
 import de.fabmax.kool.scene.scene
 import de.fabmax.kool.util.Time
@@ -42,21 +44,31 @@ class ParticlesScene(
 
         // === COMPUTE ===
         val computePass = ComputePass("Particles Compute")
+        //TODO placing this lower seems to set velocity to zero at the start. Is any kind of velocity read at certain times causing it to zero out?
+        computePass.addTask(particlesMesh.colorShader, configRepo.numGroups) // Recolor particles
         gpuSort.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
         gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
-        ReorderBuffersShader(
-            listOf(
-                buffers.positionBuffer,
-                buffers.velocitiesBuffer,
-                buffers.forcesBuffer,
-                //FIXME web max 8 buffers per stage
 
-//                buffers.particleTypesBuffer,
-//                buffers.clustersBuffer,
-//                buffers.colorsBuffer,
-//                buffers.localNeighboursBuffer,
+        // Web has a limit of 8 storage buffers per shader stage, accommodate this by running multiple reorder shaders
+        val buffersToReorder = listOf(
+            buffers.positionBuffer,
+            buffers.velocitiesBuffer,
+            buffers.forcesBuffer,
+            buffers.particleTypesBuffer,
+            buffers.clustersBuffer,
+            buffers.colorsBuffer,
+            buffers.localNeighboursBuffer,
+        )
+        val chunked = when (KoolSystem.platform) {
+            Platform.Javascript -> buffersToReorder.chunked(3)
+            else -> listOf(buffersToReorder)
+        }
+        chunked.forEach {
+            ReorderBuffersShader(it).addTo(
+                computePass, buffers.sortIndices, configRepo.count, configRepo.numGroups
             )
-        ).addTo(computePass, buffers.sortIndices, configRepo.count, configRepo.numGroups)
+        }
+
         offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)
         val fieldsPasses = fieldsShader.addTo(computePass) // Run force computations based on particle interactions
         convertShader.addTo(computePass) // Convert particles to different types as needed
@@ -65,7 +77,6 @@ class ParticlesScene(
         velocitiesDataShader.addTo(computePass)
 
         addComputePass(computePass)
-
 
         // === RENDERING ===
         cameraManager.manageCameraFor(this)

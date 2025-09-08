@@ -56,7 +56,7 @@ class SimulationStatisticsWindow(
                     // Update velocity histogram every 25 frames
                     surface.onEachFrame {
                         counter++
-                        if (counter % 10 == 0) launchOnMainThread {
+                        if (counter % 50 == 0) launchOnMainThread {
                             viewModel.updateVelocityHistogram()
                         }
                     }

@@ -34,8 +34,8 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
 //    )
     fun KslScopeBuilder.cutoff(
         distance: FloatParam,
-        cutoffR: FloatParam,
         cutoffD: FloatParam,
+        cutoffR: FloatParam,
     ): FloatParam {
         // Clamp the distance to the transition range [lowerBound, upperBound].
         val clampedDistance = clamp(distance, cutoffR - cutoffD, cutoffR + cutoffD)
@@ -44,8 +44,8 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
 
     fun KslScopeBuilder.`d_cutoff`(
         distance: FloatParam,
-        cutoffR: FloatParam,
         cutoffD: FloatParam,
+        cutoffR: FloatParam,
     ): FloatParam {
         // Define the lower and upper bounds of the transition region.
         val lowerBound = cutoffR - cutoffD
@@ -112,8 +112,8 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
 //        val cutoffD = cutoffD.asShaderParam()
 
         body {
-            val cutoff = float1Var(cutoff(distance, 0.3f.const, 5f.const), "cutoff")
-            val d_cutoff = float1Var(d_cutoff(distance, 0.3f.const, 5f.const), "dCutoff")
+            val cutoff = float1Var(cutoff(distance, 0.2f.const, 3f.const), "cutoff")
+            val d_cutoff = float1Var(d_cutoff(distance, 0.2f.const, 3f.const), "dCutoff")
             val repulsive = float1Var(force(A, lambda1, distance), "repulsive")
             val attractive = float1Var(force(-B, lambda2, distance), "attractive")
             val d_repulsive = float1Var(d_force(A, lambda1, distance), "dRepulsive")
@@ -122,7 +122,8 @@ object TersoffSimple : PairwiseForce("tersoff_simple") {
             val `d(b_ij)` = float1Var(`d(b_ij)`(localCount, beta, n), "dBIJ")
             val normalTerm = repulsive + b_ij * attractive
             val derivativeTerm = d_repulsive + (`d(b_ij)` * attractive) + (b_ij * d_attractive)
-            -(d_cutoff * normalTerm + cutoff * derivativeTerm)
+
+            return@body -(d_cutoff * normalTerm + cutoff * derivativeTerm)
         }
     }
 

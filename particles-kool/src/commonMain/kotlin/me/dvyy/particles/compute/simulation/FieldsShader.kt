@@ -84,8 +84,8 @@ class FieldsShader(
 
                     fun cutoff(
                         distance: KslScalarExpression<KslFloat1>,
-                        cutoffR: KslScalarExpression<KslFloat1>,
                         cutoffD: KslScalarExpression<KslFloat1>,
+                        cutoffR: KslScalarExpression<KslFloat1>,
                     ): KslScalarExpression<KslFloat1> {
                         // Clamp the distance to the transition range [lowerBound, upperBound].
                         val clampedDistance = clamp(distance, cutoffR - cutoffD, cutoffR + cutoffD)
@@ -98,7 +98,7 @@ class FieldsShader(
                         `if`(all(otherPos eq position)) { `continue`() }
                         val direction = float3Var(position - otherPos)
                         val dist = float1Var(length(direction))
-                        localCount += cutoff(dist, 0.3f.const, 5f.const) //TODO cutoff function
+                        localCount += cutoff(dist, 0.2f.const, 3f.const) //TODO cutoff function
                     }
                 }
 
@@ -147,7 +147,7 @@ class FieldsShader(
                             val interaction = structVar(it.interactionFor(pairHash)).struct
                             // For pairs without an interaction paramsMat[0][0] is 0
                             forceBetweenParticles += interaction.enabled.ksl *
-                                    functionRef.invoke(dist, 0f.const, *interaction.parametersAsArray())
+                                    functionRef.invoke(dist, localCount, *interaction.parametersAsArray())
                                         .clampMaxForce()
                         }
 

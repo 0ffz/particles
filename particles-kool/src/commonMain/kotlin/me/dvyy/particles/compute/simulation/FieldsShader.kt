@@ -118,10 +118,13 @@ class FieldsShader(
                     forcesDef.individualForces.forEach {
                         val functionRef = it.force.kslReference
                         val interaction = structVar(it.interactionFor(particleType)).struct
-                        nextForce += interaction.enabled.ksl * functionRef.invoke(
-                            position,
-                            *interaction.parametersAsArray()
-                        )
+                        // TODO avoid conditional branch
+                        `if`(interaction.enabled.ksl eq 1f.const) {
+                            nextForce += functionRef.invoke(
+                                position,
+                                *interaction.parametersAsArray()
+                            )
+                        }
                     }
                     // Pairwise forces
                     fori(startIndex, endIndexExclusive) { i ->
@@ -146,9 +149,12 @@ class FieldsShader(
                             //TODO this buffer access adds a good amount of overhead
                             val interaction = structVar(it.interactionFor(pairHash)).struct
                             // For pairs without an interaction paramsMat[0][0] is 0
-                            forceBetweenParticles += interaction.enabled.ksl *
-                                    functionRef.invoke(dist, localCount, *interaction.parametersAsArray())
-                                        .clampMaxForce()
+                            // TODO avoid conditional branch, again on some vendors multiplication by zero may be nonzero
+                            `if`(interaction.enabled.ksl eq 1f.const) {
+                                forceBetweenParticles += functionRef
+                                    .invoke(dist, localCount, *interaction.parametersAsArray())
+                                    .clampMaxForce()
+                            }
                         }
 
                         nextForce += normalize(direction) * forceBetweenParticles

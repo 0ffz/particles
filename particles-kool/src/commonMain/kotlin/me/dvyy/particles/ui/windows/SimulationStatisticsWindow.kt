@@ -2,7 +2,6 @@ package me.dvyy.particles.ui.windows
 
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.toString
-import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
@@ -33,7 +32,7 @@ class SimulationStatisticsWindow(
     val simsPs = mutableStateOf(0.0)
     val fps = mutableStateOf(0.0)
     val clusterOptions = settings.clusterOptions.asMutableState(scope)
-
+    val meanSquareVelocity = viewModel.meanSquareVelocity.asMutableState(scope)
 
     override fun UiScope.windowContent() = ScrollArea(
         withHorizontalScrollbar = false,
@@ -51,16 +50,16 @@ class SimulationStatisticsWindow(
             }
 
             Category("Graphs") {
-                Subcategory("Velocity Histogram") {
-                    var counter by remember(0)
-                    // Update velocity histogram every 25 frames
-                    surface.onEachFrame {
-                        counter++
-                        if (counter % 50 == 0) launchOnMainThread {
-                            viewModel.updateVelocityHistogram()
-                        }
+                Subcategory("Mean Square Velocity") {
+                    ParameterGraph(viewModel.msqvOverTime, redraw = { viewModel.readbackMeanSquareVelocity() }) {
+                        Text("Mean Square Velocity: " + meanSquareVelocity.use().toString(2)) { }
                     }
-                    ParameterGraph(viewModel.velocitiesHistogram)
+                }
+                Subcategory("Velocity Histogram") {
+                    ParameterGraph(
+                        viewModel.velocitiesHistogram,
+                        redrawFreq = 50,
+                        redraw = { viewModel.updateVelocityHistogram() })
                 }
                 Subcategory("Cluster size distribution") {
                     val opts by clusterOptions

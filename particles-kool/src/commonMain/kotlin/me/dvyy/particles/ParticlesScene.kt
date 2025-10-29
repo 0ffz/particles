@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.update
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.data.MeanSquareVelocities
 import me.dvyy.particles.compute.data.VelocitiesDataShader
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.OffsetsShader
 import me.dvyy.particles.compute.partitioning.ReorderBuffersShader
+import me.dvyy.particles.compute.partitioning.ResetBuffers
 import me.dvyy.particles.compute.simulation.FieldsMultiPasses
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
@@ -27,10 +29,12 @@ class ParticlesScene(
     val configRepo: ConfigRepository,
     val clustering: ParticleClustering,
     val gpuSort: GPUSort,
+    val resetBuffers: ResetBuffers,
     val cameraManager: CameraManager,
     val particlesMesh: ParticlesMesh,
     val offsetsShader: OffsetsShader,
     val velocitiesDataShader: VelocitiesDataShader,
+    val meanSquareDataShader: MeanSquareVelocities,
 //    val reorderBuffersShader: ReorderBuffersShader,
     val convertShader: ConvertParticlesShader,
     val fieldsShader: FieldsMultiPasses,
@@ -46,7 +50,7 @@ class ParticlesScene(
         val computePass = ComputePass("Particles Compute")
         //TODO placing this lower seems to set velocity to zero at the start. Is any kind of velocity read at certain times causing it to zero out?
         computePass.addTask(particlesMesh.colorShader, configRepo.numGroups) // Recolor particles
-        gpuSort.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
+        resetBuffers.addResetShader(computePass) // Reset keys and indices based on grid cell particle is in
         gpuSort.addSortingShader(configRepo.count, buffers = buffers, computePass = computePass) // Sort by grid cells
 
         // Web has a limit of 8 storage buffers per shader stage, accommodate this by running multiple reorder shaders
@@ -75,6 +79,7 @@ class ParticlesScene(
 
         // == DATA COLLECTION ==
         velocitiesDataShader.addTo(computePass)
+        meanSquareDataShader.addTo(computePass)
 
         addComputePass(computePass)
 

@@ -4,6 +4,7 @@ import de.fabmax.kool.input.PointerInput
 import de.fabmax.kool.math.Vec2f
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
+import de.fabmax.kool.util.launchOnMainThread
 import kotlinx.coroutines.CoroutineScope
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
@@ -128,7 +129,7 @@ class UniformsWindow(
 fun UiScope.TextInputWithTooltip(
     parameter: UniformParameter,
     onChange: (Float) -> Unit,
-    width: Dimension = FitContent
+    width: Dimension = FitContent,
 ) {
     ParameterTextInput(parameter, onChange = { onChange(it) }) {
         val position = remember(Vec2f.ZERO)
@@ -196,9 +197,37 @@ fun UiScope.TextInputWithTooltip(
     }
 }
 
-fun UiScope.ParameterGraph(graph: GraphNode) {
+fun UiScope.ParameterGraph(
+    graph: GraphNode,
+    redrawFreq: Int = 1,
+    redraw: suspend () -> Unit,
+    infoLines: ColumnScope.() -> Unit = {},
+) {
+    var enabled by remember(true)
+    var counter by remember(0)
+    surface.onEachFrame {
+        counter++
+        if (enabled && counter % redrawFreq == 0) launchOnMainThread {
+            redraw()
+        }
+    }
     Box(Grow.Std, 400.dp) {
         modifier.background(graph)
+    }
+    Column(Grow.Std) {
+        modifier.padding(4.dp)
+        infoLines()
+    }
+    Row(Grow.Std) {
+        modifier.padding(start = 4.dp, end = 4.dp, bottom = 4.dp)
+        Text("Enabled: ") {
+            modifier.alignY(AlignmentY.Center)
+        }
+        Switch(enabled) {
+            modifier.onToggle { enabled = it }.alignY(AlignmentY.Center)
+        }
+        Box { modifier.width(Grow.Std) }
+        Button(text = "Clear") { modifier.onClick { graph.clearYAxis() } }
     }
 }
 
@@ -270,9 +299,11 @@ fun UiScope.ToggleButton(
 }
 
 fun UiScope.Subcategory(name: String, content: UiScope.() -> Unit) {
+    val toggled = remember(true)
     Text(name) {
         modifier.backgroundColor(colors.primaryVariant.withAlpha(0.1f))
+            .onClick { toggled.set(!toggled.value) }
         sectionSubtitleStyle()
     }
-    content()
+    if (toggled.use()) Column(Grow.Std) { content() }
 }

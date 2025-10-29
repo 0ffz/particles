@@ -4,9 +4,11 @@ import de.fabmax.kool.KoolContext
 import me.dvyy.particles.clustering.ParticleClustering
 import me.dvyy.particles.compute.ConvertParticlesShader
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.data.MeanSquareVelocities
 import me.dvyy.particles.compute.data.VelocitiesDataShader
 import me.dvyy.particles.compute.partitioning.GPUSort
 import me.dvyy.particles.compute.partitioning.OffsetsShader
+import me.dvyy.particles.compute.partitioning.ResetBuffers
 import me.dvyy.particles.compute.simulation.FieldsMultiPasses
 import me.dvyy.particles.compute.simulation.FieldsShader
 import me.dvyy.particles.compute.simulation.VerletHalfStepShader
@@ -43,10 +45,12 @@ fun shadersModule() = module {
     singleOf(::ConvertParticlesShader)
     singleOf(::OffsetsShader)
     singleOf(::GPUSort)
+    singleOf(::ResetBuffers)
     singleOf(::FieldsShader)
     singleOf(::VerletHalfStepShader)
     singleOf(::FieldsMultiPasses)
     singleOf(::VelocitiesDataShader)
+    singleOf(::MeanSquareVelocities)
 }
 
 fun sceneModule() = module {

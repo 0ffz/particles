@@ -19,6 +19,7 @@ import kotlinx.coroutines.Deferred
 import me.dvyy.particles.compute.forces.ForceWithParameters
 import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
+import kotlin.math.min
 
 class GraphNode : UiRenderer<UiNode> {
     private val graphMesh: Mesh
@@ -92,17 +93,37 @@ class GraphNode : UiRenderer<UiNode> {
     fun render(valuesX: FloatArray, valuesY: FloatArray) {
         this.valuesX = valuesX
         this.valuesY = valuesY
+        updateViewPort()
+        updated = true
+    }
+
+    fun updateViewPort() {
         viewport.set(
             valuesX.min(),
-            valuesY.min(),
+            min(0f, valuesY.min()),
             valuesX.max(),
             valuesY.max(),
         )
+    }
+
+    fun pushNewValueRight(value: Float) {
+        for (i in 0..<valuesY.lastIndex) {
+            valuesY[i] = valuesY[i + 1]
+        }
+        valuesY[valuesY.lastIndex] = value
+        updateViewPort()
+        updated = true
+    }
+
+    fun clearYAxis(value: Float = 0f) {
+        for(i in valuesY.indices) {
+            valuesY[i] = value
+        }
         updated = true
     }
 
     init {
-        graphMesh = Mesh(graphGeom, name = "DebugOverlay/DeltaTGraph")
+        graphMesh = Mesh(graphGeom, name = "GraphNode")
         graphMesh.geometry.usage = Usage.DYNAMIC
         graphMesh.shader = Ui2Shader()
     }
@@ -116,11 +137,10 @@ class GraphNode : UiRenderer<UiNode> {
 //                })
 //            }
 //        }
-        node.surface.getMeshLayer(node.modifier.zLayer - 1).addCustomLayer("dt-graph") { graphMesh }
+        node.surface.getMeshLayer(node.modifier.zLayer - 1).addCustomLayer("dt-graph-${node}") { graphMesh }
         if (node.clipBoundsPx == clipBounds && !updated) return
         clipBounds.set(node.clipBoundsPx)
         updated = false
-        println("Ran render ui!")
         node.apply {
             width = widthPx.toInt()
             height = heightPx.toInt()

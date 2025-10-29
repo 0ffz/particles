@@ -5,6 +5,7 @@ import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
 import de.fabmax.kool.pipeline.Texture2d
+import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.FileKit
@@ -21,6 +22,7 @@ import kotlinx.io.files.Path
 import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.data.MeanSquareVelocities
 import me.dvyy.particles.compute.data.VelocitiesDataShader
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
@@ -44,6 +46,7 @@ class ParticlesViewModel(
     private val paramOverrides: ParameterOverrides,
     private val scope: CoroutineScope,
     private val velocitiesData: VelocitiesDataShader,
+    private val meanSquareData: MeanSquareVelocities,
 ) {
     val passesPerFrame = MutableStateFlow(1)
     val uiState: MutableStateValue<List<UiConfigurable>> = configRepo.config.map { it.simulation }
@@ -72,6 +75,12 @@ class ParticlesViewModel(
     val velocitiesHistogram = GraphNode().apply {
         style = GraphStyle.Bar(width = 5.0)
     }
+    val msqvOverTime = GraphNode().apply {
+        render(FloatArray(1024) { it.toFloat() }, FloatArray(1024) { 0f })
+        style = GraphStyle.Bar(width = 5.0)
+    }
+
+    val meanSquareVelocity = MutableStateFlow(0f)
 
     suspend fun updateVelocityHistogram() {
         val buckets = Int32Buffer(velocitiesData.numBuckets)
@@ -81,6 +90,14 @@ class ParticlesViewModel(
             FloatArray(bucketsArray.size) { it.toFloat() },
             bucketsArray.map { it.toFloat() }.toFloatArray()
         )
+    }
+
+    suspend fun readbackMeanSquareVelocity() {
+        val result = Float32Buffer(buffers.count)
+        meanSquareData.readBack.downloadData(result)
+        val msqV = result[0] / buffers.count
+        msqvOverTime.pushNewValueRight(msqV)
+        meanSquareVelocity.update { msqV }
     }
 
     fun updateState(simulation: Simulation.() -> Simulation) = scope.launch {

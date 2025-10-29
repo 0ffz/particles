@@ -37,7 +37,7 @@ class ShaderTest : KoolTest() {
             )
         }
         val buffers = ParticleBuffers(config)
-        val sort = GPUSort(config, buffers)
+        val sort = GPUSort()
         val unsortedBuffer = Int32Buffer(buffers.particleGridCellKeys.size).apply {
             repeat(buffers.particleGridCellKeys.size) {
                 put(Random.nextInt(0, 1000))

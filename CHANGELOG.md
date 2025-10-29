@@ -15,8 +15,11 @@ development.
   future
 - Added more options to graphs displayed in GUI like toggling on/off and clearing
 - Added helper function for drawing graphs for values that update over time
+- Added banner and icon for the project
 
 ### Changed
 
+- Change project name references from 'Particles' to 'Particle HIVE'
 - Decreased strength of wall repulsion to fix odd behaviour in 3d, as well as sticking to walls under certain force
   parameters
+- Docs moved to a static site generator we have more control over

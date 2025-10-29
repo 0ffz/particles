@@ -9,7 +9,7 @@ import me.dvyy.particles.compute.forces.Force
 actual fun launchParticles(forces: List<Force>, args: Array<String>) {
     KoolApplication(
         config = KoolConfigJvm(
-            windowTitle = "Particles",
+            windowTitle = "Particle HIVE",
             isVsync = false,
             maxFrameRate = 500,
             renderBackend = Backend.VULKAN,// else Backend.VULKAN,

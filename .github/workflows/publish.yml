@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: MineInAbyss/publish-action@better-semver
+      - uses: MineInAbyss/publish-action@keep-a-changelog
         with:
           build-tasks: 'shadowJar'
           release-files: |

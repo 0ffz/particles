@@ -7,7 +7,7 @@ Some parameters can be edited live, these will show up as a slider, but others l
 ## Config file definition
 
 ```yaml
-[[[simulation|#simulation]]]: 
+simulation:
   count: 10000
   minGridSize: 5.0
   dT: 0.001
@@ -20,7 +20,7 @@ Some parameters can be edited live, these will show up as a slider, but others l
     width: 1000
     height: 1000
     depth: 1000
-[[[particles|#particles]]]:
+particles:
   hydrogen:
     color: ffffff
     radius: 1.0
@@ -32,10 +32,10 @@ Some parameters can be edited live, these will show up as a slider, but others l
     convertTo:
       type: hydrogen
       chance: 0.01
-[[[interactions|#interactions]]]:
+interactions:
   hydrogen-oxygen:
     lennardJones:
-      sigma: [[[!param;max=10|#parameters]]] 5.0
+      sigma: !param;max=10 5.0
       epsilon: !param;max=500 5.0
   hydrogen-hydrogen:
     lennardJones:

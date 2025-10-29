@@ -1,6 +1,8 @@
 # Force types
 
-All custom forces extend the `Force` class, and are configured in a similar way. All forces are functions run in a GPU compute shader, they differ primarily in which parameters they have access to (ex. pairwise functions get the distance between a particle pair.)
+All custom forces extend the `Force` class, and are configured similarly. All forces are functions run in a GPU compute
+shader, they differ primarily in which parameters they have access to (ex. pairwise functions get the distance between a
+particle pair.)
 
 Like the rest of the GPU code in this program, these are written with [KSL](https://github.com/kool-engine/kool?tab=readme-ov-file#kool-shader-language), with examples available in the demo module.
 

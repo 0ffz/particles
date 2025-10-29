@@ -1,4 +1,10 @@
-# Particles
+# Particle HIVE
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.png">
+  <img src="assets/banner-light.png">
+</picture>
 
 A GPU particle simulation built on [Kool Engine](https://github.com/kool-engine/kool).
 The goal is to provide a simple API for writing arbitrary particle interactions as [compute shaders](https://learnopengl.com/Guest-Articles/2022/Compute-Shaders/Introduction).

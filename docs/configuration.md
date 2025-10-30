@@ -46,11 +46,3 @@ interactions:
       sigma: !param;max=10 10.0
       epsilon: !param;max=500 5.0
 ```
-
-### Simulation {id="simulation"}
-
-### Particles {id="particles"}
-
-### Interactions {id="interactions"}
-
-### Parameters {id="parameters"}

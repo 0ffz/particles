@@ -1,13 +1,18 @@
 - [Home](/)
-- [About](/about)
 
 # :school: User guide
 
-- [User guide](/usage)
 - [Installation](/installation)
 - [Configuration](/configuration)
-  - [Particle interactions](/particle-interactions)
-- [Interface](/application-ui)
+  - Simulation
+  - Particles
+  - Interactions
+- Interface
+  - Live parameters
+  - Config file
+  - Projects
+  - Statistics
+  - Visual options
 
 # :code: Developer docs
 
@@ -16,5 +21,12 @@
 - [Force types](/force-types)
   - [Individual](/individual)
   - [Pairwise](/pairwise)
+
+# :atom: Forces
 - [Built in forces](/forces)
-  - [Lennard Jones](/lennard-jones)
+- Pairwise
+  - [Morse](/guide/forces/pairwise/morse)
+  - [Lennard Jones](/guide/forces/pairwise/lennard-jones)
+  - [Tersoff simplified](/guide/forces/pairwise/tersoff-simplified)
+- Individual
+  - [Gravity](/guide/forces/individual/gravity)

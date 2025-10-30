@@ -15,7 +15,7 @@
 Particles can run on any browser that supports WebGPU.
 Currently this is best supported on Chromium-based browsers, with Firefox recently adding support.
 
-- Install a Chromium based browser (ex. Google Chrome, Edge, Brave, etc...)
+- Install a Chromium based browser _(ex. Google Chrome, Edge, Brave, etc...)_
 - On Linux, you may need to enable the <a href="chrome://flags/#enable-vulkan">Vulkan</a>
   and <a href="chrome://flags/#enable-unsafe-webgpu">unsafe WebGPU support</a> flags
 - Open the <a href="https://particles.dvyy.me">online demo</a>

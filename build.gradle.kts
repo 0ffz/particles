@@ -6,10 +6,10 @@ allprojects {
     repositories {
         mavenCentral()
         google()
-//        mavenLocal()
         maven("https://oss.sonatype.org/content/repositories/snapshots")
         maven("https://repo.mineinabyss.com/releases")
         maven("https://repo.mineinabyss.com/snapshots")
+        mavenLocal()
     }
 }
 
@@ -18,7 +18,7 @@ configurations {
 }
 
 dependencies {
-    "docs"("me.dvyy:shocky-docs:0.0.7")
+    "docs"("me.dvyy:shocky-docs:0.0.8")
 }
 
 tasks {

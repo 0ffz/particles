@@ -1,2 +1,7 @@
 name: Particle HIVE
 siteUrl: https://particles.dvyy.me/docs
+redirects:
+  about: /
+  overview: /
+  usage: /installation
+  lennard-jones: /guide/forces/pairwise/lennard-jones

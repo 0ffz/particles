@@ -144,16 +144,35 @@ class ParticlesMesh(
                     // Extract the camera’s right and up vectors from the view matrix.
                     // (Assuming viewMat is an orthonormal matrix, its transpose is its inverse.)
                     val viewMat = camData.viewMat
+
+                    // We rotate cameraUp by a very small angle to avoid z-fighting in 2d scenes.
+                    val angle = 0.02f
+                    val angleSin = sin(angle).const
+                    val angleCos = cos(angle).const
+                    val rotMat = mat3Value(
+                        float3Value(1f.const, 0f.const, 0f.const),
+                        float3Value(0f.const, angleCos, -angleSin),
+                        float3Value(0f.const, angleSin, angleCos)
+                    )
+
                     val cameraRight = float3Value(viewMat[0].x, viewMat[1].x, viewMat[2].x)
-                    val cameraUp = float3Value(viewMat[0].y, viewMat[1].y, viewMat[2].y)
+                    val cameraUp = float3Value(viewMat[0].y, viewMat[1].y, viewMat[2].y).times(rotMat)
                     //val cameraIn   = float3Value(viewMat[0].z, viewMat[1].z, viewMat[2].z)
 
                     // Compute the billboard vertex position:
                     // The vertex’s x and y (from the quad geometry) are used to offset along the camera’s right and up directions.
+
+                    // TODO toggle for 3d sphere rendering
+//                    outPosition set camData.viewProjMat * float4Value(
+//                        position * radius + positionOffset.times(Vec3f(1f, -1f, 1f).const),
+//                        1f.const
+//                    )
+                    // Billboard rotation
                     val worldPos = positionOffset.times(
                         Vec3f(1f, -1f, 1f).const
                     ) + (cameraRight * position.x * radius) + (cameraUp * position.y * radius)
                     outPosition set camData.viewProjMat * float4Value(worldPos, 1f.const)
+
                     fragPos.input set outPosition
                     interCenter.input set position
                     interColor.input set colorsBuffer[offset]
@@ -193,7 +212,9 @@ class ParticlesMesh(
             storage("colorsBuffer", buffers.colorsBuffer)
         }
         generate {
-//            fillPolygon(listOf(Vec3f(1f, 0f, 0f), Vec3f(1f, 1f, 0f), Vec3f(0f, 1f, 0f), Vec3f(0f, 0f, 0f)))
+//            icoSphere {
+//                steps = 2
+//            }
             fillPolygon(generateCirclePoints(20, radius = 1f))
         }
     }

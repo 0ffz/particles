@@ -23,3 +23,7 @@ development.
 - Decreased strength of wall repulsion to fix odd behaviour in 3d, as well as sticking to walls under certain force
   parameters
 - Docs moved to a static site generator we have more control over
+
+### Fixed
+
+- Prevent z-fighting in 2d scenes by rotating billboards upwards by a tiny angle

@@ -69,7 +69,10 @@ class ParticlesScene(
         }
         chunked.forEach {
             ReorderBuffersShader(it).addTo(
-                computePass, buffers.sortIndices, configRepo.count, configRepo.numGroups
+                stage = computePass,
+                indices = buffers.sortIndices,
+                numValues = configRepo.count,
+                numGroups = configRepo.numGroups
             )
         }
 

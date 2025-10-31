@@ -23,6 +23,7 @@ class VisualOptionsWindow(
     val recolorGradient = settings.ui.recolorGradient.asMutableState(scope)
     val size = settings.ui.scale.asMutableState(scope)
     val shouldCalibrateFPS = settings.ui.shouldCalibrateFPS.asMutableState(scope)
+    val showGrid = settings.ui.showGrid.asMutableState(scope)
     val targetFPS = settings.ui.targetFPS.asMutableState(scope)
 
     override fun UiScope.windowContent() = ScrollArea(
@@ -81,6 +82,17 @@ class VisualOptionsWindow(
                         modifier.items(ParticleColor.entries.map { it.name.lowercase().capitalize() })
                             .selectedIndex(coloring.use().ordinal)
                             .onItemSelected { color -> settings.ui.coloring.update { ParticleColor.entries[color] } }
+                    }
+                }
+                MenuRow {
+                    Text("Show grid") {
+                        labelStyle()
+                        modifier.width(Grow.Std)
+                    }
+                    Checkbox(showGrid.use()) {
+                        modifier.onToggle {
+                            settings.ui.showGrid.update { !it }
+                        }
                     }
                 }
 //                MenuRow {

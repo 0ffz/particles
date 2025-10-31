@@ -12,17 +12,25 @@ import de.fabmax.kool.util.Color
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.launch
+import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.dsl.ParticlesConfig
 
 class CameraManager(
     val configRepo: ConfigRepository,
     val scope: CoroutineScope,
+    val settings: AppSettings,
 ) {
     private val lineMesh = mutableStateOf<LineMesh?>(null)
     private val gridMesh = mutableStateOf<LineMesh?>(null)
 
     fun manageCameraFor(scene: Scene) {
+        scene.updateGridMesh()
+        scope.launch {
+            settings.ui.showGrid.collect {
+                updateGridMeshVisibility(it)
+            }
+        }
         scope.launch {
             configRepo.config.distinctUntilChangedBy { it.simulation.threeDimensions }.collect {
                 updateCamera(scene, it)
@@ -32,6 +40,7 @@ class CameraManager(
 
     fun Scene.updateGridMesh() {
         gridMesh.set(addLineMesh {
+            isVisible = false
             generate {
                 color = Color.GRAY
                 val cells = configRepo.gridCells
@@ -54,6 +63,10 @@ class CameraManager(
         })
     }
 
+    fun updateGridMeshVisibility(visible: Boolean) {
+        gridMesh.value?.isVisible = visible
+    }
+
     fun updateCamera(scene: Scene, config: ParticlesConfig) {
         val boxMax = configRepo.boxSize
         val bb = BoundingBoxF(Vec3f.ZERO, boxMax.times(Vec3f(1f, -1f, 1f)))
@@ -61,7 +74,6 @@ class CameraManager(
         lineMesh.set(scene.addLineMesh {
             addBoundingBox(bb, Color.WHITE)
         })
-//        scene.updateGridMesh()
         scene.clearColor = ClearColorFill(Color("444444"))
         scene.orbitCamera {
             maxZoom = boxMax.length().toDouble()

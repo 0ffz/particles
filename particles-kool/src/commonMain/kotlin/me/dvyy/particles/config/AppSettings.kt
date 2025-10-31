@@ -34,6 +34,7 @@ class UiSettings(
     val scale = settings.getFlow("scale", UiScale.LARGE, scope)
     val targetFPS = settings.getFlow("targetFPS", 60, scope)
     val shouldCalibrateFPS = settings.getFlow("shouldCalibrateFPS", false, scope)
+    val showGrid = settings.getFlow("showGrid", false, scope)
 }
 
 

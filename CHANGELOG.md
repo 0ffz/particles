@@ -16,6 +16,7 @@ development.
 - Added more options to graphs displayed in GUI like toggling on/off and clearing
 - Added helper function for drawing graphs for values that update over time
 - Added banner and icon for the project
+- Grid toggle button under visual options
 
 ### Changed
 

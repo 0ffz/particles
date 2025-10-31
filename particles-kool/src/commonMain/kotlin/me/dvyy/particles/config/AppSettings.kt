@@ -35,6 +35,8 @@ class UiSettings(
     val targetFPS = settings.getFlow("targetFPS", 60, scope)
     val shouldCalibrateFPS = settings.getFlow("shouldCalibrateFPS", false, scope)
     val showGrid = settings.getFlow("showGrid", false, scope)
+    val leftSidebarWidth = settings.getFlow<Float>("window-selector/left/size", 200f, scope)
+    val rightSidebarWidth = settings.getFlow<Float>("window-selector/right/size", 200f, scope)
 }
 
 

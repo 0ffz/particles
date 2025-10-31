@@ -73,11 +73,11 @@ class ParticlesViewModel(
     )
 
     val velocitiesHistogram = GraphNode().apply {
-        style = GraphStyle.Bar(width = 5.0)
+        style = GraphStyle.Bar(width = 6.0)
     }
     val msqvOverTime = GraphNode().apply {
         render(FloatArray(1024) { it.toFloat() }, FloatArray(1024) { 0f })
-        style = GraphStyle.Bar(width = 5.0)
+        style = GraphStyle.Bar(width = 3.0)
     }
 
     val meanSquareVelocity = MutableStateFlow(0f)

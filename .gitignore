@@ -6,3 +6,4 @@ gui-parameters
 .kotlin
 dist
 kotlin-js-store
+out

@@ -65,7 +65,11 @@ class AppUI(
             surface.colors = this@AppUI.colors
             modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
             Box(width = sidebarSize) {
-                windowSelector(listOf(uniformsWindow, textEditorWindow, projectSwitcherWindow), "0:row/0:leaf")
+                windowSelector(
+                    listOf(uniformsWindow, textEditorWindow, projectSwitcherWindow),
+                    "0:row/0:leaf",
+                    isLeft = true
+                )
             }
         }
         addPanelSurface {
@@ -74,7 +78,7 @@ class AppUI(
             modifier.height(Grow.Std).width(FitContent).backgroundColor(colors.background)
                 .alignX(AlignmentX.End)
             Box(width = sidebarSize) {
-                windowSelector(listOf(statsWindow, visualsWindow), "0:row/2:leaf")
+                windowSelector(listOf(statsWindow, visualsWindow), "0:row/2:leaf", isLeft = false)
             }
         }
         addNode(dock)
@@ -87,6 +91,14 @@ class AppUI(
                 "0:row/2:leaf"
             )
         )
+        dock.getLeafAtPath("0:row/0:leaf")?.width?.onChange { old, new ->
+            val px = (new as? Dp)?.px ?: return@onChange
+            settings.ui.leftSidebarWidth.update { px }
+        }
+        dock.getLeafAtPath("0:row/2:leaf")?.width?.onChange { old, new ->
+            val px = (new as? Dp)?.px ?: return@onChange
+            settings.ui.rightSidebarWidth.update { px }
+        }
         val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)
         dock.getLeafAtPath("0:row/1:leaf")?.dock(centerSpacer)
     }
@@ -97,16 +109,15 @@ class AppUI(
 
     private val windowSpawnLocation = MutableVec2f(32f, 32f)
 
-    fun spawnWindow(window: FieldsWindow, dockPath: String? = null) {
+    fun spawnWindow(window: FieldsWindow, width: Float?, dockPath: String? = null) {
         dock.addDockableSurface(window.windowDockable, window.windowSurface)
         dockPath?.let {
             val leaf = dock.getLeafAtPath(it)
             leaf?.dock(window.windowDockable)
-            if (leaf?.width?.value !is Dp && window.preferredWidth != null)
-                leaf?.width?.set(Dp(window.preferredWidth))
+            if (leaf?.width?.value !is Dp && width != null)
+                leaf?.width?.set(Dp(width))
             return
         }
-
         window.windowDockable.setFloatingBounds(
             Dp(windowSpawnLocation.x), Dp(windowSpawnLocation.y),
         )
@@ -135,8 +146,9 @@ class AppUI(
         window.windowSurface.release()
     }
 
-    fun UiScope.windowSelector(windows: List<FieldsWindow>, nodePath: String) {
+    fun UiScope.windowSelector(windows: List<FieldsWindow>, nodePath: String, isLeft: Boolean) {
         val selected = remember { settings.settings.getFlow<Int?>("window-selector/$nodePath", 0, scope) }
+        val width = remember { if (isLeft) settings.ui.leftSidebarWidth else settings.ui.rightSidebarWidth }
         val mutableState = remember { selected.asMutableState(scope) }
         MultiSelect(windows, mutableState.use(), onSelect = { newValue ->
             val previous = selected.value
@@ -146,7 +158,8 @@ class AppUI(
                 dock.removeDockableSurface(prevWindow.windowSurface)
             }
             if (newValue != null) {
-                spawnWindow(windows[newValue], nodePath)
+                val window = windows[newValue]
+                spawnWindow(window, width.value, nodePath)
             }
             selected.update { newValue }
         })

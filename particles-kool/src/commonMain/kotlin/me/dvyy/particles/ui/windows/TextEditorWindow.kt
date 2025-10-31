@@ -82,7 +82,7 @@ class TextEditorWindow(
                 AppFonts.MONOSPACED.copy(sizePts = 20f)
             }
         }
-        windowDockable.setFloatingBounds(width = Dp(500f), height = Dp(800f))
+        windowDockable.setFloatingBounds(width = windowDockable.floatingWidth.value, height = Dp(800f))
     }
 
     override fun UiScope.windowContent() {

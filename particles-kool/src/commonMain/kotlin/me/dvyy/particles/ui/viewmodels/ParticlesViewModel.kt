@@ -1,6 +1,8 @@
 package me.dvyy.particles.ui.viewmodels
 
 import com.charleskorn.kaml.YamlNode
+import de.fabmax.kool.KoolSystem
+import de.fabmax.kool.Platform
 import de.fabmax.kool.modules.ui2.MutableStateValue
 import de.fabmax.kool.pipeline.MipMapping
 import de.fabmax.kool.pipeline.SamplerSettings
@@ -9,16 +11,13 @@ import de.fabmax.kool.util.Float32Buffer
 import de.fabmax.kool.util.Int32Buffer
 import de.fabmax.kool.util.launchOnMainThread
 import io.github.vinceglb.filekit.FileKit
-import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.deprecated.openFileSaver
-import io.github.vinceglb.filekit.dialogs.openFilePicker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.io.files.Path
 import kotlinx.serialization.KSerializer
 import me.dvyy.particles.SceneManager
 import me.dvyy.particles.compute.ParticleBuffers
@@ -29,10 +28,7 @@ import me.dvyy.particles.config.ConfigRepository
 import me.dvyy.particles.config.ParameterOverrides
 import me.dvyy.particles.config.YamlHelpers
 import me.dvyy.particles.dsl.Simulation
-import me.dvyy.particles.helpers.Buffers
-import me.dvyy.particles.helpers.FileSystemUtils
-import me.dvyy.particles.helpers.asMutableState
-import me.dvyy.particles.helpers.initFloat4
+import me.dvyy.particles.helpers.*
 import me.dvyy.particles.ui.helpers.UiConfigurable
 import me.dvyy.particles.ui.nodes.GraphNode
 import me.dvyy.particles.ui.nodes.GraphStyle
@@ -72,10 +68,10 @@ class ParticlesViewModel(
         name = "plot"
     )
 
-    val velocitiesHistogram = GraphNode().apply {
+    val velocitiesHistogram = GraphNode("velocity-histogram").apply {
         style = GraphStyle.Bar(width = 6.0)
     }
-    val msqvOverTime = GraphNode().apply {
+    val msqvOverTime = GraphNode("msqv-over-time").apply {
         render(FloatArray(1024) { it.toFloat() }, FloatArray(1024) { 0f })
         style = GraphStyle.Bar(width = 3.0)
     }
@@ -131,19 +127,32 @@ class ParticlesViewModel(
     }
 
     fun attemptOpenProject() = launchOnMainThread {
-        val file = FileKit.openFilePicker(type = FileKitType.File("yml")) ?: return@launchOnMainThread
+        val file = FilePicker.pickFile("yml") ?: return@launchOnMainThread
+        println("Opening scene...")
         sceneManager.open(file)
-        val path = FileSystemUtils.getPathOrNull(file) ?: return@launchOnMainThread
-        settings.recentProjectPaths.update { it + path.toString() }
+        println("Opened scene")
+        val path = file.path
+        println("Saving $path to recent projects")
+        settings.recentProjectPaths.update { (listOf(path.toString()) + it).distinct() }
     }
 
-    fun openProject(path: String) = launchOnMainThread {
-        sceneManager.open(FileSystemUtils.toFileOrNull(Path(path)) ?: return@launchOnMainThread)
-        settings.recentProjectPaths.update { listOf(path) + (it - path) }
+    fun openProject(path: ConfigPath) = launchOnMainThread {
+        sceneManager.open(path.readContents() ?: return@launchOnMainThread)
+        settings.recentProjectPaths.update { listOf(path.toString()) + (it - path.toString()) }
     }
 
-    fun removeProject(path: String) = launchOnMainThread {
-        settings.recentProjectPaths.update { it - path }
+    fun removeProject(path: ConfigPath) = launchOnMainThread {
+        settings.recentProjectPaths.update { it - path.toString() }
+        if (KoolSystem.platform == Platform.Javascript) {
+            FileSystemUtils.clearCachedFileIfExists(path)
+        }
+    }
+
+    fun saveConfigAs() = launchOnMainThread {
+        FileSystemUtils.saveFileAs(
+            configRepo.configLines.value.encodeToByteArray(),
+            configRepo.currentFile.value?.name ?: "config.yml"
+        )
     }
 
     fun saveClusterData() {

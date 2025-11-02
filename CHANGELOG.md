@@ -17,6 +17,7 @@ development.
 - Added helper function for drawing graphs for values that update over time
 - Added banner and icon for the project
 - Grid toggle button under visual options
+- Support for recent projects in web via local storage, plus "Save as" button to save projects back to disk
 
 ### Changed
 

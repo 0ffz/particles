@@ -1,10 +1,13 @@
 package me.dvyy.particles.ui.windows
 
+import de.fabmax.kool.KoolSystem
+import de.fabmax.kool.Platform
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
+import de.fabmax.kool.util.MdColor
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.io.files.Path
 import me.dvyy.particles.config.AppSettings
+import me.dvyy.particles.helpers.ConfigPath
 import me.dvyy.particles.helpers.asMutableState
 import me.dvyy.particles.ui.AppUI
 import me.dvyy.particles.ui.Icons
@@ -33,14 +36,26 @@ class ProjectSwitcherWindow(
     ) {
         modifier.width(Grow.Std)
         Column(Grow.Std, Grow.Std) {
-            Button("Open project") {
-                modifier.onClick {
-                    viewModel.attemptOpenProject()
-                }.margin(sizes.smallGap)
+            Row {
+                Button("Open project") {
+                    modifier.onClick {
+                        viewModel.attemptOpenProject()
+                    }.margin(sizes.smallGap)
+                }
+
+                if (KoolSystem.platform == Platform.Javascript) {
+                    Image(Icons.triangleAlert) {
+                        modifier.alignY(AlignmentY.Center).tint(MdColor.ORANGE tone 100)
+                        Tooltip(
+                            "Recent projects are stored in browser memory, NOT on disk. Re-open projects if the files have been changed externally.",
+                            tooltipState = remember { TooltipState(delay = 0.1) }
+                        )
+                    }
+                }
             }
 
             Column(Grow.Std) {
-                recentPaths.use().forEach { path ->
+                recentPaths.use().forEach { pathName ->
                     Box(Grow.Std) {
                         modifier
                             .margin(sizes.smallGap)
@@ -52,7 +67,8 @@ class ProjectSwitcherWindow(
 //                        }
                         Row(Grow.Std) {
 //                            modifier.backgroundColor(colors.backgroundAlpha(0.5f)).alignY(AlignmentY.Bottom)
-                            Button(Path(path).name.substringBeforeLast(".")) {
+                            val path = ConfigPath(pathName)
+                            Button(path.name.substringBeforeLast(".")) {
                                 modifier.alignY(AlignmentY.Center)
                                     .colors(
                                         buttonColor = Color.TRANSPARENT,
@@ -70,7 +86,9 @@ class ProjectSwitcherWindow(
                             }
                             IconButton(Icons.x, onClick = {
                                 viewModel.removeProject(path)
-                            })
+                            }) {
+                                modifier.alignY(AlignmentY.Center)
+                            }
                         }
                     }
                 }

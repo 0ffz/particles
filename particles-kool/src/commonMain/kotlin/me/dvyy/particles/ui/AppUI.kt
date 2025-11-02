@@ -92,11 +92,11 @@ class AppUI(
             )
         )
         dock.getLeafAtPath("0:row/0:leaf")?.width?.onChange { old, new ->
-            val px = (new as? Dp)?.px ?: return@onChange
+            val px = (new as? Dp)?.value ?: return@onChange
             settings.ui.leftSidebarWidth.update { px }
         }
         dock.getLeafAtPath("0:row/2:leaf")?.width?.onChange { old, new ->
-            val px = (new as? Dp)?.px ?: return@onChange
+            val px = (new as? Dp)?.value ?: return@onChange
             settings.ui.rightSidebarWidth.update { px }
         }
         val centerSpacer = UiDockable("EmptyDockable", dock, isHidden = true)

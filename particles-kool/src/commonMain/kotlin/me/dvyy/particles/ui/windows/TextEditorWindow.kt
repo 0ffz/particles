@@ -1,5 +1,7 @@
 package me.dvyy.particles.ui.windows
 
+import de.fabmax.kool.KoolSystem
+import de.fabmax.kool.Platform
 import de.fabmax.kool.math.Vec2i
 import de.fabmax.kool.modules.ui2.*
 import de.fabmax.kool.util.Color
@@ -106,15 +108,33 @@ class TextEditorWindow(
                             }
                         }
                     }
+                    if (KoolSystem.platform == Platform.Javascript) {
+                        Button("Save as") {
+                            modifier.margin(sizes.gap)
+                            modifier.onClick {
+                                viewModel.saveConfigAs()
+                            }
+                        }
+                    }
+
                     if (textChanged.use()) {
                         Text("(Reload required)") {
                             modifier.alignY(AlignmentY.Center)
                         }
                     }
+                    if (KoolSystem.platform == Platform.Javascript) {
+                        Image(Icons.triangleAlert) {
+                            modifier.alignY(AlignmentY.Center).tint(MdColor.ORANGE tone 100)
+                            Tooltip(
+                                "Changes made here are not saved right away! Click 'Save as' to save your changes.",
+                                tooltipState = remember { TooltipState(delay = 0.1) }
+                            )
+                        }
+                    }
                 }
                 config.onFailure {
                     Text("Failed to load config: ${it.message}") {
-                        modifier.margin(sizes.gap)
+                        modifier.padding(sizes.smallGap).isWrapText(true).width(Grow.Std)
                     }
                 }
             }

@@ -28,7 +28,7 @@ class ForceParametersViewModel(
     val config: ConfigRepository,
     val sceneManager: SceneManager,
 ) {
-    val graph = GraphNode()
+    val graph = GraphNode("force")
     val parameters = combine(forcesDefinition.forces.map { force ->
         force.changes.map {
             println("Changes made to $force!")

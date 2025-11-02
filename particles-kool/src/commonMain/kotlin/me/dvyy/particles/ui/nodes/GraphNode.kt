@@ -21,7 +21,7 @@ import me.dvyy.particles.compute.forces.PairwiseForce
 import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import kotlin.math.min
 
-class GraphNode : UiRenderer<UiNode> {
+class GraphNode(val layerName: String) : UiRenderer<UiNode> {
     private val graphMesh: Mesh
     private val graphGeom = IndexedVertexList(Ui2Shader.UI_MESH_ATTRIBS)
     private val graphBuilder = MeshBuilder(graphGeom).apply { isInvertFaceOrientation = true }
@@ -137,7 +137,7 @@ class GraphNode : UiRenderer<UiNode> {
 //                })
 //            }
 //        }
-        node.surface.getMeshLayer(node.modifier.zLayer - 1).addCustomLayer("dt-graph-${node}") { graphMesh }
+        node.surface.getMeshLayer(node.modifier.zLayer - 1).addCustomLayer("dt-graph-${layerName}") { graphMesh }
         if (node.clipBoundsPx == clipBounds && !updated) return
         clipBounds.set(node.clipBoundsPx)
         updated = false

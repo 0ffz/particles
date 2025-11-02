@@ -5,16 +5,15 @@ import de.fabmax.kool.scene.Scene
 import de.fabmax.kool.util.RenderLoop
 import de.fabmax.kool.util.delayFrames
 import de.fabmax.kool.util.launchOnMainThread
-import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.io.files.Path
 import me.dvyy.particles.compute.forces.Force
 import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.AppSettings
 import me.dvyy.particles.config.ConfigRepository
-import me.dvyy.particles.helpers.FileSystemUtils
+import me.dvyy.particles.helpers.ConfigPath
+import me.dvyy.particles.helpers.FilePickerResult
 import me.dvyy.particles.ui.AppUI
 import org.koin.core.module.Module
 import org.koin.dsl.koinApplication
@@ -24,7 +23,7 @@ class SceneManager(
     val ctx: KoolContext,
     /** Classes/data that persists across application reloads. */
     val baseModule: Module,
-    val forces: List<Force>
+    val forces: List<Force>,
 ) {
     private var loadedScenes: List<Scene> = listOf()
     val mainScene get() = loadedScenes.first()
@@ -56,10 +55,11 @@ class SceneManager(
         }.koin
         val configRepo = application.get<ConfigRepository>()
         val settings = application.get<AppSettings>()
-        if(configRepo.currentFile.value == null) {
-            settings.recentProjectPaths.value.firstOrNull()
-                ?.let { FileSystemUtils.toFileOrNull(Path(it)) }
-                ?.let { configRepo.openFile(it) }
+        if (configRepo.currentFile.value == null) {
+            val lastOpened = settings.recentProjectPaths.value.firstOrNull()
+                ?.let { ConfigPath(it).readContents() }
+
+            if (lastOpened != null) configRepo.openFile(lastOpened)
         }
         configRepo.isDirty = true
         val ui = application.get<AppUI>().ui
@@ -79,7 +79,7 @@ class SceneManager(
         loadedScenes = listOf()
     }
 
-    suspend fun open(file: PlatformFile) {
+    suspend fun open(file: FilePickerResult) {
         val config = globalApplication.koin.get<ConfigRepository>()
         config.openFile(file)
         reload()

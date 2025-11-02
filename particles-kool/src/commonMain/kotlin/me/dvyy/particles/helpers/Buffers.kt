@@ -2,6 +2,7 @@ package me.dvyy.particles.helpers
 
 import de.fabmax.kool.math.Vec3f
 import de.fabmax.kool.math.Vec4f
+import de.fabmax.kool.math.randomGaussianF
 import de.fabmax.kool.pipeline.GpuBuffer
 import de.fabmax.kool.pipeline.GpuType
 import de.fabmax.kool.pipeline.StorageBuffer
@@ -29,7 +30,7 @@ object Buffers {
                 Random.nextDouble(-maxVelocity, maxVelocity).toFloat(),
                 if (threeDimensional) Random.nextDouble(-maxVelocity, maxVelocity).toFloat() else 0f,
                 0f,
-            )
+            ).times(randomGaussianF())
         }
 
     fun integers(count: Int) = StorageBuffer(GpuType.Int1, count)

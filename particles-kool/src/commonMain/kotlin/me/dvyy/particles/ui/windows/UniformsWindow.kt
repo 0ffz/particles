@@ -211,7 +211,7 @@ fun UiScope.ParameterGraph(
             redraw()
         }
     }
-    Box(Grow.Std, 400.dp) {
+    Box(Grow.Std, Dp.fromPx(350f)) {
         modifier.background(graph)
     }
     Column(Grow.Std) {

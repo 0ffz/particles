@@ -1,10 +1,10 @@
 package me.dvyy.particles.config
 
+import de.fabmax.kool.KoolSystem
+import de.fabmax.kool.Platform
 import de.fabmax.kool.math.Vec3i
 import de.fabmax.kool.math.toVec3f
 import de.fabmax.kool.math.toVec3i
-import io.github.vinceglb.filekit.PlatformFile
-import io.github.vinceglb.filekit.readString
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -12,6 +12,8 @@ import me.dvyy.particles.compute.partitioning.WORK_GROUP_SIZE
 import me.dvyy.particles.dsl.Particle
 import me.dvyy.particles.dsl.ParticlesConfig
 import me.dvyy.particles.dsl.Simulation
+import me.dvyy.particles.helpers.ConfigPath
+import me.dvyy.particles.helpers.FilePickerResult
 import me.dvyy.particles.helpers.FileSystemUtils
 import kotlin.math.pow
 
@@ -27,7 +29,7 @@ class ConfigRepository(
     )
     private val _configLines =
         MutableStateFlow(YamlHelpers.yaml.encodeToString(ParticlesConfig.serializer(), _config.value))
-    private val _currentFile = MutableStateFlow<PlatformFile?>(null)
+    private val _currentFile = MutableStateFlow<ConfigPath?>(null)
     val config = _config.asStateFlow()
     val configLines = _configLines.asStateFlow()
     val currentFile = _currentFile.asStateFlow()
@@ -74,8 +76,8 @@ class ConfigRepository(
     }
 
     fun saveConfigLines(newLines: String) {
-        val path = FileSystemUtils.getPathOrNull(_currentFile.value ?: return) ?: return
-        FileSystemUtils.write(path.toString(), newLines)
+        val path = _currentFile.value ?: return
+        FileSystemUtils.write(path, newLines)
         _configLines.update { newLines }
     }
 
@@ -83,8 +85,13 @@ class ConfigRepository(
         if (isDirty) run(config.value)
     }
 
-    suspend fun openFile(file: PlatformFile): Result<Unit> = runCatching {
-        _currentFile.update { file }
-        loadConfig(file.readString())
+    suspend fun openFile(file: FilePickerResult): Result<Unit> = runCatching {
+        _currentFile.update { file.path }
+        loadConfig(file.contents)
+
+        // On JS, cache the file contents in browser memory right away
+        if (KoolSystem.platform == Platform.Javascript) {
+            saveConfigLines(file.contents)
+        }
     }
 }

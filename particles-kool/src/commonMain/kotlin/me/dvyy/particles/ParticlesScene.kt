@@ -77,7 +77,10 @@ class ParticlesScene(
         }
 
         offsetsShader.addTo(computePass) // Calculate offsets (start index in particles array for each grid cell)
-        val fieldsPasses = fieldsShader.addTo(computePass) // Run force computations based on particle interactions
+        val fieldsPasses = fieldsShader.addTo(
+            computePass,
+            meanSquareDataShader
+        ) // Run force computations based on particle interactions
         convertShader.addTo(computePass) // Convert particles to different types as needed
 
         // == DATA COLLECTION ==

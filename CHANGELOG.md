@@ -11,13 +11,14 @@ development.
 ### Added
 
 - Started a changelog based on keep a changelog
-- Mean square velocity calculation via a compute shader that sums log_2 times; plan to extract into a general API in the
-  future
+- **Mean square velocity** calculation via a compute shader that sums log_2 times; plan to extract into a general API in
+  the future
+- **Support for recent projects in web** via local storage, plus "Save as" button to save projects back to disk
+- **Target velocity** via rescaling based on mean square velocity
 - Added more options to graphs displayed in GUI like toggling on/off and clearing
 - Added helper function for drawing graphs for values that update over time
 - Added banner and icon for the project
 - Grid toggle button under visual options
-- Support for recent projects in web via local storage, plus "Save as" button to save projects back to disk
 
 ### Changed
 

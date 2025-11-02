@@ -36,6 +36,7 @@ class FieldsShader(
             val velocities = storage<KslFloat4>("velocities")
             val forces = storage<KslFloat4>("forces")
             val localNeighbours = storage<KslFloat1>("localNeighbours")
+            val velocityData = storage<KslFloat1>("velocityData")
 
             val particleTypes = storage<KslInt1>("particleTypes")
 
@@ -188,10 +189,23 @@ class FieldsShader(
                 `if`(length(nextVelocity) gt params.maxVelocity.ksl) {
                     nextVelocity set normalize(nextVelocity) * params.maxVelocity.ksl
                 }
+                val target = params.targetVelocity.ksl
+                val totalSqrtVelocities = float1Var(velocityData[0.const])
+                val average = totalSqrtVelocities / count.toFloat1()
+//                val halved = totalSqrtVelocities/2f.const
+//                val degreesOfFreedom = 2f.const
+                val strength = params.targetVelocityFixStrength.ksl
+                // nudge particles towards target velocity
+                nextVelocity set nextVelocity * sqrt(
+                    1f.const + (dT * strength) * ((target) / max(
+                        average,
+                        0.1f.const
+                    ) - 1f.const)
+                )
 
                 forces[id] = float4Value(nextForce, 0f)
                 velocities[id] = float4Value(nextVelocity, 0f)
-                localNeighbours[id] = localCount
+                localNeighbours[id] = totalSqrtVelocities
             }
         }
 
@@ -214,6 +228,7 @@ class FieldsShader(
     var localNeighbours by shader.storage("localNeighbours")
     var forces by shader.storage("forces")
     var particleTypes by shader.storage("particleTypes")
+    var velocityData by shader.storage("velocityData")
 }
 //
 //context(scope: KslScopeBuilder)

@@ -40,16 +40,32 @@ class MeanSquareVelocities(
             }
         }
     }
+
+    private val outputShader = KslComputeShader("MeanSquareVelocities_output") {
+//        val struct = struct { SimulationStatisticsStruct() }
+//        val total = storage("total", struct)
+        val inputs = storage<KslFloat1>("inputs")
+        val output = storage<KslFloat1>("outputStorage")
+        computeStage(1) {
+            main {
+                output[0.const] = inputs[0.const]
+            }
+        }
+    }
+
+    private var outputBind by outputShader.storage("outputStorage")//.uniformStruct("total", ::SimulationStatisticsStruct)
+
     private var inputs by reduce.storage("inputs")
     private var outputs by reduce.storage("outputs")
     private var total by reduce.uniform1i("total")
 
-    val inputBuffer = Buffers.floats(buffers.count)
-    val outputBuffer = Buffers.floats(buffers.count)
+    private val inputBuffer = Buffers.floats(buffers.count)
+    private val outputBuffer = Buffers.floats(buffers.count)
+    val output = Buffers.floats(1)
 
     private val roundedUp = 1 shl (32 - (buffers.count - 1).countLeadingZeroBits())
     private val iterations = roundedUp.countTrailingZeroBits()
-    val readBack = if (iterations % 2 == 0) inputBuffer else outputBuffer
+    private val readBack = if (iterations % 2 == 0) inputBuffer else outputBuffer
 
     fun addTo(
         pass: ComputePass,
@@ -73,6 +89,10 @@ class MeanSquareVelocities(
                     }
                 }
             }
+            addTask(outputShader.apply {
+                storage("inputs").set(readBack)
+                outputBind = output
+            }, Vec3i(1, 1, 1))
         }
     }
 }

@@ -52,6 +52,12 @@ class ParticlesViewModel(
                 UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
                     updateState { copy(dT = it.toDouble()) }
                 },
+                UiConfigurable.Slider("Target Velocity", state.targetVelocity, 0f, 100f) {
+                    updateState { copy(targetVelocity = it.toDouble()) }
+                },
+                UiConfigurable.Slider("Targetting Strength", state.targetVelocityStrength, 0f, 100f) {
+                    updateState { copy(targetVelocityStrength = it.toDouble()) }
+                },
                 UiConfigurable.Slider("Max Velocity", state.maxVelocity, 0f, 100f) {
                     updateState { copy(maxVelocity = it.toDouble()) }
                 },
@@ -89,8 +95,8 @@ class ParticlesViewModel(
     }
 
     suspend fun readbackMeanSquareVelocity() {
-        val result = Float32Buffer(buffers.count)
-        meanSquareData.readBack.downloadData(result)
+        val result = Float32Buffer(1)
+        meanSquareData.output.downloadData(result)
         val msqV = result[0] / buffers.count
         msqvOverTime.pushNewValueRight(msqV)
         meanSquareVelocity.update { msqV }

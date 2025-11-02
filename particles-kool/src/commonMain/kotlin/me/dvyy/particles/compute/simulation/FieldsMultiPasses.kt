@@ -2,6 +2,7 @@ package me.dvyy.particles.compute.simulation
 
 import de.fabmax.kool.pipeline.ComputePass
 import me.dvyy.particles.compute.ParticleBuffers
+import me.dvyy.particles.compute.data.MeanSquareVelocities
 import me.dvyy.particles.compute.forces.ForcesDefinition
 import me.dvyy.particles.config.ConfigRepository
 
@@ -32,10 +33,14 @@ class FieldsMultiPasses(
         halfStep.boxMax = configRepo.boxSize
     }
 
-    fun addTo(computePass: ComputePass): List<Pair<ComputePass.Task, ComputePass.Task>> {
+    fun addTo(
+        computePass: ComputePass,
+        velocitiesShader: MeanSquareVelocities,
+    ): List<Pair<ComputePass.Task, ComputePass.Task>> {
         val config = configRepo.config.value
 
         initBuffers()
+        fields.velocityData = velocitiesShader.output
         val passes = buildList {
             repeat(config.simulation.passesPerFrame) { passIndex ->
                 val halfStep = computePass.addTask(halfStep.shader, numGroups = configRepo.numGroups).apply {
@@ -53,6 +58,8 @@ class FieldsMultiPasses(
                             fields.params.set {
                                 maxVelocity.set(simulation.maxVelocity.toFloat())
                                 maxForce.set(simulation.maxForce.toFloat())
+                                targetVelocity.set(simulation.targetVelocity.toFloat())
+                                targetVelocityFixStrength.set(simulation.targetVelocityStrength.toFloat())
                             }
                             val count = configRepo.count
                             fields.count = count

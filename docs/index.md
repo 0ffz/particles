@@ -6,15 +6,15 @@ items:
   - title: User guide
     desc: Install and run Particle HIVE
     icon: school
-    url: /usage
+    url: /installation
   - title: Developer docs
     desc: Create custom simulations
     icon: code
     url: /api-usage
-  - title: About
-    icon: info-circle
-    desc: Learn more about this project
-    url: /about
+#  - title: About
+#    icon: info-circle
+#    desc: Learn more about this project
+#    url: /about
 ---
 
 <picture>

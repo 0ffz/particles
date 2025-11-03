@@ -205,7 +205,7 @@ class FieldsShader(
 
                 forces[id] = float4Value(nextForce, 0f)
                 velocities[id] = float4Value(nextVelocity, 0f)
-                localNeighbours[id] = totalSqrtVelocities
+                localNeighbours[id] = localCount
             }
         }
 

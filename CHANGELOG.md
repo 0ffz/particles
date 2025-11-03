@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project does not fully adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) while under heavy
 development.
 
+## [0.4.1] - 2025-11-03
+
+### Added
+
+- **Version number** in bottom right corner of GUI
+- Changelog page on docs site 
+
+### Fixed
+
+- **Local neighbour count** visualization not working
+- Misleading labels in UI for "reload config from file" and "target velocity"
+
 ## [0.4.0] - 2025-11-02
 
 ### Added

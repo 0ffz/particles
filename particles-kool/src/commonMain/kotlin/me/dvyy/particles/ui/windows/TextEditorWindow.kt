@@ -95,7 +95,7 @@ class TextEditorWindow(
                     if (config.isSuccess) colors.backgroundVariant else (MdColor.RED tone 500).withAlpha(0.1f)
                 )
                 config.onSuccess {
-                    Button("Reload from file") {
+                    Button("Reload") {
                         modifier.margin(sizes.gap)
                         modifier.onClick {
                             val decoded = decodeConfigFromText(lines.value)

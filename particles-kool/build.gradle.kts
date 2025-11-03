@@ -1,3 +1,4 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.targets.js.dsl.ExperimentalDistributionDsl
 import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
@@ -6,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.powerassert)
     alias(libs.plugins.kotlinx.serialization)
+    id("com.codingfeline.buildkonfig") version "0.17.1"
 }
 
 kotlin {
@@ -91,5 +93,17 @@ kotlin {
                 implementation("io.kotest:kotest-assertions-core:6.0.0.M5")
             }
         }
+    }
+}
+
+
+buildkonfig {
+    packageName = "me.dvyy.particles"
+
+    // default config is required
+    defaultConfigs {
+        buildConfigField(FieldSpec.Type.STRING, "version", project.version.toString())
+//        buildConfigField 'STRING', 'name', 'value'
+//        buildConfigField 'STRING', 'nullableField', null, nullable: true
     }
 }

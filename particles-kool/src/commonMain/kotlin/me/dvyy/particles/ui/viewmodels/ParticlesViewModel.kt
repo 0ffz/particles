@@ -52,7 +52,7 @@ class ParticlesViewModel(
                 UiConfigurable.Slider("dT", state.dT, 0f, 0.01f, precision = 4) {
                     updateState { copy(dT = it.toDouble()) }
                 },
-                UiConfigurable.Slider("Target Velocity", state.targetVelocity, 0f, 100f) {
+                UiConfigurable.Slider("Target Velocity^2", state.targetVelocity, 0f, 100f) {
                     updateState { copy(targetVelocity = it.toDouble()) }
                 },
                 UiConfigurable.Slider("Targetting Strength", state.targetVelocityStrength, 0f, 100f) {

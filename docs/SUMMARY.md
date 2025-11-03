@@ -1,4 +1,5 @@
 - [Home](/)
+- [Changelog](/changelog)
 
 # :school: User guide
 

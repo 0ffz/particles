@@ -48,12 +48,12 @@ class MeanSquareVelocities(
         val output = storage<KslFloat1>("outputStorage")
         computeStage(1) {
             main {
+                //FIXME inGlobalInvocationId read is needed for WebGPU target, otherwise struct passed into shader inputs is not generated
+                int1Var(inGlobalInvocationId.x.toInt1())
                 output[0.const] = inputs[0.const]
             }
         }
     }
-
-    private var outputBind by outputShader.storage("outputStorage")//.uniformStruct("total", ::SimulationStatisticsStruct)
 
     private var inputs by reduce.storage("inputs")
     private var outputs by reduce.storage("outputs")
@@ -91,7 +91,7 @@ class MeanSquareVelocities(
             }
             addTask(outputShader.apply {
                 storage("inputs").set(readBack)
-                outputBind = output
+                storage("outputStorage").set(output)
             }, Vec3i(1, 1, 1))
         }
     }
